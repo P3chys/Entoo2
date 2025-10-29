@@ -85,6 +85,9 @@ services/**/*.pyd
 logs/
 *.log
 
+# GitHub Actions debug logs
+gh-action*.txt
+
 # Temporary files
 tmp/
 temp/
