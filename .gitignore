@@ -1,0 +1,132 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Executables
+*.bat
+
+# AI files
+.claude
+
+# Old Entoo files
+old_entoo/*
+
+# Laravel
+webapp/vendor/
+webapp/node_modules/
+webapp/storage/*.key
+webapp/storage/framework/
+webapp/storage/logs/
+webapp/storage/app/public/
+webapp/bootstrap/cache/
+webapp/.env
+webapp/.phpunit.result.cache
+webapp/Homestead.json
+webapp/Homestead.yaml
+webapp/npm-debug.log
+webapp/yarn-error.log
+
+# Vite build output
+webapp/public/build/
+webapp/public/hot
+
+# Old static assets (if any remain from pre-Vite setup)
+webapp/public/css/
+webapp/public/js/
+webapp/public/mix-manifest.json
+
+# Test coverage
+webapp/coverage/
+webapp/.phpunit.cache
+webapp/tests/coverage/
+
+# Migration snapshots (if using doctrine/dbal schema dumps)
+webapp/database/.snapshot
+webapp/database/schema/
+webapp/storage/schema/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+docker/data/
+volumes/
+.docker/
+
+# Elasticsearch data
+elasticsearch-data/
+es-data/
+
+# Storage
+storage/app/subjects/*
+!storage/app/subjects/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Database
+*.sql
+*.sqlite
+*.db
+
+# Compiled Python files
+services/**/__pycache__/
+services/**/*.pyc
+services/**/*.pyo
+services/**/*.pyd
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backups
+*.bak
+*.backup
+
+# Redis dumps
+dump.rdb
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Uploaded files (if they shouldn't be in repo)
+webapp/storage/app/uploads/
+entoo_subjects/
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.yarn/
+.pnp.*
+
+# Package manager locks (uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Cache directories
+.cache/
+.parcel-cache/
+.vite/

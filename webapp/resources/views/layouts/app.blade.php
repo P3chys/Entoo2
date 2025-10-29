@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Entoo - Document Management')</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: var(--spacing-md);">
+                    <div style="width: 36px; height: 36px; background: var(--primary-gradient); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: var(--shadow-sm);">
+                        📚
+                    </div>
+                    <h1 style="margin: 0;">Entoo</h1>
+                </a>
+            </div>
+            <div class="navbar-menu" id="navbarMenu">
+                <!-- Guest links (shown when not logged in) -->
+                <div id="guestLinks" style="display: flex; gap: var(--spacing-md); align-items: center;">
+                    <a href="/login" class="nav-link">Login</a>
+                    <a href="/register" class="nav-link btn-primary">Get Started</a>
+                </div>
+                <!-- Authenticated links (shown when logged in) -->
+                <div id="authLinks" style="display: none; gap: var(--spacing-md); align-items: center;">
+                    <a href="/dashboard" class="nav-link" style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="divider-vertical" style="height: 24px;"></div>
+                    <a href="#" onclick="showProfileModal(event)" class="nav-link" id="userInfo" style="cursor: pointer; display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-lg); background: rgba(91, 127, 255, 0.08); border-radius: var(--radius-full);">
+                        <div class="avatar avatar-sm" style="width: 28px; height: 28px; font-size: 0.75rem;" id="userAvatar"></div>
+                        <span id="userName"></span>
+                    </a>
+                    <button onclick="logout()" class="nav-link" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px 0 rgba(239, 68, 68, 0.3); padding: var(--spacing-sm) var(--spacing-lg);">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        @yield('content')
+    </main>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 User Profile</h2>
+                <button onclick="closeProfileModal()" class="close-btn">&times;</button>
+            </div>
+
+            <div style="padding: var(--spacing-xl);">
+                <div id="profileContent">
+                    <div class="loading">Loading profile...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Entoo. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Update navbar based on authentication status
+        function updateNavbar() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const guestLinks = document.getElementById('guestLinks');
+            const authLinks = document.getElementById('authLinks');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+
+            if (token && user) {
+                guestLinks.style.display = 'none';
+                authLinks.style.display = 'flex';
+
+                const name = user.name || user.email || 'User';
+                if (userName) {
+                    userName.textContent = name;
+                }
+                if (userAvatar) {
+                    userAvatar.textContent = name.charAt(0).toUpperCase();
+                }
+            } else {
+                guestLinks.style.display = 'flex';
+                authLinks.style.display = 'none';
+            }
+        }
+
+        // Update navbar on page load
+        updateNavbar();
+
+        // Profile Modal Functions
+        async function showProfileModal(event) {
+            if (event) event.preventDefault();
+
+            const modal = document.getElementById('profileModal');
+            const content = document.getElementById('profileContent');
+
+            modal.classList.remove('hidden');
+            content.innerHTML = '<div class="loading">Loading profile...</div>';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load profile');
+
+                const data = await response.json();
+                displayProfile(data);
+            } catch (error) {
+                content.innerHTML = '<div class="alert alert-error">Failed to load profile</div>';
+            }
+        }
+
+        function displayProfile(data) {
+            const content = document.getElementById('profileContent');
+            const user = data.user;
+            const stats = data.stats;
+
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: var(--spacing-xl);">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; margin: 0 auto var(--spacing-md);">
+                        ${user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: var(--spacing-xs);">${user.name}</h3>
+                    <p style="color: var(--text-secondary);">${user.email}</p>
+                </div>
+
+                <div class="stats-grid" style="margin-bottom: var(--spacing-xl);">
+                    <div class="stat-card">
+                        <h3>${stats.total_files}</h3>
+                        <p>Files Uploaded</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.total_size_formatted}</h3>
+                        <p>Storage Used</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: var(--spacing-lg);">
+                    <button onclick="changePassword()" class="btn btn-secondary" style="width: 100%; margin-bottom: var(--spacing-md);">
+                        🔒 Change Password
+                    </button>
+                    <button onclick="viewMyFiles()" class="btn btn-primary" style="width: 100%;">
+                        📁 View My Files
+                    </button>
+                </div>
+            `;
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function changePassword() {
+            const password = prompt('Enter new password:');
+            if (!password) return;
+
+            const confirmPassword = prompt('Confirm new password:');
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            const currentPassword = prompt('Enter current password:');
+            if (!currentPassword) return;
+
+            const token = localStorage.getItem('token');
+            fetch('/api/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: password,
+                    new_password_confirmation: confirmPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || 'Password changed successfully. Please log in again.');
+                logout();
+            })
+            .catch(error => {
+                alert('Failed to change password. Please check your current password.');
+            });
+        }
+
+        function viewMyFiles() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            closeProfileModal();
+            if (user.id && window.filterByUser) {
+                window.filterByUser(user.id, user.name);
+            } else {
+                window.location.href = '/dashboard';
+            }
+        }
+    </script>
+    @stack('scripts')
+</body>
+</html>
