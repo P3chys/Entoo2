@@ -3,132 +3,23 @@ name: Laravel Tests
 on:
   push:
     branches: [ main, develop, feature/** ]
-  pull_request:
-    branches: [ main, develop ]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: entoo_test
-          POSTGRES_USER: entoo_user
-          POSTGRES_PASSWORD: entoo_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-        env:
-          discovery.type: single-node
-          ES_JAVA_OPTS: -Xms512m -Xmx512m
-          xpack.security.enabled: false
-        ports:
-          - 9200:9200
-        options: >-
-          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+    runs-on: self-hosted
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: mbstring, pdo, pdo_pgsql, redis, swoole, zip, gd
-        coverage: none
-
-    - name: Install Composer dependencies
-      working-directory: ./webapp
-      run: |
-        mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
-        composer install --no-progress --prefer-dist --optimize-autoloader
-
-    - name: Copy .env
-      working-directory: ./webapp
-      run: |
-        cp .env.example .env
-        php artisan key:generate
-
-    - name: Set up environment variables
-      working-directory: ./webapp
-      run: |
-        echo "DB_CONNECTION=pgsql" >> .env
-        echo "DB_HOST=localhost" >> .env
-        echo "DB_PORT=5432" >> .env
-        echo "DB_DATABASE=entoo_test" >> .env
-        echo "DB_USERNAME=entoo_user" >> .env
-        echo "DB_PASSWORD=entoo_password" >> .env
-        echo "REDIS_HOST=localhost" >> .env
-        echo "REDIS_PORT=6379" >> .env
-        echo "REDIS_CLIENT=phpredis" >> .env
-        echo "CACHE_STORE=redis" >> .env
-        echo "ELASTICSEARCH_HOST=http://localhost:9200" >> .env
-
-    - name: Run database migrations
-      working-directory: ./webapp
-      run: |
-        php artisan migrate --force
-
-    - name: Initialize Elasticsearch
-      working-directory: ./webapp
-      run: |
-        php artisan elasticsearch:init
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Build frontend assets
-      working-directory: ./webapp
-      run: |
-        npm install
-        npm run build
-
     - name: Run PHPUnit tests
-      working-directory: ./webapp
       run: |
-        php artisan test
+        docker exec php php artisan test
 
-    - name: Install Playwright dependencies
+    - name: Run Playwright E2E tests
       working-directory: ./tests
       run: |
         npm install
-        npx playwright install --with-deps chromium
-
-    - name: Start Laravel Octane server
-      working-directory: ./webapp
-      run: |
-        php artisan octane:start --server=swoole --host=127.0.0.1 --port=8000 &
-        sleep 5
-        curl -f http://127.0.0.1:8000/api/health || exit 1
-
-    - name: Run Playwright tests
-      working-directory: ./tests
-      run: |
         npx playwright test --reporter=list
 
     - name: Upload Playwright report
@@ -145,4 +36,4 @@ jobs:
       with:
         name: test-results
         path: tests/test-results/
-        retention-days: 30
+        retention-days: 7
