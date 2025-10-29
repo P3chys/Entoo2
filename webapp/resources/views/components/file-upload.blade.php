@@ -21,7 +21,7 @@
                 <label for="fileInput">Choose File</label>
                 <input type="file" id="fileInput" name="file" required
                        accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
-                <small>Supported: PDFA, DOC, DOCX, PPT, PPTX, TXT (Max: 50MB)</small>
+                <small>Supported: PDF, DOC, DOCX, PPT, PPTX, TXT (Max: 50MB)</small>
             </div>
 
             <div id="uploadProgress" class="upload-progress hidden">

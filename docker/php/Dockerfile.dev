@@ -1,0 +1,39 @@
+# -------------------------------------------------------------------
+# 🐘 PHP Development with Hot Reload (Laravel Octane + Swoole)
+# -------------------------------------------------------------------
+
+FROM php:8.2-cli-alpine
+
+# Install dependencies
+RUN apk add --no-cache \
+        bash git unzip tzdata \
+        libzip-dev oniguruma-dev icu-dev \
+        linux-headers openssl-dev pcre-dev curl-dev \
+        postgresql-dev build-base autoconf make g++ \
+        libpng-dev libjpeg-turbo-dev freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_pgsql pgsql bcmath zip opcache pcntl \
+    && pecl install redis swoole \
+    && docker-php-ext-enable redis swoole gd \
+    && apk del build-base autoconf make g++ \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+# Copy composer from official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# -------------------------------------------------------------------
+# 🔧 Development PHP configuration (NO opcache for hot reload)
+# -------------------------------------------------------------------
+COPY ./docker/php/php-dev.ini /usr/local/etc/php/php.ini
+
+# -------------------------------------------------------------------
+# ⚡ Run Octane with --watch for hot reload
+# -------------------------------------------------------------------
+EXPOSE 8000
+USER www-data
+
+# Use --watch flag to automatically reload on file changes
+CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000", "--watch"]

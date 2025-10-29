@@ -130,3 +130,4 @@ yarn-error.log*
 .cache/
 .parcel-cache/
 .vite/
+DEV_README.md

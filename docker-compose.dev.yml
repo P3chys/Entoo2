@@ -1,0 +1,27 @@
+version: '3.8'
+
+# Development override - use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile.dev
+    volumes:
+      - ./webapp:/var/www/html
+      - ./storage:/var/www/html/storage
+      - ./docker/php/php-dev.ini:/usr/local/etc/php/php.ini
+      - ./old_entoo:/old_entoo:ro
+    command: >
+      sh -c "
+        php artisan config:clear &&
+        php artisan route:clear &&
+        php artisan view:clear &&
+        php artisan cache:clear &&
+        php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000
+      "
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - ASSET_URL=http://localhost:8000
