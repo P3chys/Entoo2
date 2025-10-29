@@ -97,27 +97,27 @@ jobs:
       run: |
         php artisan elasticsearch:init
 
-    - name: Run PHPUnit tests
-      working-directory: ./webapp
-      run: |
-        php artisan test
-
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-
-    - name: Install Playwright dependencies
-      working-directory: ./tests
-      run: |
-        npm install
-        npx playwright install --with-deps chromium
 
     - name: Build frontend assets
       working-directory: ./webapp
       run: |
         npm install
         npm run build
+
+    - name: Run PHPUnit tests
+      working-directory: ./webapp
+      run: |
+        php artisan test
+
+    - name: Install Playwright dependencies
+      working-directory: ./tests
+      run: |
+        npm install
+        npx playwright install --with-deps chromium
 
     - name: Start Laravel Octane server
       working-directory: ./webapp
