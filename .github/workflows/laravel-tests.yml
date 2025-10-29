@@ -13,9 +13,8 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Run PHPUnit tests
-      run: |
-        entoo.bat test
-      shell: cmd
+      run: docker exec php php artisan test
+      shell: pwsh
 
     - name: Run Playwright E2E tests
       working-directory: ./tests
