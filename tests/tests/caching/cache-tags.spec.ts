@@ -126,10 +126,6 @@ test.describe('Cache Tags Functionality', () => {
     const maxTime = Math.max(...times);
     const minTime = Math.min(...times);
     expect(maxTime - minTime).toBeLessThan(100);
-    // All requests should be reasonably consistent (within 50ms range)
-    const maxTime = Math.max(...times);
-    const minTime = Math.min(...times);
-    expect(maxTime - minTime).toBeLessThan(50);
   });
 
   test('should handle cache tags for subject categories', async ({ request }) => {
