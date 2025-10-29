@@ -16,6 +16,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Infrastructure**: Docker Compose
 - **Auth**: Laravel Sanctum
 
+## Claude Code Workflow
+
+**IMPORTANT:** When implementing features or improvements, Claude Code should:
+
+### 1. Automatic Testing
+- **ALWAYS** create comprehensive tests for each feature using Playwright
+- Run all tests and ensure they pass before committing
+- Include both E2E tests and performance validation
+- Test files go in `tests/tests/` directory
+
+### 2. Automatic Git Operations
+- Create feature branches automatically: `feature/descriptive-name`
+- Commit changes with detailed, multi-line commit messages
+- Include performance metrics and test results in commits
+- **ALWAYS** push branches to remote automatically: `git push -u origin <branch>`
+
+### 3. Automatic PR Creation
+- **ALWAYS** create Pull Requests automatically after pushing
+- Use detailed PR descriptions with:
+  - Summary of changes
+  - Test results (all tests must pass)
+  - Performance impact measurements
+  - Before/After comparisons
+  - Deployment notes
+- Include co-authorship: `Co-Authored-By: Claude <noreply@anthropic.com>`
+
+### 4. Documentation
+- Update or create documentation for significant changes
+- Include code examples and usage instructions
+- Add performance benchmarks when relevant
+
+### 5. Complete Workflow Example
+```bash
+# 1. Create branch
+git checkout -b feature/add-caching
+
+# 2. Implement feature with tests
+# ... make changes ...
+# ... create Playwright tests ...
+
+# 3. Run tests
+cd tests && npm test  # Must pass 100%
+
+# 4. Commit with detailed message
+git add -A
+git commit -m "Add Redis caching with 80% performance improvement"
+
+# 5. Push to remote
+git push -u origin feature/add-caching
+
+# 6. Create PR automatically
+gh pr create --title "..." --body "..." --base main --head feature/add-caching
+```
+
+**DO NOT** ask for permission to push or create PRs - do it automatically as part of the workflow.
+
 ## Development Environment
 
 ### Starting the Application

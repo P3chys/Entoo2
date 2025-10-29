@@ -28,14 +28,14 @@ class SubjectController extends Controller
 
         if ($withCounts) {
             // Use Elasticsearch - MUCH faster than PostgreSQL!
-            $subjects = Cache::remember('subjects:all:with_counts:es', 300, function () {
+            $subjects = Cache::tags(['subjects', 'files'])->remember('subjects:all:with_counts:es', 300, function () {
                 return $this->elasticsearchService->getSubjectsWithCounts();
             });
 
             return response()->json(['subjects' => $subjects]);
         }
 
-        $subjects = Cache::remember('subjects:all', 300, function () {
+        $subjects = Cache::tags(['subjects'])->remember('subjects:all', 300, function () {
             return UploadedFile::select('subject_name')
                 ->groupBy('subject_name')
                 ->orderBy('subject_name')
@@ -55,7 +55,7 @@ class SubjectController extends Controller
     {
         $cacheKey = 'subject:' . md5($subjectName) . ':categories';
 
-        $categories = Cache::remember($cacheKey, 300, function () use ($subjectName) {
+        $categories = Cache::tags(['subjects', 'files'])->remember($cacheKey, 300, function () use ($subjectName) {
             // Define all valid categories
             $allCategories = ['Materialy', 'Otazky', 'Prednasky', 'Seminare'];
 

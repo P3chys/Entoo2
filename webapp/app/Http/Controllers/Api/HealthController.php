@@ -61,7 +61,7 @@ class HealthController extends Controller
      */
     public function stats()
     {
-        $stats = Cache::remember('stats:all:es', 300, function () {
+        $stats = Cache::tags(['stats', 'files'])->remember('stats:all:es', 300, function () {
             // Use Elasticsearch for super fast stats - much faster than PostgreSQL!
             $esStats = $this->elasticsearchService->getComprehensiveStats();
 

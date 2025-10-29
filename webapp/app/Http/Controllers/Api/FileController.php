@@ -41,7 +41,7 @@ class FileController extends Controller
 
             $cacheKey = 'files:es:subject:' . md5($request->subject_name);
 
-            $files = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($request) {
+            $files = Cache::tags(['files', 'subjects'])->remember($cacheKey, 300, function () use ($request) {
                 $size = min($request->input('per_page', 1000), 1000);
                 return $this->elasticsearchService->getFilesBySubject($request->subject_name, $size);
             });
@@ -63,7 +63,7 @@ class FileController extends Controller
             'page' => $request->input('page', 1)
         ]));
 
-        $files = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($request) {
+        $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
             $query = UploadedFile::with('user:id,name,email');
 
             // Filter by subject
@@ -86,8 +86,8 @@ class FileController extends Controller
                 $query->where('user_id', $request->user_id);
             }
 
-            // Respect per_page parameter (default 20, max 10000)
-            $perPage = min($request->input('per_page', 20), 10000);
+            // Respect per_page parameter (default 20, max 1000)
+            $perPage = min($request->input('per_page', 20), 1000);
             return $query->orderBy('created_at', 'desc')->paginate($perPage);
         });
 
@@ -295,7 +295,7 @@ class FileController extends Controller
             'page' => $request->input('page', 1)
         ]));
 
-        $files = Cache::remember($cacheKey, 300, function () use ($request) {
+        $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
             $query = UploadedFile::with('user:id,name,email');
 
             if ($request->has('subject_name')) {
@@ -318,20 +318,19 @@ class FileController extends Controller
     }
 
     /**
-     * Clear all file-related caches
+     * Clear all file-related caches using tags
+     * Much more efficient than manually forgetting individual keys
      */
     private function clearFileRelatedCaches()
     {
-        // Clear all file listing caches
+        // Clear all caches tagged with 'files'
+        // This includes: file listings, browse results, and subject file counts
         Cache::tags(['files'])->flush();
 
-        // Clear subjects cache
-        Cache::forget('subjects:all');
+        // Clear subjects cache (affected by file uploads/deletes)
+        Cache::tags(['subjects'])->flush();
 
-        // Clear stats cache
-        Cache::forget('stats:all');
-
-        // Clear category caches (we can't target specific ones easily, so clear pattern)
-        // Note: This is a simple implementation. For production, consider using cache tags
+        // Clear stats cache (affected by file uploads/deletes)
+        Cache::tags(['stats'])->flush();
     }
 }

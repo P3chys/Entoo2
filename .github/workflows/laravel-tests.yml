@@ -1,0 +1,39 @@
+name: Laravel Tests
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run PHPUnit tests
+      run: docker exec php php artisan test
+      shell: pwsh
+
+    - name: Run Playwright E2E tests
+      working-directory: ./tests
+      run: |
+        npm install
+        npx playwright test --reporter=list
+
+    - name: Upload Playwright report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: tests/playwright-report/
+        retention-days: 30
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: tests/test-results/
+        retention-days: 7
