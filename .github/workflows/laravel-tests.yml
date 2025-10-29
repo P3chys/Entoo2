@@ -63,6 +63,7 @@ jobs:
     - name: Install Composer dependencies
       working-directory: ./webapp
       run: |
+        mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs
         composer install --no-progress --prefer-dist --optimize-autoloader
 
     - name: Copy .env
