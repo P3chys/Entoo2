@@ -45,7 +45,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"  # Increased from 512m for better performance
       - bootstrap.memory_lock=true
     ulimits:
       memlock:

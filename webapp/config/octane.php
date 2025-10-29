@@ -106,7 +106,7 @@ return [
             FlushOnce::class,
             FlushTemporaryContainerInstances::class,
             // DisconnectFromDatabases::class,
-            // CollectGarbage::class,
+            CollectGarbage::class,  // Enable GC to prevent memory leaks in long-running workers
         ],
 
         WorkerErrorOccurred::class => [
@@ -220,5 +220,27 @@ return [
     */
 
     'max_execution_time' => 30,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Swoole Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure Swoole-specific settings for optimal performance.
+    | These settings control worker processes, memory management, and request
+    | handling for the Swoole server.
+    |
+    */
+
+    'swoole' => [
+        'options' => [
+            'worker_num' => env('SWOOLE_WORKERS', 4),        // Number of worker processes (CPU cores)
+            'task_worker_num' => 2,                          // Background task workers
+            'max_request' => 1000,                           // Restart worker after N requests (prevents memory leaks)
+            'package_max_length' => 10 * 1024 * 1024,       // 10MB max request size (for file uploads)
+            'buffer_output_size' => 2 * 1024 * 1024,        // 2MB output buffer
+            'socket_buffer_size' => 2 * 1024 * 1024,        // 2MB socket buffer
+        ],
+    ],
 
 ];

@@ -18,6 +18,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Claude Code Workflow
 
+**CRITICAL PRE-CONDITION:**
+Before starting any new feature work, ALWAYS verify:
+- ✅ All existing PRs are merged to main, OR
+- ✅ There is a failing GitHub Action that needs fixing
+
+**NEVER** start new feature work if:
+- ❌ There are open/unmerged PRs waiting for review
+- ❌ There are failing GitHub Actions that need attention
+- ❌ Previous work is incomplete
+
+Check status with: `gh pr list` and `gh run list --limit 5`
+
+---
+
 **IMPORTANT:** When implementing features or improvements, Claude Code should:
 
 ### 1. Automatic Testing
