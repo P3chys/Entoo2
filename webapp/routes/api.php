@@ -53,6 +53,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Subject profiles (authenticated create/update/delete)
     Route::post('/subject-profiles', [\App\Http\Controllers\Api\SubjectProfileController::class, 'store']);
-    Route::put('/subject-profiles/{id}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'update']);
-    Route::delete('/subject-profiles/{id}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'destroy']);
+    Route::put('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'update']);
+    Route::delete('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'destroy']);
 });

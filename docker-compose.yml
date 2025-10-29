@@ -90,7 +90,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/php/Dockerfile
-    container_name: entoo_php
+    container_name: php
     working_dir: /var/www/html
     volumes:
       - ./webapp:/var/www/html

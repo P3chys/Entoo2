@@ -70,9 +70,9 @@ class SubjectProfileController extends Controller
     /**
      * Update an existing subject profile
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, string $subjectName)
     {
-        $profile = SubjectProfile::findOrFail($id);
+        $profile = SubjectProfile::where('subject_name', $subjectName)->firstOrFail();
 
         $validated = $request->validate([
             'description' => 'nullable|string',
@@ -98,9 +98,9 @@ class SubjectProfileController extends Controller
     /**
      * Delete a subject profile
      */
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, string $subjectName)
     {
-        $profile = SubjectProfile::findOrFail($id);
+        $profile = SubjectProfile::where('subject_name', $subjectName)->firstOrFail();
 
         $profile->delete();
 

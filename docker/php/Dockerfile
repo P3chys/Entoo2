@@ -33,15 +33,10 @@ COPY ./webapp /var/www/html
 COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
 
 # -------------------------------------------------------------------
-# 🔥 Build optimization phase
+# 🔥 Install dependencies and set permissions
 # -------------------------------------------------------------------
 RUN set -eux; \
     composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; \
-    php artisan config:cache; \
-    php artisan route:cache; \
-    php artisan view:cache; \
-    php artisan event:cache; \
-    php artisan optimize; \
     chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # -------------------------------------------------------------------
