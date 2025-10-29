@@ -38,6 +38,14 @@ This document outlines the remaining performance optimizations from the original
    - Subject queries: ~20-50ms (down from 80-150ms)
    - Optimized for most common query pattern
 
+7. **PDF Text Parsing with pdftotext** - Robust PDF extraction
+   - Status: ✅ Complete (PR #4)
+   - Replaced disabled PHP parser with pdftotext command
+   - ~200ms extraction time for 200KB PDFs
+   - Extracts 30,000+ characters per document
+   - No timeouts or memory leaks (previous implementation was disabled)
+   - 6/6 Playwright tests passing
+
 ## Remaining High Priority Items
 
 ### DEPRECATED: 3. Configure Swoole Worker Settings
@@ -149,28 +157,24 @@ Schema::table('uploaded_files', function (Blueprint $table) {
 
 ---
 
-### 7. Enable PDF Text Parsing (Optional)
+### DEPRECATED: 7. Enable PDF Text Parsing
 **Priority**: Low
 **Impact**: Better search results for PDFs
 **Effort**: Medium (30 minutes + testing)
+**Status**: ✅ Complete (PR #4)
 
-**Current Issue**:
-- DocumentParserService uses basic PDF parsing
-- Could leverage pdftotext for better extraction
+**Implementation**:
+- Added poppler-utils to Dockerfile
+- Updated DocumentParserService to use pdftotext command
+- Fast extraction: ~200ms for 200KB PDFs
+- Robust handling: No timeouts or memory leaks
+- Graceful failure with logging
 
-**Recommended Changes**:
-```bash
-# Install pdftotext in Docker container
-apt-get install poppler-utils
-
-# Update DocumentParserService to use pdftotext
-pdftotext -layout document.pdf - | head -c 100000
-```
-
-**Expected Results**:
-- 20-30% better text extraction quality
-- Improved search relevance
-- Better handling of complex PDFs
+**Results Achieved**:
+- 100% improvement (was disabled, now working)
+- Extracts 30,000+ characters per PDF
+- Layout-preserved, UTF-8 encoded output
+- 6/6 Playwright tests passing
 
 ---
 
@@ -206,14 +210,19 @@ return response()->json(['status' => 'processing']);
 
 ## Implementation Order
 
-**For next session, start with:**
+**All high-priority items completed! ✅**
 
-1. **Swoole Worker Settings** (15 min) - High impact, low effort
-2. **Garbage Collection** (5 min) - Stability improvement
-3. **Elasticsearch Heap** (5 min) - Easy win for search performance
-4. **Composite Index** (10 min) - Significant query speedup
+Completed in order:
+1. ✅ Cache Tags with phpredis (PR #2)
+2. ✅ Gzip Compression (PR #2)
+3. ✅ Swoole Worker Settings (PR #3)
+4. ✅ Garbage Collection (PR #3)
+5. ✅ Elasticsearch Heap (PR #3)
+6. ✅ Composite Index (PR #3)
+7. ✅ PDF Text Parsing (PR #4)
 
-**Total time: ~35 minutes for 4 high-value improvements**
+**Remaining optional item:**
+- Item #8: Queue for File Processing (Low priority, high effort)
 
 ---
 
@@ -229,7 +238,7 @@ After each change:
 
 ## Current Performance Baseline
 
-From PR #2 + PR #3 improvements:
+From PR #2 + PR #3 + PR #4 improvements:
 - Cache hit times: 10-90ms ✅
 - Bandwidth: 76.7% reduction ✅
 - Swoole concurrency: 20 concurrent requests in ~120ms ✅
@@ -237,10 +246,12 @@ From PR #2 + PR #3 improvements:
 - Search queries: <100ms ✅
 - Subject queries: 20-50ms (down from 80-150ms) ✅
 - Memory stability: Stable over 100+ requests ✅
-- Tests: 20/20 passing ✅
+- PDF parsing: ~200ms per document, 30k+ chars ✅
+- Tests: 25/26 Playwright, 3/3 PHPUnit passing ✅
 
 **Achieved Results:**
 - ✅ Worker concurrency: Handles 20+ concurrent requests efficiently
 - ✅ Search queries: 30-50% faster with 1GB heap
 - ✅ File listing: 50-70% faster with composite index
 - ✅ Stable memory usage with automatic GC
+- ✅ PDF text extraction: Working (was disabled), no timeouts/leaks

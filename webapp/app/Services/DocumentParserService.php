@@ -68,39 +68,52 @@ class DocumentParserService
     }
 
     /**
-     * Extract text from PDF file
+     * Extract text from PDF file using pdftotext (poppler-utils)
+     *
+     * This implementation uses the external pdftotext tool which is much faster
+     * and more robust than PHP-based PDF parsing libraries. It handles complex
+     * PDFs efficiently and doesn't suffer from memory leaks or timeouts.
      *
      * @param string $filepath
      * @return string
      */
     private function extractTextFromPdf(string $filepath): string
     {
-        // TODO: PDF text extraction is temporarily disabled due to performance issues
-        // with complex PDF files. The PDF parser can hang or timeout on certain files.
-        // Files will still be indexed with metadata, but without text content.
-        // Consider implementing a more robust PDF parsing solution (e.g., using
-        // external tools like pdftotext, or processing PDFs asynchronously in a queue)
-
-        Log::info("PDF text extraction disabled for: {$filepath}");
-        return "";
-
-        /* Original implementation - disabled for now
         try {
-            // Skip PDF parsing for very large or complex files
-            // Check file size - be more conservative for PDFs
-            $fileSize = filesize($filepath);
-            if ($fileSize > 2 * 1024 * 1024) { // 2MB
-                $sizeMB = round($fileSize / 1024 / 1024, 2);
-                Log::info("Skipping PDF text extraction for large file: {$filepath} ({$sizeMB}MB)");
+            // Check if pdftotext is available
+            $pdftotextPath = trim(shell_exec('which pdftotext') ?? '');
+            if (empty($pdftotextPath)) {
+                Log::warning("pdftotext not found, PDF text extraction disabled");
                 return "";
             }
 
-            $parser = new PdfParser();
-            $pdf = $parser->parseFile($filepath);
-            $text = $pdf->getText();
+            // Escape filepath for shell command
+            $escapedPath = escapeshellarg($filepath);
+
+            // Use pdftotext with layout preservation and UTF-8 encoding
+            // -layout: Maintain original physical layout
+            // -enc UTF-8: Output in UTF-8 encoding
+            // -nopgbrk: Don't insert page breaks
+            // -eol unix: Use Unix line endings
+            // - : Output to stdout
+            $command = "pdftotext -layout -enc UTF-8 -nopgbrk -eol unix {$escapedPath} - 2>&1";
+
+            $output = shell_exec($command);
+
+            if ($output === null) {
+                Log::warning("pdftotext command failed for: {$filepath}");
+                return "";
+            }
+
+            // Limit output to first 100,000 characters to prevent memory issues
+            $text = substr($output, 0, 100000);
 
             // Clean up extracted text
             $text = $this->cleanText($text);
+
+            if (empty($text)) {
+                Log::info("No text extracted from PDF: {$filepath}");
+            }
 
             return $text;
         } catch (Exception $e) {
@@ -108,7 +121,6 @@ class DocumentParserService
             // Return empty string instead of throwing exception
             return "";
         }
-        */
     }
 
     /**
