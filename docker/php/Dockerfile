@@ -11,6 +11,7 @@ RUN apk add --no-cache \
         linux-headers openssl-dev pcre-dev curl-dev \
         postgresql-dev build-base autoconf make g++ \
         libpng-dev libjpeg-turbo-dev freetype-dev \
+        poppler-utils \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_pgsql pgsql bcmath zip opcache pcntl \
     && pecl install redis swoole \
