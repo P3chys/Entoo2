@@ -14,7 +14,8 @@ jobs:
 
     - name: Run PHPUnit tests
       run: |
-        docker exec php php artisan test
+        entoo.bat test
+      shell: cmd
 
     - name: Run Playwright E2E tests
       working-directory: ./tests
