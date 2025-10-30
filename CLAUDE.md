@@ -34,11 +34,70 @@ Check status with: `gh pr list` and `gh run list --limit 5`
 
 **IMPORTANT:** When implementing features or improvements, Claude Code should:
 
-### 1. Automatic Testing
-- **ALWAYS** create comprehensive tests for each feature using Playwright
-- Run all tests and ensure they pass before committing
+### 1. Automatic Testing - GUI and E2E
+- **ALWAYS** create comprehensive GUI tests for any frontend/UI changes using Playwright
+- **ALWAYS** run all tests and ensure they pass before committing
 - Include both E2E tests and performance validation
 - Test files go in `tests/tests/` directory
+
+**GUI Testing Requirements:**
+
+When implementing or modifying any GUI feature, you MUST:
+
+1. **Create Playwright E2E tests** covering:
+   - User interactions (clicks, inputs, navigation)
+   - Form submissions and validations
+   - Modal/dialog interactions
+   - Search and filtering functionality
+   - File uploads and downloads
+   - Authentication flows
+   - Favorites and user preferences
+   - Error states and edge cases
+
+2. **Use test helpers** from `tests/tests/helpers/`:
+   - `auth.helper.ts` - Authentication setup and utilities
+   - `api.helper.ts` - API interactions and data setup
+   - `ui.helper.ts` - Common UI interactions
+
+3. **Organize tests** by feature:
+   - `tests/tests/gui/auth.spec.ts` - Authentication
+   - `tests/tests/gui/favorites.spec.ts` - Favorites
+   - `tests/tests/gui/file-upload.spec.ts` - File management
+   - `tests/tests/gui/search.spec.ts` - Search functionality
+   - `tests/tests/gui/subject-profile.spec.ts` - Subject profiles
+   - `tests/tests/gui/dashboard.spec.ts` - Dashboard features
+
+4. **Run tests in headless mode** (configured by default):
+   ```bash
+   cd tests
+   npm test  # All tests
+   npm test tests/gui/your-feature.spec.ts  # Specific test
+   ```
+
+5. **Verify test results** before committing:
+   - All tests must pass (100% success rate)
+   - No flaky tests (tests must be deterministic)
+   - Performance benchmarks must meet targets
+
+**Example GUI Test:**
+```typescript
+import { test, expect } from '@playwright/test';
+import { setupAuth } from '../helpers/auth.helper';
+import { toggleFavorite, isSubjectFavorite } from '../helpers/ui.helper';
+
+test.describe('New Feature Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuth(page);
+  });
+
+  test('should do something', async ({ page }) => {
+    // Your test code
+    await expect(page.locator('.element')).toBeVisible();
+  });
+});
+```
+
+See [tests/README.md](tests/README.md) for complete testing documentation.
 
 ### 2. Automatic Git Operations
 - Create feature branches automatically: `feature/descriptive-name`
@@ -142,6 +201,7 @@ npm run build  # Build for production
 
 ### Testing
 
+**Backend Tests (PHPUnit):**
 ```bash
 docker exec -it php php artisan test
 # or
@@ -150,6 +210,29 @@ entoo.bat test
 # Run specific test
 docker exec -it php php artisan test --filter=TestName
 ```
+
+**Frontend/GUI Tests (Playwright E2E):**
+```bash
+cd tests
+
+# Run all E2E tests (headless)
+npm test
+
+# Run specific test suite
+npm test tests/gui/auth.spec.ts
+npm test tests/gui/favorites.spec.ts
+
+# Run with browser UI (headed mode)
+npm run test:headed
+
+# Debug mode
+npm run test:debug
+
+# View test report
+npx playwright show-report
+```
+
+**IMPORTANT:** Always run GUI tests after making frontend changes. All tests must pass before committing.
 
 ## Architecture
 
@@ -311,7 +394,10 @@ ELASTICSEARCH_HOST=http://elasticsearch:9200
 3. Key files:
    - `dashboard.js` - Dashboard interactions
    - `subject-profile-modal.js` - Subject profile modal
+   - `file-upload.js` - File upload functionality
 4. Build: `npm run build` or use `npm run dev` for watch mode
+5. **ALWAYS create/update GUI tests** in `tests/tests/gui/`
+6. **Run tests** to verify changes: `cd tests && npm test`
 
 ### Adding Elasticsearch Fields
 
