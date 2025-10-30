@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessUploadedFile;
 use App\Models\UploadedFile;
 use App\Services\DocumentParserService;
 use App\Services\ElasticsearchService;
@@ -129,21 +130,7 @@ class FileController extends Controller
                 'local'
             );
 
-            $fullPath = Storage::path($path);
-
-            // Parse document content
-            try {
-                $content = $this->parserService->extractText($fullPath, $extension);
-            } catch (Exception $e) {
-                // If parsing fails, log but continue with empty content
-                $content = '';
-                \Log::warning("Failed to parse file content", [
-                    'file' => $filename,
-                    'error' => $e->getMessage()
-                ]);
-            }
-
-            // Create database record
+            // Create database record with pending status
             $file = UploadedFile::create([
                 'user_id' => $request->user()->id,
                 'filename' => $filename,
@@ -153,37 +140,16 @@ class FileController extends Controller
                 'category' => $validated['category'],
                 'file_size' => $uploadedFile->getSize(),
                 'file_extension' => $extension,
+                'processing_status' => 'pending',
             ]);
 
-            // Index in Elasticsearch
-            try {
-                $this->elasticsearchService->indexDocument([
-                    'file_id' => $file->id,
-                    'user_id' => $file->user_id,
-                    'filename' => $file->filename,
-                    'original_filename' => $file->original_filename,
-                    'filepath' => $file->filepath,
-                    'subject_name' => $file->subject_name,
-                    'category' => $file->category,
-                    'file_extension' => $file->file_extension,
-                    'file_size' => $file->file_size,
-                    'content' => $content,
-                    'created_at' => $file->created_at->toIso8601String(),
-                    'updated_at' => $file->updated_at->toIso8601String(),
-                ]);
-            } catch (Exception $e) {
-                \Log::error("Failed to index file in Elasticsearch", [
-                    'file_id' => $file->id,
-                    'error' => $e->getMessage()
-                ]);
-            }
-
-            // Clear all relevant caches
-            $this->clearFileRelatedCaches();
+            // Dispatch job to process file asynchronously
+            ProcessUploadedFile::dispatch($file);
 
             return response()->json([
-                'message' => 'File uploaded successfully',
-                'file' => $file
+                'message' => 'File uploaded successfully and is being processed',
+                'file' => $file,
+                'status' => 'processing'
             ], 201);
 
         } catch (Exception $e) {
@@ -203,6 +169,22 @@ class FileController extends Controller
             ->findOrFail($id);
 
         return response()->json(['file' => $file]);
+    }
+
+    /**
+     * Get processing status for a file
+     */
+    public function status(Request $request, int $id)
+    {
+        $file = UploadedFile::where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        return response()->json([
+            'id' => $file->id,
+            'processing_status' => $file->processing_status,
+            'processing_error' => $file->processing_error,
+            'processed_at' => $file->processed_at,
+        ]);
     }
 
     /**
