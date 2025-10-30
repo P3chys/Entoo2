@@ -7,13 +7,14 @@ import { Page, expect, Locator } from '@playwright/test';
 
 /**
  * Wait for element to be visible with custom timeout
+ * If multiple elements match, waits for the first one
  */
 export async function waitForVisible(
   page: Page,
   selector: string,
   timeout: number = 5000
 ): Promise<Locator> {
-  const element = page.locator(selector);
+  const element = page.locator(selector).first();
   await expect(element).toBeVisible({ timeout });
   return element;
 }

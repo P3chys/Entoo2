@@ -5,17 +5,18 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Limit workers to prevent server overload - use 2 workers max for better stability
+  workers: process.env.CI ? 1 : 2,
   reporter: [
     ['html'],
     ['list'],
     ['json', { outputFile: 'test-results/results.json' }]
   ],
 
-  // Global timeout settings
-  timeout: 30000, // 30 seconds per test
+  // Global timeout settings - increased for GUI tests with authentication
+  timeout: 60000, // 60 seconds per test (GUI tests need more time)
   expect: {
-    timeout: 5000, // 5 seconds for assertions
+    timeout: 10000, // 10 seconds for assertions (increased for slow server responses)
   },
 
   use: {

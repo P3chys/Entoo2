@@ -237,22 +237,22 @@ function buildTreeStructure(subjects) {
         const isFav = isFavorite(subjectName);
 
         html += `
-            <div class="tree-subject" data-subject="${subjectName}">
+            <div class="tree-subject subject-row" data-subject="${subjectName}">
                 <div class="subject-header" onclick="toggleSubject(this, '${subjectName.replace(/'/g, "\\'")}')">
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
-                        <span>${subjectName}</span>
-                        <span class="favorite-star ${isFav ? 'active' : ''}"
+                        <span class="subject-name name">${subjectName}</span>
+                        <span class="favorite-star star-icon ${isFav ? 'active' : ''}"
                               onclick="toggleFavorite('${subjectName.replace(/'/g, "\\'")}', event)"
                               title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
                             ${isFav ? '⭐' : '☆'}
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="subject-count">${totalFiles} files</span>
+                        <span class="subject-count file-count count">${totalFiles} files</span>
                     </div>
                 </div>
-                <div class="subject-categories">
+                <div class="subject-categories files-container file-list">
                     <div class="loading" style="padding: 1rem;">Loading categories...</div>
                 </div>
             </div>
@@ -392,7 +392,7 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
 
         tabContentHTML += `
             <div class="tab-content" id="tab-${subjectId}-${categoryName}">
-                <button class="upload-btn-category" onclick="openUploadModal('${subjectName.replace(/'/g, "\\'")}', '${categoryName}', event)">
+                <button class="upload-btn-category upload-button" id="uploadFileBtn" onclick="openUploadModal('${subjectName.replace(/'/g, "\\'")}', '${categoryName}', event)">
                     📤 Upload to ${categoryName}
                 </button>
                 <div class="file-list">
@@ -801,10 +801,16 @@ async function loadStats() {
         const totalFiles = document.getElementById('totalFiles');
         const totalSubjects = document.getElementById('totalSubjects');
         const totalStorage = document.getElementById('totalStorage');
+        const favoriteCount = document.getElementById('favoriteCount');
 
         if (totalFiles) totalFiles.textContent = response.total_files || 0;
         if (totalSubjects) totalSubjects.textContent = response.total_subjects || 0;
         if (totalStorage) totalStorage.textContent = ((response.total_storage_bytes || 0) / (1024 * 1024)).toFixed(2) + ' MB';
+
+        // Update favorite count from global favorites array
+        if (favoriteCount) {
+            favoriteCount.textContent = favorites.length || 0;
+        }
     } catch (error) {
         console.error('Failed to load stats:', error);
     }
