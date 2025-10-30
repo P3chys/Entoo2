@@ -199,14 +199,51 @@ Place test files in `tests/fixtures/`:
 
 ## CI/CD Integration
 
-Tests can be run in CI/CD pipelines:
+### GitHub Actions Configuration
+
+The workflow is configured to run non-authentication tests automatically:
+
+```yaml
+- name: Run Playwright E2E tests (Non-Auth)
+  run: |
+    npm install
+    npx playwright install chromium
+    npx playwright test tests/performance/ tests/caching/ tests/pdf-parsing.spec.ts
+```
+
+**GUI tests requiring authentication are skipped in CI** because they need:
+- A running authenticated session
+- Test user credentials
+- Database with test data
+
+### Running All Tests in CI
+
+To enable GUI tests in CI, you would need to:
+
+1. **Create test user in database:**
+   ```bash
+   docker exec php php artisan tinker
+   User::create([
+     'name' => 'Test User',
+     'email' => 'test@entoo.cz',
+     'password' => bcrypt('password123')
+   ]);
+   ```
+
+2. **Update workflow to run GUI tests:**
+   ```yaml
+   npx playwright test --reporter=list
+   ```
+
+### Local Testing
+
+All tests (including GUI) work locally:
 
 ```bash
-# In GitHub Actions or similar
 cd tests
 npm ci
 npx playwright install --with-deps chromium
-npm test
+npm test  # Runs all tests
 ```
 
 The configuration automatically adjusts for CI environments:
