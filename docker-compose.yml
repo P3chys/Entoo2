@@ -140,6 +140,42 @@ services:
       retries: 3
       start_period: 40s
 
+  # Laravel Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: entoo_queue
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --timeout=300
+    volumes:
+      - ./webapp:/var/www/html
+      - ./storage:/var/www/html/storage
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - entoo_network
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=entoo
+      - DB_USERNAME=entoo_user
+      - DB_PASSWORD=entoo_password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+      - REDIS_PORT=6379
+      - ELASTICSEARCH_HOST=http://elasticsearch:9200
+      - ELASTICSEARCH_PORT=9200
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Dozzle - Docker Log Viewer
   dozzle:
     image: amir20/dozzle:latest

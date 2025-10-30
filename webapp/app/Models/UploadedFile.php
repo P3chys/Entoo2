@@ -15,11 +15,15 @@ class UploadedFile extends Model
         'category',
         'file_size',
         'file_extension',
+        'processing_status',
+        'processing_error',
+        'processed_at',
     ];
 
     protected $casts = [
         'user_id' => 'integer',
         'file_size' => 'integer',
+        'processed_at' => 'datetime',
     ];
 
     public function user()

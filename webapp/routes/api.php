@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // File management (upload, delete)
     Route::post('/files', [FileController::class, 'store']);
     Route::get('/files/{id}', [FileController::class, 'show']);
+    Route::get('/files/{id}/status', [FileController::class, 'status']);
     Route::get('/files/{id}/download', [FileController::class, 'download']);
     Route::delete('/files/{id}', [FileController::class, 'destroy']);
 

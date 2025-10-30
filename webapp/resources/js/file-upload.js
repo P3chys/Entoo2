@@ -34,6 +34,95 @@ window.closeUploadModal = function() {
 }
 
 /**
+ * Polls for file processing status
+ * @param {number} fileId - The file ID to check
+ */
+async function pollProcessingStatus(fileId) {
+    const progressText = document.getElementById('progressText');
+    const progressFill = document.getElementById('progressFill');
+    const uploadError = document.getElementById('uploadError');
+    const uploadSuccess = document.getElementById('uploadSuccess');
+
+    let attempts = 0;
+    const maxAttempts = 60; // Poll for up to 1 minute (60 * 1 second)
+
+    const poll = async () => {
+        attempts++;
+
+        try {
+            const response = await fetch(`/api/files/${fileId}/status`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.processing_status === 'completed') {
+                // Processing completed successfully
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Processing complete!';
+                uploadSuccess.textContent = 'File uploaded and processed successfully!';
+                uploadSuccess.classList.remove('hidden');
+
+                setTimeout(() => {
+                    closeUploadModal();
+                    // Reload dashboard if the function exists
+                    if (typeof loadDashboard === 'function') {
+                        loadDashboard();
+                    }
+                }, 1500);
+            } else if (data.processing_status === 'failed') {
+                // Processing failed
+                progressFill.style.width = '100%';
+                progressFill.style.backgroundColor = 'var(--color-danger)';
+                uploadError.textContent = `Processing failed: ${data.processing_error || 'Unknown error'}`;
+                uploadError.classList.remove('hidden');
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('uploadProgress').classList.add('hidden');
+            } else if (data.processing_status === 'processing') {
+                // Still processing - update progress
+                const progress = Math.min(50 + (attempts * 2), 90); // Simulate progress 50% -> 90%
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = 'Processing file content...';
+
+                if (attempts < maxAttempts) {
+                    setTimeout(poll, 1000); // Poll again in 1 second
+                } else {
+                    // Timeout
+                    uploadError.textContent = 'Processing is taking longer than expected. Please check back later.';
+                    uploadError.classList.remove('hidden');
+                    document.getElementById('uploadBtn').disabled = false;
+                }
+            } else if (data.processing_status === 'pending') {
+                // Still pending - update progress
+                const progress = Math.min(10 + (attempts * 2), 50); // Simulate progress 10% -> 50%
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = 'Queued for processing...';
+
+                if (attempts < maxAttempts) {
+                    setTimeout(poll, 1000); // Poll again in 1 second
+                } else {
+                    // Timeout
+                    uploadError.textContent = 'Processing is taking longer than expected. Please check back later.';
+                    uploadError.classList.remove('hidden');
+                    document.getElementById('uploadBtn').disabled = false;
+                }
+            }
+        } catch (error) {
+            uploadError.textContent = 'Failed to check processing status';
+            uploadError.classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('uploadProgress').classList.add('hidden');
+        }
+    };
+
+    // Start polling
+    poll();
+}
+
+/**
  * Handles the file upload form submission
  * @param {Event} event - The form submit event
  */
@@ -47,6 +136,8 @@ window.handleFileUpload = async function(event) {
 
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadProgress = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
     const uploadError = document.getElementById('uploadError');
     const uploadSuccess = document.getElementById('uploadSuccess');
 
@@ -54,6 +145,9 @@ window.handleFileUpload = async function(event) {
     uploadProgress.classList.remove('hidden');
     uploadError.classList.add('hidden');
     uploadSuccess.classList.add('hidden');
+    progressFill.style.width = '0%';
+    progressFill.style.backgroundColor = 'var(--color-primary)';
+    progressText.textContent = 'Uploading...';
 
     try {
         const response = await fetch('/api/files', {
@@ -68,24 +162,21 @@ window.handleFileUpload = async function(event) {
         const data = await response.json();
 
         if (response.ok) {
-            uploadSuccess.textContent = 'File uploaded successfully!';
-            uploadSuccess.classList.remove('hidden');
+            // Upload successful, now poll for processing status
+            progressFill.style.width = '10%';
+            progressText.textContent = 'Upload complete, processing...';
 
-            setTimeout(() => {
-                closeUploadModal();
-                // Reload dashboard if the function exists
-                if (typeof loadDashboard === 'function') {
-                    loadDashboard();
-                }
-            }, 1500);
+            // Start polling for processing status
+            pollProcessingStatus(data.file.id);
         } else {
             uploadError.textContent = data.message || 'Upload failed';
             uploadError.classList.remove('hidden');
+            uploadBtn.disabled = false;
+            uploadProgress.classList.add('hidden');
         }
     } catch (error) {
         uploadError.textContent = 'Upload failed';
         uploadError.classList.remove('hidden');
-    } finally {
         uploadBtn.disabled = false;
         uploadProgress.classList.add('hidden');
     }
