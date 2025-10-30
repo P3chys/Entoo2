@@ -153,6 +153,21 @@ async function loadFiles() {
 
     if (loading) loading.classList.remove('hidden');
 
+    // Track currently expanded subjects before rebuilding
+    const expandedSubjects = [];
+    if (treeView) {
+        const expandedIcons = treeView.querySelectorAll('.subject-icon.expanded');
+        expandedIcons.forEach(icon => {
+            const subjectHeader = icon.closest('.subject-header');
+            if (subjectHeader) {
+                const subjectTitle = subjectHeader.querySelector('.subject-title span:nth-child(2)');
+                if (subjectTitle) {
+                    expandedSubjects.push(subjectTitle.textContent);
+                }
+            }
+        });
+    }
+
     try {
         // Load only subjects with file counts - much faster!
         const response = await fetchAPI('/api/subjects?with_counts=true');
@@ -169,6 +184,27 @@ async function loadFiles() {
         } else {
             if (noFiles) noFiles.classList.add('hidden');
             buildTreeStructure(subjects);
+
+            // Re-expand previously expanded subjects after a short delay
+            if (expandedSubjects.length > 0) {
+                setTimeout(() => {
+                    expandedSubjects.forEach(subjectName => {
+                        // Clear cache to force fresh data load
+                        delete subjectFiles[subjectName];
+
+                        // Find and expand the subject
+                        const subjects = document.querySelectorAll('.tree-subject');
+                        subjects.forEach(subjectDiv => {
+                            if (subjectDiv.dataset.subject === subjectName) {
+                                const subjectHeader = subjectDiv.querySelector('.subject-header');
+                                if (subjectHeader) {
+                                    window.toggleSubject(subjectHeader, subjectName);
+                                }
+                            }
+                        });
+                    });
+                }, 100);
+            }
         }
     } catch (error) {
         if (loading) loading.classList.add('hidden');
