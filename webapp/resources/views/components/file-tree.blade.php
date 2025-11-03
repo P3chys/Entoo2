@@ -7,5 +7,5 @@
         <h2>🔍 Search Results (<span id="searchCount">0</span>)</h2>
         <div id="searchResultsGrid" class="search-results-list"></div>
     </div>
-    <div id="treeView"></div>
+    <div id="treeView" class="file-tree subjects-list subject-list"></div>
 </div>
