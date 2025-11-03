@@ -19,6 +19,10 @@
                 </a>
             </div>
             <div class="navbar-menu" id="navbarMenu">
+                <!-- Theme Toggle (always visible) -->
+                <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+                </button>
                 <!-- Guest links (shown when not logged in) -->
                 <div id="guestLinks" style="display: flex; gap: var(--spacing-md); align-items: center;">
                     <a href="/login" class="nav-link">Login</a>
@@ -69,6 +73,45 @@
     </footer>
 
     <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const htmlElement = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+
+            htmlElement.setAttribute('data-theme', savedTheme);
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            const htmlElement = document.documentElement;
+            const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            const themeIcon = document.getElementById('themeIcon');
+
+            // Add rotation animation
+            if (themeIcon) {
+                themeIcon.classList.add('rotate');
+                setTimeout(() => {
+                    themeIcon.classList.remove('rotate');
+                }, 500);
+            }
+
+            // Update theme
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon
+            if (themeIcon) {
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }
+        }
+
+        // Initialize theme before page load completes
+        initTheme();
+
         // Update navbar based on authentication status
         function updateNavbar() {
             const token = localStorage.getItem('token');
