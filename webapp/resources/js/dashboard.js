@@ -100,7 +100,7 @@ window.toggleFavorite = async function(subjectName, event) {
         starElement.title = 'Add to favorites';
         favorites = favorites.filter(f => f.id !== favorite.id);
     } else {
-        starElement.textContent = '⭐';
+        starElement.textContent = '★';
         starElement.classList.add('active');
         starElement.title = 'Remove from favorites';
         favorites.push({ id: -1, subject_name: subjectName });
@@ -128,7 +128,7 @@ window.toggleFavorite = async function(subjectName, event) {
     } catch (error) {
         // Revert star icon on error
         if (isRemoving) {
-            starElement.textContent = '⭐';
+            starElement.textContent = '★';
             starElement.classList.add('active');
             starElement.title = 'Remove from favorites';
             favorites.push(favorite);
@@ -245,7 +245,7 @@ function buildTreeStructure(subjects) {
                         <span class="favorite-star star-icon ${isFav ? 'active' : ''}"
                               onclick="toggleFavorite('${subjectName.replace(/'/g, "\\'")}', event)"
                               title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
-                            ${isFav ? '⭐' : '☆'}
+                            ${isFav ? '★' : '☆'}
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
