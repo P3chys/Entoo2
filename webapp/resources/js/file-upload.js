@@ -16,8 +16,45 @@ window.openUploadModal = function(subject, category) {
     currentUploadSubject = subject;
     currentUploadCategory = category;
 
+    // Show context mode
+    document.getElementById('uploadContext').style.display = 'block';
+    document.getElementById('uploadSelectors').style.display = 'none';
+    document.getElementById('categorySelectGroup').style.display = 'none';
+
     document.getElementById('uploadSubject').textContent = subject;
     document.getElementById('uploadCategory').textContent = category;
+    document.getElementById('uploadModal').classList.remove('hidden');
+    document.getElementById('uploadForm').reset();
+    document.getElementById('uploadError').classList.add('hidden');
+    document.getElementById('uploadSuccess').classList.add('hidden');
+}
+
+/**
+ * Opens the upload modal in global mode with subject/category selectors
+ */
+window.openUploadModalGlobal = function() {
+    currentUploadSubject = '';
+    currentUploadCategory = '';
+
+    // Show selector mode
+    document.getElementById('uploadContext').style.display = 'none';
+    document.getElementById('uploadSelectors').style.display = 'block';
+    document.getElementById('categorySelectGroup').style.display = 'block';
+
+    // Populate subject dropdown from dashboard data
+    const subjectSelect = document.getElementById('subjectSelect');
+    subjectSelect.innerHTML = '<option value="">Select a subject...</option>';
+
+    if (typeof window.allFiles !== 'undefined') {
+        const subjects = Object.keys(window.allFiles).sort();
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject;
+            option.textContent = subject;
+            subjectSelect.appendChild(option);
+        });
+    }
+
     document.getElementById('uploadModal').classList.remove('hidden');
     document.getElementById('uploadForm').reset();
     document.getElementById('uploadError').classList.add('hidden');
@@ -129,10 +166,14 @@ async function pollProcessingStatus(fileId) {
 window.handleFileUpload = async function(event) {
     event.preventDefault();
 
+    // Get subject and category from either context or selectors
+    const subject = currentUploadSubject || document.getElementById('subjectSelect')?.value;
+    const category = currentUploadCategory || document.getElementById('categorySelect')?.value;
+
     const formData = new FormData();
     formData.append('file', document.getElementById('fileInput').files[0]);
-    formData.append('subject_name', currentUploadSubject);
-    formData.append('category', currentUploadCategory);
+    formData.append('subject_name', subject);
+    formData.append('category', category);
 
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadProgress = document.getElementById('uploadProgress');

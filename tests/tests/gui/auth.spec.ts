@@ -36,7 +36,7 @@ test.describe('Authentication GUI Tests', () => {
     expect(authenticated).toBe(true);
 
     // Verify dashboard content is visible
-    await expect(page.locator('.dashboard-container, .file-tree')).toBeVisible();
+    await expect(page.locator('.dashboard-container, .file-tree').first()).toBeVisible();
   });
 
   test('should fail login with invalid credentials', async ({ page }) => {
