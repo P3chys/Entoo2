@@ -1,0 +1,34 @@
+/* ========================================
+   BADGES COMPONENT
+   Badge variants and styles
+   ======================================== */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.badge-primary {
+    background: var(--primary-100);
+    color: var(--primary-700);
+}
+
+.badge-success {
+    background: var(--success-50);
+    color: var(--success-700);
+}
+
+.badge-warning {
+    background: var(--warning-50);
+    color: var(--warning-700);
+}
+
+.badge-neutral {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}

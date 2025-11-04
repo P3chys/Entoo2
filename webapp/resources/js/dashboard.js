@@ -237,7 +237,7 @@ function buildTreeStructure(subjects) {
         const isFav = isFavorite(subjectName);
 
         html += `
-            <div class="tree-subject subject-row" data-subject="${subjectName}">
+            <div class="tree-subject glass-subject subject-row" data-subject="${subjectName}">
                 <div class="subject-header" onclick="toggleSubject(this, '${subjectName.replace(/'/g, "\\'")}')">
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
@@ -422,7 +422,7 @@ function buildFilesHTML(files) {
         const ownerId = file.user ? file.user.id : null;
 
         html += `
-            <div class="file-item">
+            <div class="file-item glass-file-item">
                 <div class="file-item-info">
                     <div class="file-item-icon">${fileIcon}</div>
                     <div class="file-item-details">
@@ -719,7 +719,7 @@ function displaySearchResults(results, query) {
         }
 
         html += `
-            <div class="search-result-item">
+            <div class="search-result-item glass-search-result">
                 <div class="search-result-header">
                     <div class="search-result-info">
                         <div style="display: flex; align-items: center; gap: 1rem;">
