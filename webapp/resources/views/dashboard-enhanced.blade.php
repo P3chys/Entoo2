@@ -16,19 +16,19 @@
 
         <!-- Dashboard Stats -->
         <div class="stats-grid" style="margin-bottom: var(--spacing-xl);">
-            <div class="stat-card">
+            <div class="stat-card glass-stat-card">
                 <h3 id="favoriteCount" class="favorite-count">0</h3>
                 <p>Favorite Subjects</p>
             </div>
-            <div class="stat-card">
+            <div class="stat-card glass-stat-card">
                 <h3 id="totalSubjects">0</h3>
                 <p>Total Subjects</p>
             </div>
-            <div class="stat-card">
+            <div class="stat-card glass-stat-card">
                 <h3 id="totalFiles">0</h3>
                 <p>Total Files</p>
             </div>
-            <div class="stat-card">
+            <div class="stat-card glass-stat-card">
                 <h3 id="totalStorage">0 MB</h3>
                 <p>Storage Used</p>
             </div>

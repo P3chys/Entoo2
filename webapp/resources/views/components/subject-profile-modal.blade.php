@@ -1,16 +1,16 @@
 {{-- Subject Profile Modal Component --}}
-<div id="subjectProfileModal" class="modal hidden">
-    <div class="modal-content" style="max-width: 700px;">
+<div id="subjectProfileModal" class="modal glass-modal-backdrop hidden">
+    <div class="modal-content glass-modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h2>📋 Subject Profile</h2>
             <button onclick="closeSubjectProfileModal()" class="close-btn">&times;</button>
         </div>
 
-        <div id="subjectProfileContent">
+        <div id="subjectProfileContent" style="padding: var(--spacing-xl);">
             <div class="loading">Loading profile...</div>
         </div>
 
-        <div id="subjectProfileForm" class="hidden">
+        <div id="subjectProfileForm" class="hidden" style="padding: var(--spacing-xl);">
             <form onsubmit="saveSubjectProfile(event)">
                 <input type="hidden" id="profileSubjectName">
 
@@ -59,7 +59,7 @@
 
                 <div class="form-group">
                     <label for="profileColor">Color Theme</label>
-                    <input type="color" id="profileColor" name="color" value="#667eea">
+                    <input type="color" id="profileColor" name="color" value="#2563eb" style="height: 48px; cursor: pointer;">
                     <small>Choose a color to identify this subject</small>
                 </div>
 

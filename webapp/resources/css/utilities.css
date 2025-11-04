@@ -1,0 +1,101 @@
+/* ========================================
+   UTILITY CLASSES
+   Helpers, scrollbar, selection, responsive
+   ======================================== */
+
+.loading,
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+}
+
+.loading {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--gray-600);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
+/* ========================================
+   SELECTION
+   ======================================== */
+
+::selection {
+    background: var(--primary-200);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] ::selection {
+    background: var(--primary-700);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .navbar .container {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .search-bar {
+        flex-direction: column;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .search-options {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .modal-content {
+        max-width: 100%;
+        margin: var(--spacing-lg);
+    }
+}
