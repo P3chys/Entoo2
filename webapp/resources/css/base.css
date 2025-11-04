@@ -124,10 +124,18 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
-    /* Vibrant gradient background for glassmorphism visibility */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
+    /* HIGHLY VIBRANT gradient for glassmorphism visibility */
+    background: linear-gradient(135deg,
+        #667eea 0%,    /* Deep indigo */
+        #764ba2 20%,   /* Purple */
+        #f093fb 40%,   /* Hot pink */
+        #4facfe 60%,   /* Sky blue */
+        #00f2fe 80%,   /* Cyan */
+        #43e97b 100%   /* Lime green */
+    );
+    background-size: 300% 300%;
+    background-attachment: fixed;
+    animation: gradientShift 20s ease infinite;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -135,7 +143,19 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Animated gradient for glassmorphism effect */
+/* Dark mode - deep saturated colors */
+[data-theme="dark"] body {
+    background: linear-gradient(135deg,
+        #1a1a2e 0%,    /* Deep navy */
+        #16213e 20%,   /* Dark blue */
+        #0f3460 40%,   /* Ocean blue */
+        #533483 60%,   /* Deep purple */
+        #e94560 80%,   /* Crimson */
+        #f39c12 100%   /* Amber */
+    );
+}
+
+/* Animated gradient shift */
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
