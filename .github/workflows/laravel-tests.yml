@@ -12,6 +12,53 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Ensure Docker containers are running
+      run: |
+        $containerStatus = docker inspect -f '{{.State.Running}}' php 2>$null
+        if ($containerStatus -ne "true") {
+          Write-Host "PHP container not running. Starting containers..."
+          docker-compose up -d
+
+          # Wait for containers to be healthy
+          Write-Host "Waiting for containers to be healthy..."
+          $timeout = 120
+          $elapsed = 0
+          while ($elapsed -lt $timeout) {
+            $postgresHealthy = docker inspect --format='{{.State.Health.Status}}' postgres 2>$null
+            $phpRunning = docker inspect -f '{{.State.Running}}' php 2>$null
+
+            if ($postgresHealthy -eq "healthy" -and $phpRunning -eq "true") {
+              Write-Host "Containers are healthy and ready"
+              break
+            }
+
+            Write-Host "Waiting for containers... ($elapsed seconds elapsed)"
+            Start-Sleep -Seconds 10
+            $elapsed += 10
+          }
+
+          if ($elapsed -ge $timeout) {
+            Write-Error "Containers failed to become healthy within timeout"
+            docker ps -a
+            exit 1
+          }
+        } else {
+          Write-Host "PHP container already running"
+        }
+      shell: pwsh
+
+    - name: Verify container health
+      run: |
+        Write-Host "Container status:"
+        docker ps --filter "name=php" --format "table {{.Names}}\t{{.Status}}\t{{.State}}"
+
+        Write-Host "`nPHP version:"
+        docker exec php php -v
+
+        Write-Host "`nLaravel version:"
+        docker exec php php artisan --version
+      shell: pwsh
+
     - name: Run PHPUnit tests
       run: docker exec php php artisan test
       shell: pwsh
