@@ -14,6 +14,7 @@ class SubjectProfileController extends Controller
     public function index(Request $request)
     {
         $profiles = SubjectProfile::with(['creator:id,name', 'updater:id,name'])
+            ->withCount('uploadedFiles')
             ->orderBy('subject_name')
             ->get();
 
@@ -27,6 +28,7 @@ class SubjectProfileController extends Controller
     {
         $profile = SubjectProfile::where('subject_name', $subjectName)
             ->with(['creator:id,name', 'updater:id,name'])
+            ->withCount('uploadedFiles')
             ->first();
 
         if (!$profile) {
@@ -64,6 +66,7 @@ class SubjectProfileController extends Controller
         return response()->json([
             'message' => 'Subject profile created successfully',
             'profile' => $profile->load(['creator:id,name', 'updater:id,name'])
+                ->loadCount('uploadedFiles')
         ], 201);
     }
 
@@ -92,6 +95,7 @@ class SubjectProfileController extends Controller
         return response()->json([
             'message' => 'Subject profile updated successfully',
             'profile' => $profile->load(['creator:id,name', 'updater:id,name'])
+                ->loadCount('uploadedFiles')
         ]);
     }
 
