@@ -7,7 +7,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -168,12 +171,21 @@ class AuthController extends Controller
             'email' => 'required|email|exists:users,email',
         ]);
 
-        // TODO: Implement email sending with reset token
-        // For now, just return a success message
+        // Send password reset link
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return response()->json([
+                'message' => 'Password reset instructions have been sent to your email address.'
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Password reset instructions have been sent to your email address.'
-        ]);
+            'message' => 'Unable to send password reset link. Please try again.',
+            'errors' => ['email' => [trans($status)]]
+        ], 422);
     }
 
     /**
@@ -187,19 +199,33 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // TODO: Implement token verification
-        // For now, just update the password
+        // Reset the password with token verification
+        $status = Password::reset(
+            $validated,
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
 
-        $user = User::where('email', $validated['email'])->first();
-        $user->password = Hash::make($validated['password']);
-        $user->save();
+                $user->save();
 
-        // Revoke all tokens
-        $user->tokens()->delete();
+                // Revoke all Sanctum tokens for security
+                $user->tokens()->delete();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Password has been reset successfully. Please log in with your new password.'
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Password has been reset successfully. Please log in with your new password.'
-        ]);
+            'message' => 'Password reset failed. The token may be invalid or expired.',
+            'errors' => ['email' => [trans($status)]]
+        ], 422);
     }
 
     /**
