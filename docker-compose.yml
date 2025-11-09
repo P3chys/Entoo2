@@ -182,6 +182,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # MailHog - Email Testing Tool
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: entoo_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - entoo_network
+
   # Dozzle - Docker Log Viewer
   dozzle:
     image: amir20/dozzle:latest

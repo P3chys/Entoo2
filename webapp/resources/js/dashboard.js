@@ -41,8 +41,12 @@ function checkAuth() {
  * Load all dashboard data
  */
 window.loadDashboard = async function() {
+    // Load favorites FIRST before building the tree
+    // This ensures favorites are available when sorting and rendering stars
+    await loadFavorites();
+
+    // Then load files and stats in parallel
     await Promise.all([
-        loadFavorites(),
         loadFiles(),
         loadStats()
     ]);
@@ -410,7 +414,7 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
 
         tabContentHTML += `
             <div class="tab-content" id="tab-${subjectId}-${categoryName}">
-                <button class="upload-btn-category upload-button" id="uploadFileBtn" onclick="openUploadModal('${subjectName.replace(/'/g, "\\'")}', '${categoryName}', event)">
+                <button class="upload-btn-category upload-button" id="uploadFileBtn" onclick="openUploadModal('${subjectName.replace(/'/g, "\\'")}', '${categoryName}')">
                     📤 Upload to ${categoryName}
                 </button>
                 <div class="file-list">
@@ -452,11 +456,11 @@ function buildFilesHTML(files) {
                     </div>
                 </div>
                 <div class="file-item-actions">
-                    <button onclick="downloadFile(${file.id}, '${escapeHtml(file.original_filename)}')" class="btn btn-primary btn-small">
+                    <button class="btn btn-primary btn-small download-btn" data-file-id="${file.id}" data-filename="${escapeHtml(file.original_filename)}">
                         ⬇ Download
                     </button>
                     ${canDelete ? `
-                        <button onclick="deleteFile(${file.id})" class="btn btn-danger btn-small">
+                        <button class="btn btn-danger btn-small delete-btn" data-file-id="${file.id}">
                             🗑️ Delete
                         </button>
                     ` : ''}
@@ -465,7 +469,7 @@ function buildFilesHTML(files) {
         `;
     });
 
-    return sanitizeHTML(html);
+    return html;
 }
 
 /**
@@ -761,11 +765,11 @@ function displaySearchResults(results, query) {
                         <span class="match-score ${scoreClass}" title="Relevance Score: ${score.toFixed(2)}">
                             ${scoreLabel} (${score.toFixed(1)})
                         </span>
-                        <button onclick="downloadFile(${file.file_id}, '${escapeHtml(file.original_filename)}')" class="btn btn-primary btn-small">
+                        <button class="btn btn-primary btn-small download-btn" data-file-id="${file.file_id}" data-filename="${escapeHtml(file.original_filename)}">
                             ⬇ Download
                         </button>
                         ${canDelete ? `
-                            <button onclick="deleteFile(${file.file_id})" class="btn btn-danger btn-small">
+                            <button class="btn btn-danger btn-small delete-btn" data-file-id="${file.file_id}">
                                 🗑️ Delete
                             </button>
                         ` : ''}
@@ -913,6 +917,28 @@ window.fetchAPI = async function(url, options = {}) {
     console.log('Response data:', data);
     return data;
 }
+
+// Event delegation for download and delete buttons
+document.addEventListener('click', (event) => {
+    // Handle download button clicks
+    if (event.target.closest('.download-btn')) {
+        const button = event.target.closest('.download-btn');
+        const fileId = button.dataset.fileId;
+        const filename = button.dataset.filename;
+        if (fileId && filename) {
+            window.downloadFile(parseInt(fileId), filename);
+        }
+    }
+
+    // Handle delete button clicks
+    if (event.target.closest('.delete-btn')) {
+        const button = event.target.closest('.delete-btn');
+        const fileId = button.dataset.fileId;
+        if (fileId) {
+            window.deleteFile(parseInt(fileId));
+        }
+    }
+});
 
 // Initialize dashboard on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
