@@ -167,3 +167,96 @@ export async function cleanupTestData(
     }
   }
 }
+
+/**
+ * Create a test subject with a file upload
+ */
+export async function createSubject(
+  page: Page,
+  subjectName: string,
+  category: string
+): Promise<void> {
+  // Subject creation happens implicitly when uploading a file
+  // So we'll just create a minimal file for the subject
+  await createFile(page, subjectName, category, 'test.pdf');
+}
+
+/**
+ * Create a test file for a subject
+ */
+export async function createFile(
+  page: Page,
+  subjectName: string,
+  category: string,
+  fileName: string
+): Promise<void> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    throw new Error('No auth token available');
+  }
+
+  // Create a minimal PDF file buffer
+  const pdfContent = Buffer.from(
+    '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 44 >>\nstream\nBT\n/F1 12 Tf\n100 700 Td\n(Test PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000214 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n306\n%%EOF'
+  );
+
+  const formData = new FormData();
+  const blob = new Blob([pdfContent], { type: 'application/pdf' });
+  formData.append('file', blob, fileName);
+  formData.append('subject_name', subjectName);
+  formData.append('category', category);
+
+  await fetch('http://localhost:8000/api/files', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+}
+
+/**
+ * Delete all test subjects matching a prefix
+ */
+export async function deleteAllTestSubjects(
+  page: Page,
+  prefix: string
+): Promise<void> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    return; // No auth, nothing to delete
+  }
+
+  try {
+    // Get all files
+    const response = await fetch('http://localhost:8000/api/files', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json();
+    const files = data.data || [];
+
+    // Delete files that match the prefix
+    for (const file of files) {
+      if (file.subject_name && file.subject_name.startsWith(prefix)) {
+        await fetch(`http://localhost:8000/api/files/${file.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    // Ignore errors during cleanup
+    console.warn('Error during test cleanup:', error);
+  }
+}
