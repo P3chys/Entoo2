@@ -28,7 +28,12 @@ Result: Database is empty but Elasticsearch and storage have orphaned data.
 
 ### Solution
 
-**Step 1: Restore database from Elasticsearch**
+**Quick Restore (Windows)**:
+```bash
+restore-database.bat
+```
+
+**Manual Restore (All Platforms)**:
 ```bash
 docker exec php php artisan sync:db-from-elasticsearch --user=28
 ```
