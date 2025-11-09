@@ -27,9 +27,14 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Created user: Adam Pech (ID: 28, Email: pechysadam@gmail.com)');
         $this->command->warn('Default password: "password" - Please change this in production!');
         $this->command->newLine();
-        $this->command->warn('⚠️  DATABASE IS EMPTY! Running auto-restore...');
 
-        // Automatically restore from Elasticsearch
-        \Artisan::call('db:auto-restore', [], $this->command->getOutput());
+        // Only auto-restore if database is empty (no files)
+        $fileCount = \App\Models\UploadedFile::count();
+        if ($fileCount == 0) {
+            $this->command->warn('⚠️  DATABASE IS EMPTY! Running auto-restore...');
+            \Artisan::call('db:auto-restore', [], $this->command->getOutput());
+        } else {
+            $this->command->info("Database already has {$fileCount} files. Skipping auto-restore.");
+        }
     }
 }
