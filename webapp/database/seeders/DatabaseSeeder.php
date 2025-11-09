@@ -26,6 +26,10 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Created user: Adam Pech (ID: 28, Email: pechysadam@gmail.com)');
         $this->command->warn('Default password: "password" - Please change this in production!');
-        $this->command->warn('Remember to run: php artisan sync:db-from-elasticsearch --user=28');
+        $this->command->newLine();
+        $this->command->warn('⚠️  DATABASE IS EMPTY! Running auto-restore...');
+
+        // Automatically restore from Elasticsearch
+        \Artisan::call('db:auto-restore', [], $this->command->getOutput());
     }
 }
