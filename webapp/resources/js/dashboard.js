@@ -22,7 +22,7 @@ window.dashboardRouteParams = window.dashboardRouteParams || {};
 function sanitizeHTML(html) {
     return DOMPurify.sanitize(html, {
         ALLOWED_TAGS: ['div', 'span', 'p', 'strong', 'button', 'a', 'h3', 'h4'],
-        ALLOWED_ATTR: ['class', 'style', 'onclick', 'title', 'href', 'id', 'data-subject']
+        ALLOWED_ATTR: ['class', 'style', 'onclick', 'title', 'href', 'id', 'data-subject', 'data-file-id', 'data-filename']
     });
 }
 
