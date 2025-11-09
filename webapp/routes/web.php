@@ -16,6 +16,15 @@ Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
 
+// Password reset pages
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request');
+
+Route::get('/reset-password/{token}', function ($token) {
+    return view('auth.reset-password', ['token' => $token]);
+})->name('password.reset');
+
 // Dashboard and app pages
 Route::get('/dashboard', function () {
     return view('dashboard-enhanced');

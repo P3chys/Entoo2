@@ -67,19 +67,23 @@ class PasswordResetTest extends TestCase
      */
     public function test_forgot_password_rate_limiting(): void
     {
-        $user = User::factory()->create();
+        Notification::fake();
 
-        // First 3 requests should succeed
+        // Note: Laravel's Password facade has built-in throttling per email
+        // We test the route-level throttle by using different users
+        $users = User::factory()->count(4)->create();
+
+        // First 3 requests with different emails should succeed
         for ($i = 0; $i < 3; $i++) {
             $response = $this->postJson('/api/forgot-password', [
-                'email' => $user->email,
+                'email' => $users[$i]->email,
             ]);
             $response->assertStatus(200);
         }
 
-        // 4th request should be rate limited
+        // 4th request should be rate limited by route throttle (3 per 10 minutes)
         $response = $this->postJson('/api/forgot-password', [
-            'email' => $user->email,
+            'email' => $users[3]->email,
         ]);
 
         $response->assertStatus(429); // Too Many Requests

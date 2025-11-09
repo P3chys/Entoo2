@@ -47,7 +47,7 @@ class FileAuthorizationTest extends TestCase
     {
         $file = UploadedFile::factory()->create();
 
-        $response = $this->get("/api/files/{$file->id}/download");
+        $response = $this->getJson("/api/files/{$file->id}/download");
 
         $response->assertStatus(401);
     }
@@ -156,7 +156,7 @@ class FileAuthorizationTest extends TestCase
     {
         $file = UploadedFile::factory()->create();
 
-        $response = $this->delete("/api/files/{$file->id}");
+        $response = $this->deleteJson("/api/files/{$file->id}");
 
         $response->assertStatus(401);
 
