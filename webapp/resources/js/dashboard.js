@@ -436,6 +436,8 @@ function buildFilesHTML(files) {
     const currentUserId = currentUser.id;
 
     files.forEach(file => {
+        // Handle both 'id' (from DB) and 'file_id' (from Elasticsearch)
+        const fileId = file.id || file.file_id;
         const fileIcon = getFileIcon(file.file_extension);
         const fileSize = formatBytes(file.file_size);
         const date = new Date(file.created_at).toLocaleDateString();
@@ -456,11 +458,11 @@ function buildFilesHTML(files) {
                     </div>
                 </div>
                 <div class="file-item-actions">
-                    <button class="btn btn-primary btn-small download-btn" data-file-id="${file.id}" data-filename="${escapeHtml(file.original_filename)}">
+                    <button class="btn btn-primary btn-small download-btn" data-file-id="${fileId}" data-filename="${escapeHtml(file.original_filename)}">
                         ⬇ Download
                     </button>
                     ${canDelete ? `
-                        <button class="btn btn-danger btn-small delete-btn" data-file-id="${file.id}">
+                        <button class="btn btn-danger btn-small delete-btn" data-file-id="${fileId}">
                             🗑️ Delete
                         </button>
                     ` : ''}
