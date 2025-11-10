@@ -32,8 +32,11 @@ webapp/public/build/
 webapp/public/hot
 
 # Old static assets (if any remain from pre-Vite setup)
-webapp/public/css/
-webapp/public/js/
+# Ignore custom CSS/JS but allow Filament assets
+webapp/public/css/*
+!webapp/public/css/filament/
+webapp/public/js/*
+!webapp/public/js/filament/
 webapp/public/mix-manifest.json
 
 # Test coverage
