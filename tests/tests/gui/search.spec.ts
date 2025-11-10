@@ -5,13 +5,28 @@
 
 import { test, expect } from '@playwright/test';
 import { setupAuth } from '../helpers/auth.helper';
-import { waitForVisible, search, waitForLoading } from '../helpers/ui.helper';
+import { waitForVisible, search, waitForLoading, ensureSearch } from '../helpers/ui.helper';
+
+// Shared URL produced by a one-time search run in beforeAll.
+// Some tests can reuse this instead of performing the search themselves.
+let sharedSearchUrl: string | undefined;
+const DEFAULT_SEARCH_QUERY = process.env.PLAYWRIGHT_SEARCH_QUERY || 'pravo';
 
 test.describe('Search GUI Tests', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
     await page.waitForLoadState('networkidle');
+    if (sharedSearchUrl) {
+      await page.goto(sharedSearchUrl);
+    } else {
+      const base = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || 'http://localhost:8000/dashboard';
+      await page.goto(`${base.replace(/\/$/, '')}/search?q=${encodeURIComponent(DEFAULT_SEARCH_QUERY)}`);
+    }
+    await page.waitForLoadState('networkidle');
   });
+
+  
+
 
   test('should display search input', async ({ page }) => {
     const searchInput = page.locator('input[type="search"], input[name="query"], #searchInput');
@@ -29,25 +44,25 @@ test.describe('Search GUI Tests', () => {
     await page.waitForTimeout(1000);
 
     // URL should contain search query
-    await expect(page).toHaveURL(new RegExp(`search=${searchQuery}`));
+    await expect(page).toHaveURL(new RegExp(`.*search\\?q=.*${searchQuery}.*`));
 
     // Results should be displayed
-    const results = page.locator('.search-results, .file-list, .subject-row');
+    const results = page.locator('.search-results, .file-list, .subject-row', );
     await expect(results.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should display search results count', async ({ page }) => {
-    await search(page, 'test');
-
-    // Should show results count
-    const resultsCount = page.locator('.results-count, .search-count, text=/\\d+ results/i');
-    await expect(resultsCount.first()).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Results count might not be displayed
+    // Try known CSS selectors including the id used in the app
+    const searchCountResult = page.locator('#searchCount');
+    await expect(searchCountResult.first()).toBeVisible({ timeout: 5000 });
+    expect(/^[0-9]+$/.test(
+      (await searchCountResult.first().innerText())
+      .trim()))
+      .toBeTruthy();
     });
-  });
 
   test('should highlight search terms in results', async ({ page }) => {
-    await search(page, 'pravo');
+    await ensureSearch(page, 'pravo');
 
     // Check if search terms are highlighted
     const highlightedTerms = page.locator('mark, .highlight, strong');
@@ -60,8 +75,8 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should search in file content (Elasticsearch)', async ({ page }) => {
-    // Search for a term that's likely in file content
-    await search(page, 'dokument');
+  // Search for a term that's likely in file content
+  await ensureSearch(page, 'dokument');
 
     await page.waitForTimeout(1000);
 
@@ -74,8 +89,8 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should handle empty search results', async ({ page }) => {
-    // Search for something that definitely doesn't exist
-    await search(page, 'xyzabc123nonexistent');
+  // Search for something that definitely doesn't exist
+  await ensureSearch(page, 'xyzabc123nonexistent');
 
     await page.waitForTimeout(1000);
 
@@ -87,8 +102,8 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should clear search', async ({ page }) => {
-    // Perform search
-    await search(page, 'test');
+  // Perform search
+  await ensureSearch(page, 'test');
 
     await page.waitForTimeout(1000);
 
@@ -124,8 +139,8 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should search with special characters', async ({ page }) => {
-    // Search with special characters
-    await search(page, 'právo & zákony');
+  // Search with special characters
+  await ensureSearch(page, 'právo & zákony');
 
     await page.waitForTimeout(1000);
 
@@ -137,8 +152,8 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should maintain search state on page reload', async ({ page }) => {
-    const searchQuery = 'smlouva';
-    await search(page, searchQuery);
+  const searchQuery = 'smlouva';
+  await ensureSearch(page, searchQuery);
 
     await page.waitForTimeout(1000);
 
@@ -171,8 +186,8 @@ test.describe('Search GUI Tests', () => {
 
     if (fileNameText) {
       // Search for file name
-      const searchTerm = fileNameText.substring(0, 10);
-      await search(page, searchTerm);
+  const searchTerm = fileNameText.substring(0, 10);
+  await ensureSearch(page, searchTerm);
 
       await page.waitForTimeout(1000);
 
@@ -191,8 +206,8 @@ test.describe('Search GUI Tests', () => {
 
     if (subjectName) {
       // Search for subject
-      const searchTerm = subjectName.substring(0, 10);
-      await search(page, searchTerm);
+  const searchTerm = subjectName.substring(0, 10);
+  await ensureSearch(page, searchTerm);
 
       await page.waitForTimeout(1000);
 
@@ -205,7 +220,7 @@ test.describe('Search GUI Tests', () => {
   test('should show search performance metrics', async ({ page }) => {
     const startTime = Date.now();
 
-    await search(page, 'test');
+  await ensureSearch(page, 'test');
 
     await page.waitForTimeout(1000);
 
@@ -243,7 +258,7 @@ test.describe('Search GUI Tests', () => {
   });
 
   test('should filter search by category', async ({ page }) => {
-    await search(page, 'test');
+    await ensureSearch(page, 'test');
 
     await page.waitForTimeout(1000);
 

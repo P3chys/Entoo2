@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   // Limit workers to prevent server overload - use 2 workers max for better stability
-  workers: process.env.CI ? 1 : 2,
+  workers: process.env.CI ? 1 : 1,
   reporter: [
     ['html'],
     ['list'],
@@ -22,7 +22,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:8000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     video: 'retain-on-failure',
 
     // Headless mode configuration

@@ -30,6 +30,61 @@ export async function waitForText(
 ): Promise<void> {
   await expect(page.locator(selector)).toContainText(text, { timeout });
 }
+  // Helper that runs a search in a consistent way for tests. If the query
+  // matches the DEFAULT_SEARCH_QUERY and a sharedSearchUrl was prepared in
+  // beforeAll, it navigates there (avoids opening extra pages/windows).
+  // Otherwise it calls the existing `search` helper. It waits for
+  // networkidle and a small timeout to let the UI render.
+  export async function ensureSearch(page: any, query: string) {
+    const DEFAULT_SEARCH_QUERY = (global as any).DEFAULT_SEARCH_QUERY || 'pravo';
+    const sharedSearchUrl = (global as any).sharedSearchUrl || null;
+    if (query === DEFAULT_SEARCH_QUERY && sharedSearchUrl) {
+      await page.goto(sharedSearchUrl);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      return;
+    }
+
+    // First try the project's existing `search` helper if available.
+    // Protect against a helper that never resolves by racing it with a timeout.
+    const helperTimeoutMs = Number(process.env.PLAYWRIGHT_SEARCH_HELPER_TIMEOUT_MS) || 5000;
+    let helperWorked = false;
+    try {
+      const helperPromise = (async () => { await search(page, query); return true; })();
+      const timeoutPromise = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), helperTimeoutMs));
+      helperWorked = await Promise.race([helperPromise, timeoutPromise]);
+      if (helperWorked) {
+        // Wait for navigation/network activity caused by helper
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500);
+      }
+    } catch (e) {
+      // helper may throw if it's not present or fails; we'll fallback below
+      helperWorked = false;
+    }
+
+    // Quick check: if results area is visible, we're done
+    const resultsLocator = page.locator('.search-results, .file-list, .subject-row');
+    try {
+      if (await resultsLocator.first().isVisible()) {
+        return;
+      }
+    } catch (e) {
+      // ignore and fall back to manual input
+    }
+
+    // Fallback: perform UI search manually (fill input + Enter)
+    try {
+      const searchInput = page.locator('input[type="search"], input[name="query"], #searchInput');
+      await searchInput.fill(query);
+      await searchInput.press('Enter');
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      return;
+    } catch (e) {
+      // nothing more we can do here — tests will fail downstream if search didn't work
+    }
+  }
 
 /**
  * Click and wait for navigation

@@ -12,9 +12,9 @@ export interface TestUser {
 }
 
 export const testUser: TestUser = {
-  email: 'test@entoo.cz',
-  password: 'password123',
-  name: 'Test User'
+  email: 'xzy@entoo.cz',
+  password: 'password12*',
+  name: 'Test UserX'
 };
 
 /**
