@@ -1,0 +1,66 @@
+/* ========================================
+   BUTTONS COMPONENT
+   Button variants and styles
+   ======================================== */
+
+.btn {
+    padding: 0.625rem var(--spacing-xl);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    text-decoration: none;
+    justify-content: center;
+}
+
+.btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-500);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background: var(--primary-600);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-700);
+}
+
+.btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+.btn-danger {
+    background: var(--danger-600);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: var(--danger-700);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-small {
+    padding: 0.5rem var(--spacing-lg);
+    font-size: 0.875rem;
+}

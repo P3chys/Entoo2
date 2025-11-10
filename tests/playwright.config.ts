@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -6,7 +7,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   // Limit workers to prevent server overload - use 2 workers max for better stability
-  workers: process.env.CI ? 1 : 2,
+  workers: process.env.CI ? 1 : 1,
   reporter: [
     ['html'],
     ['list'],
@@ -26,7 +27,7 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     // Headless mode configuration
-    headless: true, // Always run in headless mode by default
+    headless: false, // Always run in headless mode by default
 
     // Browser context options
     viewport: { width: 1280, height: 720 },
@@ -39,7 +40,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        headless: true,
+        headless: false,
       },
     },
 
