@@ -305,8 +305,8 @@ class FileController extends Controller
     }
 
     /**
-     * Clear all file-related caches using tags
-     * Much more efficient than manually forgetting individual keys
+     * Clear all file-related caches
+     * Clears both tagged caches and simple keys for optimal performance
      */
     private function clearFileRelatedCaches()
     {
@@ -317,7 +317,9 @@ class FileController extends Controller
         // Clear subjects cache (affected by file uploads/deletes)
         Cache::tags(['subjects'])->flush();
 
-        // Clear stats cache (using simple key for better performance)
+        // Clear simple cache keys for better Octane performance
         Cache::forget('system:stats:comprehensive');
+        Cache::forget('subjects:with_counts');
+        Cache::forget('subjects:list');
     }
 }

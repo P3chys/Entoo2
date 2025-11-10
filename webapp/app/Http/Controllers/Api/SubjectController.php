@@ -19,7 +19,7 @@ class SubjectController extends Controller
     }
     /**
      * Get all unique subjects (visible to all authenticated users)
-     * Cached for 5 minutes
+     * Cached for 30 minutes for better performance
      * Uses Elasticsearch for much faster performance
      */
     public function index(Request $request)
@@ -28,14 +28,16 @@ class SubjectController extends Controller
 
         if ($withCounts) {
             // Use Elasticsearch - MUCH faster than PostgreSQL!
-            $subjects = Cache::tags(['subjects', 'files'])->remember('subjects:all:with_counts:es', 300, function () {
+            // Use simple cache key without tags for better Octane performance
+            $subjects = Cache::remember('subjects:with_counts', 1800, function () {
                 return $this->elasticsearchService->getSubjectsWithCounts();
             });
 
-            return response()->json(['subjects' => $subjects]);
+            return response()->json(['subjects' => $subjects])
+                ->header('Cache-Control', 'public, max-age=300');
         }
 
-        $subjects = Cache::tags(['subjects'])->remember('subjects:all', 300, function () {
+        $subjects = Cache::remember('subjects:list', 1800, function () {
             return UploadedFile::select('subject_name')
                 ->groupBy('subject_name')
                 ->orderBy('subject_name')
@@ -43,7 +45,8 @@ class SubjectController extends Controller
                 ->pluck('subject_name');
         });
 
-        return response()->json(['subjects' => $subjects]);
+        return response()->json(['subjects' => $subjects])
+            ->header('Cache-Control', 'public, max-age=300');
     }
 
     /**
