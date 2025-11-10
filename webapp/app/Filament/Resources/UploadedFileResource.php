@@ -78,6 +78,7 @@ class UploadedFileResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn($query) => $query->with('user'))
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable(),
@@ -163,7 +164,9 @@ class UploadedFileResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
+            ->paginated([10, 25, 50, 100]);
     }
 
     public static function getRelations(): array

@@ -57,6 +57,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn($query) => $query->withCount('uploadedFiles'))
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
