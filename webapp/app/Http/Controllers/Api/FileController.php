@@ -165,8 +165,10 @@ class FileController extends Controller
      */
     public function show(Request $request, int $id)
     {
-        $file = UploadedFile::where('user_id', $request->user()->id)
-            ->findOrFail($id);
+        $file = UploadedFile::findOrFail($id);
+
+        // Authorize the view action
+        $this->authorize('view', $file);
 
         return response()->json(['file' => $file]);
     }
@@ -176,8 +178,10 @@ class FileController extends Controller
      */
     public function status(Request $request, int $id)
     {
-        $file = UploadedFile::where('user_id', $request->user()->id)
-            ->findOrFail($id);
+        $file = UploadedFile::findOrFail($id);
+
+        // Authorize the view action
+        $this->authorize('view', $file);
 
         return response()->json([
             'id' => $file->id,
@@ -189,10 +193,15 @@ class FileController extends Controller
 
     /**
      * Download file
+     *
+     * Authorization: All authenticated users can download files (document sharing platform)
      */
     public function download(Request $request, int $id)
     {
         $file = UploadedFile::findOrFail($id);
+
+        // Authorize the download action
+        $this->authorize('download', $file);
 
         // Check if file exists in storage (uploaded files)
         if (Storage::exists($file->filepath)) {
@@ -216,12 +225,8 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Only the file owner can delete
-        if ($file->user_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'You do not have permission to delete this file'
-            ], 403);
-        }
+        // Authorize the delete action
+        $this->authorize('delete', $file);
 
         try {
             // Delete from storage
