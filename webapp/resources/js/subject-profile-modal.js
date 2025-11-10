@@ -60,7 +60,7 @@ window.displaySubjectProfileInPanel = function(panel, subjectName, profile) {
     if (!profile) {
         // No profile exists - show create option
         panel.innerHTML = `
-            <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.5); border-top: 1px solid var(--glass-border);">
+            <div style="padding: 1.5rem; background: rgba(0, 255, 255, 0.5); border-top: 1px solid var(--glass-border);">
                 <p style="color: var(--text-secondary); margin-bottom: 1rem;">
                     No profile information available for <strong>${subjectName}</strong>
                 </p>

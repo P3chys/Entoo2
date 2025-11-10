@@ -40,11 +40,9 @@ class CacheSanctumToken
                 return null;
             }
 
-            // Update last_used_at timestamp asynchronously (non-blocking)
-            // This prevents the save() from blocking the response
-            dispatch(function () use ($token) {
-                $token->forceFill(['last_used_at' => now()])->save();
-            })->afterResponse();
+            // Note: We skip updating last_used_at when using cached tokens
+            // This is an acceptable tradeoff for massive performance gains
+            // The timestamp will still update when cache expires (30 min)
 
             // Cache only the necessary data (NOT the full user object)
             return [
