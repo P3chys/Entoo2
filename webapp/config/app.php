@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rate Limit Bypass Token
+    |--------------------------------------------------------------------------
+    |
+    | This token can be used to bypass rate limiting for automated tests.
+    | Set the X-Bypass-Rate-Limit header to this value in test requests.
+    | Only effective in local/testing environments.
+    |
+    */
+
+    'rate_limit_bypass_token' => env('RATE_LIMIT_BYPASS_TOKEN', 'test-bypass-token-2024'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

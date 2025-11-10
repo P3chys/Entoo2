@@ -6,6 +6,17 @@
 import { Page, APIRequestContext } from '@playwright/test';
 
 /**
+ * Rate limit bypass token for tests
+ * This matches the RATE_LIMIT_BYPASS_TOKEN in .env
+ */
+const RATE_LIMIT_BYPASS_TOKEN = 'test-bypass-token-2024';
+
+/**
+ * Export the bypass token for use in other test files
+ */
+export { RATE_LIMIT_BYPASS_TOKEN };
+
+/**
  * Get authentication token from page
  */
 export async function getAuthToken(page: Page): Promise<string | null> {
@@ -13,7 +24,17 @@ export async function getAuthToken(page: Page): Promise<string | null> {
 }
 
 /**
- * Make authenticated API request
+ * Get headers for API requests with rate limit bypass
+ */
+export function getBypassHeaders(additionalHeaders: Record<string, string> = {}): Record<string, string> {
+  return {
+    'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    ...additionalHeaders,
+  };
+}
+
+/**
+ * Make authenticated API request with rate limit bypass
  */
 export async function apiRequest(
   request: APIRequestContext,
@@ -28,6 +49,7 @@ export async function apiRequest(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
       ...options.headers,
     },
   });
@@ -63,6 +85,7 @@ export async function uploadTestFile(
   const response = await request.post('http://localhost:8000/api/files', {
     headers: {
       'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
     },
     multipart: formData,
   });
@@ -83,6 +106,7 @@ export async function deleteFile(
   await request.delete(`http://localhost:8000/api/files/${fileId}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
     },
   });
 }
@@ -211,6 +235,7 @@ export async function createFile(
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
     },
     body: formData,
   });
@@ -234,6 +259,7 @@ export async function deleteAllTestSubjects(
     const response = await fetch('http://localhost:8000/api/files', {
       headers: {
         'Authorization': `Bearer ${token}`,
+        'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
       },
     });
 
@@ -251,6 +277,7 @@ export async function deleteAllTestSubjects(
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
           },
         });
       }
