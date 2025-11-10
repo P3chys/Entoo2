@@ -4,9 +4,9 @@
 
 @section('content')
 <div class="auth-container">
-    <div class="auth-card">
-        <div style="text-align: center; margin-bottom: var(--spacing-xl);">
-            <div style="width: 64px; height: 64px; background: var(--primary-gradient); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto var(--spacing-lg); box-shadow: var(--shadow-lg);">
+    <div class="auth-card glass-auth-card">
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+            <div style="width: 64px; height: 64px; background: var(--primary-600); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto var(--spacing-lg); color: white;">
                 📚
             </div>
             <h2>Welcome Back</h2>
@@ -24,7 +24,7 @@
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required placeholder="Enter your password">
-                <small><a href="#" onclick="showForgotPassword(event)" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Forgot password?</a></small>
+                <small><a href="#" onclick="showForgotPassword(event)">Forgot password?</a></small>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
@@ -39,8 +39,8 @@
 </div>
 
 <!-- Forgot Password Modal -->
-<div id="forgotPasswordModal" class="modal hidden">
-    <div class="modal-content">
+<div id="forgotPasswordModal" class="modal glass-modal-backdrop hidden">
+    <div class="modal-content glass-modal-content">
         <div class="modal-header">
             <h2>Reset Password</h2>
             <button onclick="closeForgotPassword()" class="close-btn">&times;</button>

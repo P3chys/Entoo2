@@ -68,7 +68,7 @@ test.describe('Dashboard GUI Tests', () => {
     }
   });
 
-  test('should expand subject to show files', async ({ page }) => {
+  test('should expand and collapse subject to show files', async ({ page }) => {
     await waitForVisible(page, '.subject-row');
 
     const firstSubject = page.locator('.subject-row').first();
@@ -82,7 +82,7 @@ test.describe('Dashboard GUI Tests', () => {
     const fileCount = await getFileCount(page, subjectName);
 
     // Expand subject
-    await firstSubject.click();
+    await page.getByText('▶').first().click();
 
     // Wait for expansion
     await page.waitForTimeout(500);
@@ -92,25 +92,13 @@ test.describe('Dashboard GUI Tests', () => {
       const filesContainer = page.locator('.files-container, .file-list, .category-section');
       await expect(filesContainer.first()).toBeVisible({ timeout: 3000 });
     }
-  });
 
-  test('should collapse expanded subject', async ({ page }) => {
     await waitForVisible(page, '.subject-row');
-
-    const firstSubject = page.locator('.subject-row').first();
-    const subjectName = await firstSubject.locator('.subject-name, .name').textContent();
-
-    if (!subjectName) {
-      throw new Error('No subject name found');
-    }
-
-    // Expand
-    await expandSubject(page, subjectName);
 
     await page.waitForTimeout(500);
 
     // Collapse
-    await firstSubject.click();
+    await page.getByText('▶').first().click();
 
     await page.waitForTimeout(500);
 
@@ -209,7 +197,8 @@ test.describe('Dashboard GUI Tests', () => {
       const subjectName = await subject.locator('.subject-name, .name').textContent();
 
       if (subjectName) {
-        const fileCount = await getFileCount(page, subjectName);
+        // Pass the subject element directly instead of re-querying by name
+        const fileCount = await getFileCount(page, subject);
 
         if (fileCount === 0) {
           await subject.click();

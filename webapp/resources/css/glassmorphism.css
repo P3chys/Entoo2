@@ -1,0 +1,232 @@
+/* ========================================
+   GLASSMORPHISM DESIGN SYSTEM
+   Modern glass-like effects with backdrop blur
+   ======================================== */
+
+/* Glass Card - Standard glassmorphism effect */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(1.5);
+    -webkit-backdrop-filter: blur(15px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-base);
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+[data-theme="dark"] .glass-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Navbar - Sticky glass navigation */
+.glass-navbar {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="dark"] .glass-navbar {
+    background: rgba(17, 24, 39, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Glass Modal - Enhanced modal with heavy blur */
+.glass-modal-backdrop {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.glass-modal-content {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="dark"] .glass-modal-content {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Glass Search Section */
+.glass-search {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="dark"] .glass-search {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Glass Input - Glass-style form inputs */
+.glass-input {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    transition: all var(--transition-base);
+}
+
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: var(--primary-500) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+                0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.glass-input::placeholder {
+    color: rgba(107, 114, 128, 0.6);
+}
+
+[data-theme="dark"] .glass-input {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="dark"] .glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Glass Stat Card - Dashboard statistics */
+.glass-stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(1.5);
+    -webkit-backdrop-filter: blur(15px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all var(--transition-base);
+}
+
+.glass-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .glass-stat-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Subject Card - File tree subjects */
+.glass-subject {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .glass-subject {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass File Item - Individual file cards */
+.glass-file-item {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all var(--transition-base);
+}
+
+.glass-file-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="dark"] .glass-file-item {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .glass-file-item:hover {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/* Glass Search Result - Search result cards */
+.glass-search-result {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all var(--transition-base);
+}
+
+.glass-search-result:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .glass-search-result {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Category Section - File categories */
+.glass-category {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .glass-category {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Glass Auth Card - Login/Register cards */
+.glass-auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .glass-auth-card {
+    background: rgba(31, 41, 55, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Accessibility: Reduce transparency for users who prefer it */
+@media (prefers-reduced-transparency: reduce) {
+    .glass-card,
+    .glass-navbar,
+    .glass-modal-content,
+    .glass-search,
+    .glass-input,
+    .glass-stat-card,
+    .glass-subject,
+    .glass-file-item,
+    .glass-search-result,
+    .glass-category,
+    .glass-auth-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: var(--bg-primary) !important;
+        border: 2px solid var(--border-primary) !important;
+    }
+}
+
+/* Performance: Reduced blur on mobile */
+@media (max-width: 768px) {
+    .glass-card,
+    .glass-navbar,
+    .glass-search,
+    .glass-stat-card,
+    .glass-subject,
+    .glass-file-item,
+    .glass-search-result {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+}
