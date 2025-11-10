@@ -221,7 +221,9 @@ class MigrateRemainingFiles extends Command
                     'subject_name' => $subjectName,
                     'category' => $category,
                     'file_size' => filesize($filepath),
-                    'file_extension' => $extension
+                    'file_extension' => $extension,
+                    'processing_status' => 'completed',
+                    'processed_at' => now(),
                 ]);
 
                 DB::commit();
