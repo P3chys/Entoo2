@@ -11,20 +11,22 @@ class FavoriteController extends Controller
 {
     /**
      * Get all favorite subjects for user
-     * Cached for 5 minutes per user
+     * Cached for 30 minutes per user for better performance
      */
     public function index(Request $request)
     {
         $userId = $request->user()->id;
         $cacheKey = "favorites:user:{$userId}";
 
-        $favorites = Cache::remember($cacheKey, 300, function () use ($userId) {
+        $favorites = Cache::remember($cacheKey, 1800, function () use ($userId) {
             return FavoriteSubject::where('user_id', $userId)
                 ->orderBy('subject_name')
                 ->get();
         });
 
-        return response()->json(['favorites' => $favorites]);
+        // Add HTTP cache headers for client-side caching (5 minutes)
+        return response()->json(['favorites' => $favorites])
+            ->header('Cache-Control', 'private, max-age=300');
     }
 
     /**

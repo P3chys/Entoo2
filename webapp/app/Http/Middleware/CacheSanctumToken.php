@@ -31,7 +31,7 @@ class CacheSanctumToken
         // Create a cache key for this token
         $cacheKey = 'sanctum:token:' . hash('sha256', $bearerToken);
 
-        // Try to get the tokenable (user) from cache
+        // Try to get the token data from cache
         $cachedData = Cache::remember($cacheKey, 1800, function () use ($bearerToken) {
             // Token not in cache, look it up in database
             $token = PersonalAccessToken::findToken($bearerToken);
@@ -40,15 +40,17 @@ class CacheSanctumToken
                 return null;
             }
 
-            // Update last_used_at timestamp (don't cache this update)
-            $token->forceFill(['last_used_at' => now()])->save();
+            // Update last_used_at timestamp asynchronously (non-blocking)
+            // This prevents the save() from blocking the response
+            dispatch(function () use ($token) {
+                $token->forceFill(['last_used_at' => now()])->save();
+            })->afterResponse();
 
-            // Cache the tokenable (user) data
+            // Cache only the necessary data (NOT the full user object)
             return [
                 'tokenable_type' => $token->tokenable_type,
                 'tokenable_id' => $token->tokenable_id,
-                'tokenable' => $token->tokenable, // Eager load the user
-                'expires_at' => $token->expires_at,
+                'expires_at' => $token->expires_at?->toDateTimeString(),
             ];
         });
 
@@ -59,18 +61,24 @@ class CacheSanctumToken
         }
 
         // Check if token is expired
-        if ($cachedData['expires_at'] && now()->greaterThan($cachedData['expires_at'])) {
+        if ($cachedData['expires_at'] && now()->greaterThan(\Carbon\Carbon::parse($cachedData['expires_at']))) {
             Cache::forget($cacheKey);
             return $next($request);
         }
 
-        // Set the authenticated user from cache
-        // This prevents Sanctum from hitting the database again
-        if (isset($cachedData['tokenable'])) {
-            $request->setUserResolver(function () use ($cachedData) {
-                return $cachedData['tokenable'];
+        // Load the user by ID with Redis caching
+        // This prevents both the token AND user queries from hitting PostgreSQL
+        $userModel = $cachedData['tokenable_type'];
+        $userId = $cachedData['tokenable_id'];
+
+        $request->setUserResolver(function () use ($userModel, $userId) {
+            // Cache user data in Redis for 30 minutes
+            $userCacheKey = "user:model:{$userId}";
+
+            return Cache::remember($userCacheKey, 1800, function () use ($userModel, $userId) {
+                return $userModel::find($userId);
             });
-        }
+        });
 
         return $next($request);
     }
