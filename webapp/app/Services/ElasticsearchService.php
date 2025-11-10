@@ -394,6 +394,51 @@ class ElasticsearchService
     }
 
     /**
+     * Get Elasticsearch cluster info
+     *
+     * @return array
+     */
+    public function getInfo(): array
+    {
+        try {
+            return $this->client->info()->asArray();
+        } catch (Exception $e) {
+            Log::error("Failed to get Elasticsearch info", ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Check if index exists
+     *
+     * @return bool
+     */
+    public function indexExists(): bool
+    {
+        try {
+            return $this->client->indices()->exists(['index' => $this->indexName])->asBool();
+        } catch (Exception $e) {
+            Log::error("Failed to check if index exists", ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Get detailed index statistics
+     *
+     * @return array
+     */
+    public function getIndexStats(): array
+    {
+        try {
+            return $this->client->indices()->stats(['index' => $this->indexName])->asArray();
+        } catch (Exception $e) {
+            Log::error("Failed to get index stats", ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
      * Delete the entire index
      *
      * @return bool
