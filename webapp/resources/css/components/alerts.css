@@ -1,0 +1,29 @@
+/* ========================================
+   ALERTS COMPONENT
+   Alert messages and notifications
+   ======================================== */
+
+.alert {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background: var(--success-50);
+    color: var(--success-700);
+    border-color: var(--success-600);
+}
+
+.alert-error {
+    background: var(--danger-50);
+    color: var(--danger-700);
+    border-color: var(--danger-600);
+}
+
+.alert.hidden {
+    display: none;
+}

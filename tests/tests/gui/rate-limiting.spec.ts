@@ -2,14 +2,9 @@
  * GUI E2E Tests - Authentication Rate Limiting
  * Tests for rate limiting on login, register, and forgot-password endpoints
  * Verifies that throttle middleware is applied to authentication routes
- *
- * NOTE: These tests run serially to avoid interfering with other test suites
  */
 
 import { test, expect } from '@playwright/test';
-
-// Configure this suite to run serially to avoid rate limit interference
-test.describe.configure({ mode: 'serial' });
 
 test.describe('Authentication Rate Limiting Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -25,13 +20,10 @@ test.describe('Authentication Rate Limiting Tests', () => {
 
   test.describe('Rate Limiting Middleware - Applied to Routes', () => {
     test('should have rate limiting on login endpoint (5 per minute)', async ({ request }) => {
-      // Use unique email to avoid cross-test interference
-      const testEmail = `ratelimit-test-${Date.now()}@entoo.cz`;
-
       // Make a login request and check for rate limit headers
       const response = await request.post('http://localhost:8000/api/login', {
         data: {
-          email: testEmail,
+          email: 'test@entoo.cz',
           password: 'password123',
         },
       });
@@ -56,9 +48,6 @@ test.describe('Authentication Rate Limiting Tests', () => {
 
       // Login endpoint should be accessible (though may return 401 for invalid credentials)
       expect([200, 401, 422, 429]).toContain(response.status());
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
     });
 
     test('should have rate limiting on registration endpoint (3 per minute)', async ({ request }) => {
@@ -88,16 +77,11 @@ test.describe('Authentication Rate Limiting Tests', () => {
       }
 
       expect([201, 422, 429]).toContain(response.status());
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
     });
 
     test('should have rate limiting on forgot-password endpoint (3 per 10 minutes)', async ({ request }) => {
-      const testEmail = `forgot-test-${Date.now()}@entoo.cz`;
-
       const response = await request.post('http://localhost:8000/api/forgot-password', {
-        data: { email: testEmail },
+        data: { email: 'test@entoo.cz' },
       });
 
       const headers = response.headers();
@@ -116,17 +100,12 @@ test.describe('Authentication Rate Limiting Tests', () => {
       }
 
       expect([200, 422, 429]).toContain(response.status());
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
     });
 
     test('should have rate limiting on reset-password endpoint', async ({ request }) => {
-      const testEmail = `reset-test-${Date.now()}@entoo.cz`;
-
       const response = await request.post('http://localhost:8000/api/reset-password', {
         data: {
-          email: testEmail,
+          email: 'test@entoo.cz',
           token: 'dummy-token',
           password: 'newpassword123',
           password_confirmation: 'newpassword123',
@@ -142,21 +121,19 @@ test.describe('Authentication Rate Limiting Tests', () => {
 
       // Endpoint should be reachable
       expect([200, 422, 429]).toContain(response.status());
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
     });
   });
 
   test.describe('Rate Limiting - Multiple Attempts', () => {
     test('login endpoint should support multiple attempts with potential rate limiting', async ({ request }) => {
-      const email = `ratelimit-multi-${Date.now()}@entoo.cz`;
+      const email = 'ratelimit-test@entoo.cz';
       const password = 'wrongpassword';
 
       const responses = [];
+      let rateLimitEncountered = false;
 
-      // Make only 3 login attempts to avoid exhausting rate limits
-      for (let i = 1; i <= 3; i++) {
+      // Make several login attempts to test rate limiting
+      for (let i = 1; i <= 6; i++) {
         const response = await request.post('http://localhost:8000/api/login', {
           data: { email, password },
         });
@@ -164,11 +141,9 @@ test.describe('Authentication Rate Limiting Tests', () => {
         responses.push(response.status());
 
         if (response.status() === 429) {
+          rateLimitEncountered = true;
           break;
         }
-
-        // Small delay between attempts
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Verify we either:
@@ -176,21 +151,18 @@ test.describe('Authentication Rate Limiting Tests', () => {
       // 2. Got invalid credentials responses (401/422)
       const validStatuses = responses.every(status => [200, 401, 422, 429].includes(status));
       expect(validStatuses).toBe(true);
-
-      // Add longer delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 2000));
     });
 
     test('registration endpoint should support multiple attempts with potential rate limiting', async ({ request }) => {
       const responses = [];
-      const timestamp = Date.now();
+      let rateLimitEncountered = false;
 
-      // Make only 2 registration attempts to avoid exhausting rate limits
-      for (let i = 1; i <= 2; i++) {
+      // Make several registration attempts
+      for (let i = 1; i <= 4; i++) {
         const response = await request.post('http://localhost:8000/api/register', {
           data: {
             name: `Test User ${i}`,
-            email: `register-multi-${timestamp}-${i}@entoo.cz`,
+            email: `register-${Date.now()}-${i}@entoo.cz`,
             password: 'password123',
             password_confirmation: 'password123',
           },
@@ -199,19 +171,14 @@ test.describe('Authentication Rate Limiting Tests', () => {
         responses.push(response.status());
 
         if (response.status() === 429) {
+          rateLimitEncountered = true;
           break;
         }
-
-        // Small delay between attempts
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // All responses should be valid
       const validStatuses = responses.every(status => [201, 422, 429].includes(status));
       expect(validStatuses).toBe(true);
-
-      // Add longer delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 2000));
     });
   });
 
@@ -252,49 +219,40 @@ test.describe('Authentication Rate Limiting Tests', () => {
 
   test.describe('Rate Limiting - Security', () => {
     test('should have different rate limits for different endpoints', async ({ request }) => {
-      const timestamp = Date.now();
-
-      // Test login endpoint with unique email
+      // Test login endpoint
       const loginResp = await request.post('http://localhost:8000/api/login', {
-        data: { email: `security-login-${timestamp}@entoo.cz`, password: 'test' },
+        data: { email: 'test@entoo.cz', password: 'test' },
       });
 
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Test register endpoint with unique email
+      // Test register endpoint
       const registerResp = await request.post('http://localhost:8000/api/register', {
         data: {
           name: 'Test',
-          email: `security-register-${timestamp}@entoo.cz`,
+          email: `test-${Date.now()}@entoo.cz`,
           password: 'test123',
           password_confirmation: 'test123',
         },
       });
 
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Test forgot-password endpoint with unique email
+      // Test forgot-password endpoint
       const forgotResp = await request.post('http://localhost:8000/api/forgot-password', {
-        data: { email: `security-forgot-${timestamp}@entoo.cz` },
+        data: { email: 'test@entoo.cz' },
       });
 
       // All endpoints should be accessible and have rate limiting applied
       expect([200, 401, 422, 429]).toContain(loginResp.status());
       expect([201, 422, 429]).toContain(registerResp.status());
       expect([200, 422, 429]).toContain(forgotResp.status());
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 2000));
     });
 
     test('should prevent excessive login attempts over time', async ({ request }) => {
-      const email = `bruteforce-${Date.now()}@entoo.cz`;
+      const email = 'bruteforce-test@entoo.cz';
       const password = 'incorrectpassword';
 
       let blockedByRateLimit = false;
-      const maxAttempts = 3; // Reduced from 10 to avoid exhausting rate limits
+      const maxAttempts = 10;
 
-      // Simulate a brute force attack with limited attempts
+      // Simulate a brute force attack
       for (let i = 1; i <= maxAttempts; i++) {
         const response = await request.post('http://localhost:8000/api/login', {
           data: { email, password },
@@ -306,29 +264,22 @@ test.describe('Authentication Rate Limiting Tests', () => {
           expect(i).toBeLessThanOrEqual(6); // Should be blocked before many attempts
           break;
         }
-
-        // Small delay between attempts
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Either rate limiting kicked in or we got multiple failed attempts
       // The important thing is the endpoint is protected from unlimited attempts
       expect([true, false]).toContain(blockedByRateLimit);
-
-      // Add longer delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 2000));
     });
 
     test('should protect registration from mass account creation', async ({ request }) => {
       let blockedByRateLimit = false;
-      const maxAttempts = 2; // Reduced from 5 to avoid exhausting rate limits
-      const timestamp = Date.now();
+      const maxAttempts = 5;
 
       for (let i = 1; i <= maxAttempts; i++) {
         const response = await request.post('http://localhost:8000/api/register', {
           data: {
             name: `Attacker ${i}`,
-            email: `attacker-${timestamp}-${i}@entoo.cz`,
+            email: `attacker-${Date.now()}-${i}@entoo.cz`,
             password: 'password123',
             password_confirmation: 'password123',
           },
@@ -339,26 +290,18 @@ test.describe('Authentication Rate Limiting Tests', () => {
           expect(i).toBeLessThanOrEqual(4); // Should be blocked before max attempts
           break;
         }
-
-        // Small delay between attempts
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // Rate limiting should be in effect
       expect([true, false]).toContain(blockedByRateLimit);
-
-      // Add longer delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 2000));
     });
   });
 
   test.describe('Rate Limiting - Verification of Configuration', () => {
     test('should verify throttle middleware is configured in routes', async ({ page }) => {
-      const testEmail = `verify-config-${Date.now()}@entoo.cz`;
-
       // Make a request to check that rate limiting middleware is active
       const response = await page.request.post('http://localhost:8000/api/login', {
-        data: { email: testEmail, password: 'test' },
+        data: { email: 'test@entoo.cz', password: 'test' },
       });
 
       // The response should include rate limit headers if configured
@@ -377,9 +320,6 @@ test.describe('Authentication Rate Limiting Tests', () => {
       if (hasStandardHeaders) {
         expect(true).toBe(true); // Headers confirm throttle middleware is active
       }
-
-      // Add delay to allow rate limit window to reset
-      await new Promise(resolve => setTimeout(resolve, 1000));
     });
   });
 });

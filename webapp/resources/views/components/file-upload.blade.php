@@ -1,22 +1,23 @@
 {{-- File Upload Modal Component --}}
-<div id="uploadModal" class="modal hidden">
-    <div class="modal-content">
+<div id="uploadModal" class="modal glass-modal-backdrop hidden">
+    <div class="modal-content glass-modal-content">
         <div class="modal-header">
             <h2>📤 Upload File</h2>
             <button onclick="closeUploadModal()" class="close-btn">&times;</button>
         </div>
 
-        <div id="uploadError" class="alert alert-error hidden"></div>
-        <div id="uploadSuccess" class="alert alert-success hidden"></div>
+        <div style="padding: var(--spacing-xl);">
+            <div id="uploadError" class="alert alert-error hidden"></div>
+            <div id="uploadSuccess" class="alert alert-success hidden"></div>
 
-        <form id="uploadForm" onsubmit="handleFileUpload(event)">
-            <!-- Context mode: show selected subject/category -->
-            <div class="form-group" id="uploadContext" style="display: none;">
-                <label>Uploading to:</label>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
-                    <strong id="uploadSubject"></strong> → <strong id="uploadCategory"></strong>
+            <form id="uploadForm" onsubmit="handleFileUpload(event)">
+                <!-- Context mode: show selected subject/category -->
+                <div class="form-group" id="uploadContext" style="display: none;">
+                    <label>Uploading to:</label>
+                    <div style="background: var(--bg-secondary); padding: var(--spacing-lg); border-radius: var(--radius-md); border: 1px solid var(--border-primary); font-weight: 500;">
+                        <strong id="uploadSubject"></strong> → <strong id="uploadCategory"></strong>
+                    </div>
                 </div>
-            </div>
 
             <!-- Global mode: show dropdowns -->
             <div class="form-group" id="uploadSelectors" style="display: none;">
@@ -37,25 +38,26 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="fileInput">Choose File</label>
-                <input type="file" id="fileInput" name="file" required
-                       accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
-                <small>Supported: PDF, DOC, DOCX, PPT, PPTX, TXT (Max: 50MB)</small>
-            </div>
-
-            <div id="uploadProgress" class="upload-progress hidden">
-                <div class="progress-bar">
-                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                <div class="form-group">
+                    <label for="fileInput">Choose File</label>
+                    <input type="file" id="fileInput" name="file" required
+                           accept=".pdf,.doc,.docx,.ppt,.pptx,.txt">
+                    <small>Supported: PDF, DOC, DOCX, PPT, PPTX, TXT (Max: 50MB)</small>
                 </div>
-                <p id="progressText">Uploading...</p>
-            </div>
 
-            <div class="modal-footer">
-                <button type="button" onclick="closeUploadModal()" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="uploadBtn">📤 Upload</button>
-            </div>
-        </form>
+                <div id="uploadProgress" class="upload-progress hidden">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" style="margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: 0.875rem;">Uploading...</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="closeUploadModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadBtn">📤 Upload</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

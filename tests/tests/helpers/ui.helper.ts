@@ -274,13 +274,18 @@ export async function closeModal(page: Page): Promise<void> {
 
 /**
  * Get file count for a subject
+ * @param page - Playwright page object
+ * @param subjectNameOrElement - Subject name (string) or Locator element
  */
 export async function getFileCount(
   page: Page,
-  subjectName: string
+  subjectNameOrElement: string | import('@playwright/test').Locator
 ): Promise<number> {
-  const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
-  const countText = await subjectRow.locator('.file-count, .count').textContent();
+  const subjectRow = typeof subjectNameOrElement === 'string'
+    ? page.locator(`.subject-row:has-text("${subjectNameOrElement}")`).first()
+    : subjectNameOrElement;
+
+  const countText = await subjectRow.locator('.file-count, .count').first().textContent();
 
   if (!countText) return 0;
 

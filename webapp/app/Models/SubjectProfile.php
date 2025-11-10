@@ -25,6 +25,8 @@ class SubjectProfile extends Model
         'credits' => 'integer',
     ];
 
+    protected $appends = ['file_count'];
+
     /**
      * Get the user who created this profile
      */
@@ -42,10 +44,26 @@ class SubjectProfile extends Model
     }
 
     /**
+     * Get uploaded files for this subject
+     */
+    public function uploadedFiles()
+    {
+        return $this->hasMany(UploadedFile::class, 'subject_name', 'subject_name');
+    }
+
+    /**
      * Get file count for this subject
+     * Note: Use withCount('uploadedFiles') when eager loading to avoid N+1 queries
      */
     public function getFileCountAttribute()
     {
-        return UploadedFile::where('subject_name', $this->subject_name)->count();
+        // If loaded via withCount('uploadedFiles'), use that cached count
+        // Laravel's withCount stores it as 'uploaded_files_count'
+        if (array_key_exists('uploaded_files_count', $this->attributes)) {
+            return (int) $this->attributes['uploaded_files_count'];
+        }
+
+        // Otherwise fall back to direct query (will cause N+1 if used in loops)
+        return $this->uploadedFiles()->count();
     }
 }

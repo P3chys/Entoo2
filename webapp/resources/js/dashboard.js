@@ -259,8 +259,8 @@ function buildTreeStructure(subjects) {
         const subjectNameJS = subjectName.replace(/'/g, "\\'").replace(/"/g, '\\"');
 
         html += `
-            <div class="tree-subject subject-row" data-subject="${subjectNameEscaped}">
-                <div class="subject-header" onclick="toggleSubject(this, '${subjectNameJS}')">
+            <div class="tree-subject glass-subject subject-row" data-subject="${subjectNameEscaped}">
+                <div class="subject-header" onclick="toggleSubject(this, '${subjectNameJS}')">\
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
                         <span class="subject-name name">${subjectNameEscaped}</span>
@@ -446,7 +446,7 @@ function buildFilesHTML(files) {
         const ownerId = file.user ? file.user.id : null;
 
         html += `
-            <div class="file-item">
+            <div class="file-item glass-file-item">
                 <div class="file-item-info">
                     <div class="file-item-icon">${fileIcon}</div>
                     <div class="file-item-details">
@@ -471,7 +471,7 @@ function buildFilesHTML(files) {
         `;
     });
 
-    return html;
+    return sanitizeHTML(html);
 }
 
 /**
@@ -746,7 +746,7 @@ function displaySearchResults(results, query) {
         }
 
         html += `
-            <div class="search-result-item">
+            <div class="search-result-item glass-search-result">
                 <div class="search-result-header">
                     <div class="search-result-info">
                         <div style="display: flex; align-items: center; gap: 1rem;">
