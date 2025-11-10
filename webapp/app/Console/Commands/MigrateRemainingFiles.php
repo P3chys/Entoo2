@@ -45,10 +45,30 @@ class MigrateRemainingFiles extends Command
 
     public function handle()
     {
-        $sourcePath = $this->option('source');
+    $sourcePath = $this->option('source');
         $userId = (int) $this->option('user');
         $dryRun = $this->option('dry-run');
         $limit = $this->option('limit') ? (int) $this->option('limit') : null;
+
+        // Normalize source path: allow relative paths and fall back to storage/app/upload
+        if (!Str::startsWith($sourcePath, ['/', '\\'])) {
+            // If user passed a path that starts with 'storage' treat it as base_path relative,
+            // otherwise assume it's relative to storage/app
+            if (Str::startsWith($sourcePath, 'storage')) {
+                $sourcePath = base_path($sourcePath);
+            } else {
+                $sourcePath = storage_path($sourcePath);
+            }
+        }
+
+        // If the resolved path doesn't exist, try the common storage path as a fallback
+        if (!is_dir($sourcePath)) {
+            $fallback = storage_path('app/upload');
+            if (is_dir($fallback)) {
+                $this->warn("Source directory not found: {$sourcePath}. Using fallback: {$fallback}");
+                $sourcePath = $fallback;
+            }
+        }
 
         $user = User::find($userId);
         if (!$user) {

@@ -7,13 +7,6 @@
     <div class="container">
         <x-search :searchQuery="$searchQuery ?? null" />
 
-        <!-- Global Upload Button -->
-        <div style="margin-bottom: var(--spacing-lg); display: flex; justify-content: flex-end;">
-            <button class="btn btn-primary upload-button" id="uploadFileBtn" onclick="openUploadModalGlobal()">
-                📤 Upload File
-            </button>
-        </div>
-
         <!-- Dashboard Stats -->
         <div class="stats-grid" style="margin-bottom: var(--spacing-xl);">
             <div class="stat-card glass-stat-card">

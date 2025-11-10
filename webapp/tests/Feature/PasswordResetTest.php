@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Notification;
@@ -12,7 +11,25 @@ use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
-    use RefreshDatabase;
+    protected array $createdUsers = [];
+
+    protected function tearDown(): void
+    {
+        // Clean up created test users
+        foreach ($this->createdUsers as $user) {
+            $user->tokens()->delete();
+            $user->delete();
+        }
+
+        parent::tearDown();
+    }
+
+    protected function createTestUser(array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        $this->createdUsers[] = $user;
+        return $user;
+    }
 
     /**
      * Test forgot password request with valid email
@@ -21,7 +38,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -67,7 +84,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_forgot_password_rate_limiting(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createTestUser();
 
         // First 3 requests should succeed
         for ($i = 0; $i < 3; $i++) {
@@ -90,7 +107,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_with_valid_token(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
             'password' => Hash::make('OldPassword123!'),
         ]);
@@ -123,7 +140,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_with_invalid_token(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -145,7 +162,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_with_expired_token(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -170,7 +187,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_with_mismatched_passwords(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -192,7 +209,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_with_short_password(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -214,7 +231,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_revokes_all_tokens(): void
     {
-        $user = User::factory()->create([
+        $user = $this->createTestUser([
             'email' => 'test@example.com',
         ]);
 
@@ -246,7 +263,7 @@ class PasswordResetTest extends TestCase
      */
     public function test_password_reset_rate_limiting(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createTestUser();
         $token = Password::createToken($user);
 
         // First 5 requests should succeed or fail based on token validity

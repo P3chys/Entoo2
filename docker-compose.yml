@@ -101,7 +101,7 @@ services:
       - ./webapp:/var/www/html
       - ./storage:/var/www/html/storage
       - ./docker/php/php.ini:/usr/local/etc/php/php.ini
-      #- ./old_entoo:/old_entoo:ro
+      - ./old_entoo:/old_entoo:ro
     networks:
       - entoo_network
     environment:

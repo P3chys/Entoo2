@@ -5,33 +5,28 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\UploadedFile;
-use App\Services\DocumentParserService;
+use App\Models\FavoriteSubject;
 use App\Services\ElasticsearchService;
+use App\Services\DocumentParserService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 
-class ImportExistingFiles extends Command
+class RebuildDatabaseFromStorage extends Command
 {
     /**
      * The name and signature of the console command.
-     *
-     * @var string
      */
-    protected $signature = 'import:existing-files
-                            {--source=/old_entoo/entoo_subjects : Source directory path}
+    protected $signature = 'db:rebuild-from-storage
                             {--user=1 : User ID to own the files}
                             {--dry-run : Run without making changes}
-                            {--limit= : Limit number of files to import}';
+                            {--clear-all : Clear Redis, PostgreSQL, and Elasticsearch before rebuild}
+                            {--force : Skip all confirmations}';
 
     /**
      * The console command description.
-     *
-     * @var string
      */
-    protected $description = 'Import existing files from old_entoo/entoo_subjects directory structure';
-
-    private DocumentParserService $parserService;
-    private ElasticsearchService $elasticsearchService;
+    protected $description = 'Rebuild database from existing files in storage/app/uploads';
 
     private $stats = [
         'total_files' => 0,
@@ -42,13 +37,18 @@ class ImportExistingFiles extends Command
     ];
 
     private $supportedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'rtf', 'jpg', 'jpeg', 'png', 'heic', 'xlsx', 'xls', 'zip', 'rar', 'pages', 'odt', 'xps', 'oxps', 'odp', 'html', 'apkg'];
-    private $validCategories = ['Materialy', 'Otazky', 'Prednasky', 'Seminare'];
+    private $parseableExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'];
 
-    public function __construct(DocumentParserService $parserService, ElasticsearchService $elasticsearchService)
-    {
+    private ElasticsearchService $elasticsearchService;
+    private DocumentParserService $documentParserService;
+
+    public function __construct(
+        ElasticsearchService $elasticsearchService,
+        DocumentParserService $documentParserService
+    ) {
         parent::__construct();
-        $this->parserService = $parserService;
         $this->elasticsearchService = $elasticsearchService;
+        $this->documentParserService = $documentParserService;
     }
 
     /**
@@ -56,10 +56,9 @@ class ImportExistingFiles extends Command
      */
     public function handle()
     {
-        $sourcePath = $this->option('source');
         $userId = (int) $this->option('user');
         $dryRun = $this->option('dry-run');
-        $limit = $this->option('limit') ? (int) $this->option('limit') : null;
+        $clearAll = $this->option('clear-all');
 
         // Validate user
         $user = User::find($userId);
@@ -68,34 +67,44 @@ class ImportExistingFiles extends Command
             return 1;
         }
 
-        // Build full source path
-        // If path starts with /, treat as absolute path, otherwise relative to base_path
-        $fullPath = (str_starts_with($sourcePath, '/') || str_starts_with($sourcePath, 'C:'))
-            ? $sourcePath
-            : base_path($sourcePath);
-
-        if (!is_dir($fullPath)) {
-            $this->error("Source directory not found: {$fullPath}");
-            return 1;
-        }
-
         $this->info("========================================");
-        $this->info("Entoo File Import");
+        $this->info("DATABASE REBUILD FROM STORAGE");
         $this->info("========================================");
-        $this->info("Source: {$fullPath}");
         $this->info("User: {$user->name} (ID: {$user->id})");
         $this->info("Dry Run: " . ($dryRun ? 'YES' : 'NO'));
-        if ($limit) {
-            $this->info("Limit: {$limit} files");
-        }
+        $this->info("Clear All: " . ($clearAll ? 'YES' : 'NO'));
         $this->info("========================================\n");
 
-        // Scan directory structure
-        $this->info("Scanning directory structure...");
-        $files = $this->scanDirectory($fullPath);
-        $this->stats['total_files'] = count($files);
+        // Clear all data if requested
+        if ($clearAll) {
+            $force = $this->option('force');
+            if (!$dryRun && !$force && !$this->confirm('⚠ WARNING: This will delete ALL data from Redis, PostgreSQL, and Elasticsearch. Continue?', false)) {
+                $this->warn('Operation cancelled.');
+                return 0;
+            }
 
-        $this->info("Found {$this->stats['total_files']} files\n");
+            $this->clearAllData($dryRun);
+        }
+
+        // Scan storage directories
+        $this->info("Scanning storage directories...");
+
+        $files = [];
+        $basePaths = [
+            storage_path('app/uploads'),
+            storage_path('app/private/uploads')
+        ];
+
+        foreach ($basePaths as $basePath) {
+            if (is_dir($basePath)) {
+                $foundFiles = $this->scanDirectory($basePath, $basePath);
+                $files = array_merge($files, $foundFiles);
+                $this->info("Found " . count($foundFiles) . " files in " . $basePath);
+            }
+        }
+
+        $this->stats['total_files'] = count($files);
+        $this->info("Total files found: {$this->stats['total_files']}\n");
 
         if ($this->stats['total_files'] === 0) {
             $this->warn("No files found to import.");
@@ -103,25 +112,19 @@ class ImportExistingFiles extends Command
         }
 
         // Ask for confirmation
-        if (!$dryRun && !$this->confirm('Do you want to proceed with the import?', true)) {
-            $this->info("Import cancelled.");
+        $force = $this->option('force');
+        if (!$dryRun && !$force && !$this->confirm('Do you want to proceed with the rebuild?', true)) {
+            $this->info("Rebuild cancelled.");
             return 0;
         }
 
         // Process files
-        $progressBar = $this->output->createProgressBar($limit ?? $this->stats['total_files']);
+        $progressBar = $this->output->createProgressBar($this->stats['total_files']);
         $progressBar->start();
 
-        $processedCount = 0;
         foreach ($files as $fileInfo) {
-            $this->info("\nProcessing: {$fileInfo['path']}");
-            if ($limit && $processedCount >= $limit) {
-                break;
-            }
-
             $this->processFile($fileInfo, $user, $dryRun);
             $progressBar->advance();
-            $processedCount++;
         }
 
         $progressBar->finish();
@@ -136,9 +139,14 @@ class ImportExistingFiles extends Command
     /**
      * Scan directory and collect file information
      */
-    private function scanDirectory(string $path): array
+    private function scanDirectory(string $path, string $basePath): array
     {
         $files = [];
+
+        if (!is_dir($path)) {
+            return $files;
+        }
+
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST
@@ -154,25 +162,32 @@ class ImportExistingFiles extends Command
                 continue;
             }
 
-            // Parse path: entoo_subjects/{subject_name}/{category}/{filename}
-            $relativePath = str_replace($path . DIRECTORY_SEPARATOR, '', $file->getPathname());
-            $parts = explode(DIRECTORY_SEPARATOR, $relativePath);
+            // Parse path: uploads/{subject-name}/{category}/{uuid-filename.ext}
+            // OR: private/uploads/{subject-name}/{category}/{uuid-filename.ext}
+            $relativePath = str_replace($basePath . DIRECTORY_SEPARATOR, '', $file->getPathname());
+            $relativePath = str_replace('\\', '/', $relativePath);
+            $parts = explode('/', $relativePath);
 
-            if (count($parts) < 2) {
+            if (count($parts) < 3) {
                 continue; // Skip files not in proper structure
             }
 
-            $subjectName = $parts[0];
-            $category = $parts[1] ?? 'Materialy';
+            $subjectSlug = $parts[0];
+            $categorySlug = $parts[1];
+            $filename = $parts[2];
 
-            // Validate category
-            if (!in_array($category, $this->validCategories)) {
-                $category = 'Materialy';
-            }
+            // Convert slugs back to proper names
+            $subjectName = $this->unslugify($subjectSlug);
+            $category = $this->categorizeName($categorySlug);
+
+            // Extract original filename from filename if it has the pattern: name_hash.ext
+            // or uuid.ext
+            $originalFilename = $this->extractOriginalFilename($filename);
 
             $files[] = [
                 'path' => $file->getPathname(),
-                'filename' => $file->getFilename(),
+                'filename' => $filename,
+                'original_filename' => $originalFilename,
                 'subject_name' => $subjectName,
                 'category' => $category,
                 'size' => $file->getSize(),
@@ -181,6 +196,45 @@ class ImportExistingFiles extends Command
         }
 
         return $files;
+    }
+
+    /**
+     * Convert slug to readable name
+     */
+    private function unslugify(string $slug): string
+    {
+        // Replace hyphens with spaces and capitalize each word
+        return ucwords(str_replace('-', ' ', $slug));
+    }
+
+    /**
+     * Map category slug to valid category name
+     */
+    private function categorizeName(string $slug): string
+    {
+        $categoryMap = [
+            'prednasky' => 'Prednasky',
+            'otazky' => 'Otazky',
+            'materialy' => 'Materialy',
+            'seminare' => 'Seminare'
+        ];
+
+        $slug = strtolower($slug);
+        return $categoryMap[$slug] ?? 'Materialy';
+    }
+
+    /**
+     * Extract original filename
+     */
+    private function extractOriginalFilename(string $filename): string
+    {
+        // If filename contains underscore and hash, extract the part before hash
+        if (preg_match('/^(.+)_([a-f0-9]+)\.(pdf|docx?|pptx?|txt)$/i', $filename, $matches)) {
+            return $matches[1] . '.' . $matches[3];
+        }
+
+        // If it's just a UUID, use the filename as-is
+        return $filename;
     }
 
     /**
@@ -261,13 +315,60 @@ class ImportExistingFiles extends Command
             ];
         }
     }
+
+    /**
+     * Clear all data from Redis, PostgreSQL, and Elasticsearch
+     */
+    private function clearAllData(bool $dryRun): void
+    {
+        $this->info("\n🗑️  Clearing all data...");
+
+        // Clear Redis
+        $this->info("  - Clearing Redis cache...");
+        if (!$dryRun) {
+            Redis::flushdb();
+            $this->info("    ✓ Redis cleared");
+        } else {
+            $this->warn("    [DRY RUN] Would clear Redis");
+        }
+
+        // Truncate PostgreSQL tables
+        $this->info("  - Truncating PostgreSQL tables...");
+        if (!$dryRun) {
+            DB::statement('SET CONSTRAINTS ALL DEFERRED');
+            FavoriteSubject::truncate();
+            UploadedFile::truncate();
+            $this->info("    ✓ Tables truncated: favorite_subjects, uploaded_files");
+        } else {
+            $this->warn("    [DRY RUN] Would truncate tables");
+        }
+
+        // Delete and recreate Elasticsearch index
+        $this->info("  - Recreating Elasticsearch index...");
+        if (!$dryRun) {
+            try {
+                $this->elasticsearchService->deleteIndex();
+                $this->info("    ✓ Deleted existing index");
+
+                $this->elasticsearchService->createIndex();
+                $this->info("    ✓ Created new index");
+            } catch (\Throwable $e) {
+                $this->error("    ✗ Error: " . $e->getMessage());
+            }
+        } else {
+            $this->warn("    [DRY RUN] Would delete and recreate Elasticsearch index");
+        }
+
+        $this->info("✓ All data cleared\n");
+    }
+
     /**
      * Display import summary
      */
     private function displaySummary(): void
     {
         $this->info("========================================");
-        $this->info("Import Summary");
+        $this->info("Rebuild Summary");
         $this->info("========================================");
         $this->info("Total Files Found: {$this->stats['total_files']}");
         $this->info("Successfully Imported: {$this->stats['imported']}");
@@ -283,7 +384,8 @@ class ImportExistingFiles extends Command
         }
 
         if ($this->stats['imported'] > 0) {
-            $this->info("\n✓ Import completed successfully!");
+            $this->info("\n✓ Rebuild completed successfully!");
+            $this->info("✓ Files imported to PostgreSQL and indexed in Elasticsearch");
         }
     }
 }

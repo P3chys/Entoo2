@@ -6,22 +6,48 @@ use App\Models\User;
 use App\Models\SubjectProfile;
 use App\Models\UploadedFile;
 use App\Models\FavoriteSubject;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DatabasePerformanceTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected User $user;
+    protected array $testSubjects = [
+        'Biology', 'Chemistry', 'Computer Science', 'Mathematics', 'Physics',
+        'Test Subject', 'Subject_0', 'Subject_1', 'Subject_2', 'Subject_3', 'Subject_4',
+        'Subject_5', 'Subject_6', 'Subject_7', 'Subject_8', 'Subject_9',
+        'Subject_10', 'Subject_11', 'Subject_12', 'Subject_13', 'Subject_14',
+        'Subject_15', 'Subject_16', 'Subject_17', 'Subject_18', 'Subject_19',
+        'Subject_20', 'Subject_21', 'Subject_22', 'Subject_23', 'Subject_24',
+        'Subject_25', 'Subject_26', 'Subject_27', 'Subject_28', 'Subject_29',
+        'Subject_30', 'Subject_31', 'Subject_32', 'Subject_33', 'Subject_34',
+        'Subject_35', 'Subject_36', 'Subject_37', 'Subject_38', 'Subject_39',
+        'Subject_40', 'Subject_41', 'Subject_42', 'Subject_43', 'Subject_44',
+        'Subject_45', 'Subject_46', 'Subject_47', 'Subject_48', 'Subject_49',
+    ];
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create test user
-        $this->user = User::factory()->create();
+        // Use existing user or create one
+        $this->user = User::firstOrCreate(
+            ['email' => 'test-perf@example.com'],
+            [
+                'name' => 'Test Performance',
+                'password' => bcrypt('password'),
+            ]
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up test data created during tests
+        UploadedFile::whereIn('subject_name', $this->testSubjects)->delete();
+        FavoriteSubject::whereIn('subject_name', $this->testSubjects)->delete();
+        SubjectProfile::whereIn('subject_name', $this->testSubjects)->delete();
+
+        parent::tearDown();
     }
 
     /**

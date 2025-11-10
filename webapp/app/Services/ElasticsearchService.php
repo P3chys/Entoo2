@@ -114,7 +114,8 @@ class ElasticsearchService
             $params = [
                 'index' => $this->indexName,
                 'id' => $document['file_id'],
-                'body' => $document
+                'body' => $document,
+                'refresh' => 'true' // Force immediate refresh to make document visible
             ];
 
             $response = $this->client->index($params);
@@ -257,7 +258,8 @@ class ElasticsearchService
         try {
             $params = [
                 'index' => $this->indexName,
-                'id' => $fileId
+                'id' => $fileId,
+                'refresh' => 'true' // Force immediate refresh to make deletion visible
             ];
 
             $response = $this->client->delete($params);
@@ -436,11 +438,19 @@ class ElasticsearchService
 
             $response = $this->client->search($params);
 
+            // Get all subject names that have profiles
+            $subjectsWithProfiles = \DB::table('subject_profiles')
+                ->pluck('subject_name')
+                ->flip()
+                ->toArray();
+
             $subjects = [];
             foreach ($response['aggregations']['subjects']['buckets'] ?? [] as $bucket) {
+                $subjectName = $bucket['key'];
                 $subjects[] = [
-                    'subject_name' => $bucket['key'],
-                    'file_count' => $bucket['doc_count']
+                    'subject_name' => $subjectName,
+                    'file_count' => $bucket['doc_count'],
+                    'has_profile' => isset($subjectsWithProfiles[$subjectName])
                 ];
             }
 

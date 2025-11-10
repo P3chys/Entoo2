@@ -550,17 +550,30 @@ window.toggleSubject = async function(element, subjectName) {
             categories.innerHTML = '<div class="loading" style="padding: 1rem;">Loading files and profile...</div>';
 
             try {
-                // Load both files and profile in parallel
-                const [filesResponse, profileResponse] = await Promise.all([
-                    fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`),
-                    fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
-                        headers: { 'Accept': 'application/json' }
-                    }).catch(() => null)
-                ]);
+                // Check if this subject has a profile (to avoid 404 console errors)
+                const subject = allFiles.find(s => s.subject_name === subjectName);
+                const hasProfile = subject?.has_profile || false;
+
+                // Load files and profile in parallel (only fetch profile if it exists)
+                const promises = [
+                    fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`)
+                ];
+
+                if (hasProfile) {
+                    promises.push(
+                        fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
+                            headers: { 'Accept': 'application/json' }
+                        }).then(res => res.ok ? res : null).catch(() => null)
+                    );
+                }
+
+                const results = await Promise.all(promises);
+                const filesResponse = results[0];
+                const profileResponse = results[1] || null;
 
                 const files = filesResponse.data || [];
                 let profile = null;
-                if (profileResponse && profileResponse.ok) {
+                if (profileResponse) {
                     const data = await profileResponse.json();
                     profile = data.profile;
                 }

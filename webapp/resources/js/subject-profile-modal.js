@@ -31,15 +31,15 @@ window.viewSubjectProfile = async function(subjectName, event) {
     detailPanel.innerHTML = '<div class="loading" style="padding: 1rem;">Loading profile...</div>';
 
     try {
-        // Try to fetch existing profile
+        // Try to fetch existing profile - 404 is expected for subjects without profiles
         const response = await fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
             headers: {
                 'Accept': 'application/json'
             }
-        });
+        }).then(res => res.ok ? res : null).catch(() => null);
 
         let profile = null;
-        if (response.ok) {
+        if (response) {
             const data = await response.json();
             profile = data.profile;
         }

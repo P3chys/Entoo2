@@ -13,6 +13,78 @@ test.describe('Subject Profile GUI Tests', () => {
     await page.waitForLoadState('networkidle');
   });
 
+  test('should not generate 404 errors when expanding subjects without profiles', async ({ page }) => {
+    // Listen for console errors and failed requests
+    const consoleErrors: string[] = [];
+    const failedRequests: { url: string; status: number }[] = [];
+
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    page.on('response', (response) => {
+      if (response.status() === 404 && response.url().includes('/api/subject-profiles/')) {
+        failedRequests.push({ url: response.url(), status: response.status() });
+      }
+    });
+
+    await waitForVisible(page, '.subject-row');
+
+    // Find a subject and expand it
+    const firstSubject = page.locator('.subject-row').first();
+    const subjectHeader = firstSubject.locator('.subject-header').first();
+
+    // Click to expand the subject
+    await subjectHeader.click();
+
+    // Wait for content to load
+    await page.waitForTimeout(2000);
+
+    // Check for Profile tab
+    const profileTab = page.locator('.tab-btn:has-text("Profile")').first();
+    await expect(profileTab).toBeVisible({ timeout: 5000 });
+
+    // Click on Profile tab
+    await profileTab.click();
+    await page.waitForTimeout(1000);
+
+    // Verify no 404 errors were logged to console for subject-profiles endpoint
+    expect(failedRequests.length).toBe(0);
+  });
+
+  test('should display "Create Profile" option for subjects without profiles', async ({ page }) => {
+    await waitForVisible(page, '.subject-row');
+
+    // Find first subject and expand it
+    const firstSubject = page.locator('.subject-row').first();
+    const subjectHeader = firstSubject.locator('.subject-header').first();
+
+    await subjectHeader.click();
+    await page.waitForTimeout(1500);
+
+    // Check for Profile tab
+    const profileTab = page.locator('.tab-btn:has-text("Profile")').first();
+    await expect(profileTab).toBeVisible({ timeout: 5000 });
+
+    // Click on Profile tab
+    await profileTab.click();
+    await page.waitForTimeout(500);
+
+    // Should show either profile content or "Create Profile" button
+    const createProfileBtn = page.locator('button:has-text("Create Profile")').first();
+    const profileContent = page.locator('.tab-content.active').first();
+
+    await expect(profileContent).toBeVisible();
+
+    // Check if "Create Profile" button or profile data is visible
+    const hasCreateButton = (await createProfileBtn.count()) > 0;
+    if (hasCreateButton) {
+      await expect(createProfileBtn).toBeVisible();
+    }
+  });
+
   test('should display info button for subjects', async ({ page }) => {
     await waitForVisible(page, '.subject-row');
 

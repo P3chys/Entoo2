@@ -4,14 +4,42 @@ namespace Tests\Feature;
 
 use App\Models\UploadedFile;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FileAuthorizationTest extends TestCase
 {
-    use RefreshDatabase;
+    protected array $createdUsers = [];
+    protected array $createdFiles = [];
+
+    protected function tearDown(): void
+    {
+        // Clean up test data
+        foreach ($this->createdFiles as $file) {
+            $file->delete();
+        }
+        foreach ($this->createdUsers as $user) {
+            $user->tokens()->delete();
+            $user->delete();
+        }
+
+        parent::tearDown();
+    }
+
+    protected function createTestUser(array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        $this->createdUsers[] = $user;
+        return $user;
+    }
+
+    protected function createTestFile(array $attributes = []): UploadedFile
+    {
+        $file = UploadedFile::factory()->create($attributes);
+        $this->createdFiles[] = $file;
+        return $file;
+    }
 
     /**
      * Test authenticated user can download any file (sharing platform)
@@ -20,14 +48,14 @@ class FileAuthorizationTest extends TestCase
     {
         Storage::fake('local');
 
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $owner = $this->createTestUser();
+        $otherUser = $this->createTestUser();
 
         // Create a test file
         $testFile = HttpUploadedFile::fake()->create('document.pdf', 100);
         Storage::put('test/document.pdf', $testFile->getContent());
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $owner->id,
             'filepath' => 'test/document.pdf',
             'original_filename' => 'document.pdf',
@@ -45,7 +73,7 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_unauthenticated_user_cannot_download_file(): void
     {
-        $file = UploadedFile::factory()->create();
+        $file = $this->createTestFile();
 
         $response = $this->get("/api/files/{$file->id}/download");
 
@@ -57,10 +85,10 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_only_owner_can_view_file_details(): void
     {
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $owner = $this->createTestUser();
+        $otherUser = $this->createTestUser();
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $owner->id,
         ]);
 
@@ -87,10 +115,10 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_only_owner_can_view_processing_status(): void
     {
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $owner = $this->createTestUser();
+        $otherUser = $this->createTestUser();
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $owner->id,
             'processing_status' => 'completed',
         ]);
@@ -118,10 +146,10 @@ class FileAuthorizationTest extends TestCase
     {
         Storage::fake('local');
 
-        $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $owner = $this->createTestUser();
+        $otherUser = $this->createTestUser();
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $owner->id,
             'filepath' => 'test/document.pdf',
         ]);
@@ -154,7 +182,7 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_unauthenticated_user_cannot_delete_file(): void
     {
-        $file = UploadedFile::factory()->create();
+        $file = $this->createTestFile();
 
         $response = $this->delete("/api/files/{$file->id}");
 
@@ -171,7 +199,7 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_authorization_on_non_existent_file(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createTestUser();
 
         $response = $this->actingAs($user, 'sanctum')
             ->get('/api/files/99999');
@@ -184,11 +212,11 @@ class FileAuthorizationTest extends TestCase
      */
     public function test_multiple_users_with_different_files(): void
     {
-        $user1 = User::factory()->create();
-        $user2 = User::factory()->create();
+        $user1 = $this->createTestUser();
+        $user2 = $this->createTestUser();
 
-        $file1 = UploadedFile::factory()->create(['user_id' => $user1->id]);
-        $file2 = UploadedFile::factory()->create(['user_id' => $user2->id]);
+        $file1 = $this->createTestFile(['user_id' => $user1->id]);
+        $file2 = $this->createTestFile(['user_id' => $user2->id]);
 
         // User1 can view their own file
         $this->actingAs($user1, 'sanctum')
@@ -218,13 +246,13 @@ class FileAuthorizationTest extends TestCase
     {
         Storage::fake('local');
 
-        $user = User::factory()->create();
+        $user = $this->createTestUser();
 
         // Create a test file
         $content = 'Test file content';
         Storage::put('test/document.txt', $content);
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $user->id,
             'filepath' => 'test/document.txt',
             'original_filename' => 'document.txt',
@@ -244,9 +272,9 @@ class FileAuthorizationTest extends TestCase
     {
         Storage::fake('local');
 
-        $user = User::factory()->create();
+        $user = $this->createTestUser();
 
-        $file = UploadedFile::factory()->create([
+        $file = $this->createTestFile([
             'user_id' => $user->id,
             'filepath' => 'nonexistent/file.pdf',
         ]);
