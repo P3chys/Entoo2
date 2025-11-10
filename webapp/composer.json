@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "elasticsearch/elasticsearch": "^8.0",
+        "filament/filament": "^3.2",
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.13",
         "laravel/sanctum": "^4.0",

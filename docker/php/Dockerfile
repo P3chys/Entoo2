@@ -13,9 +13,9 @@ RUN apk add --no-cache \
         libpng-dev libjpeg-turbo-dev freetype-dev \
         poppler-utils \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_pgsql pgsql bcmath zip opcache pcntl \
+    && docker-php-ext-install gd pdo pdo_pgsql pgsql bcmath zip opcache pcntl intl \
     && pecl install redis swoole \
-    && docker-php-ext-enable redis swoole opcache gd \
+    && docker-php-ext-enable redis swoole opcache gd intl \
     && apk del build-base autoconf make g++ \
     && rm -rf /tmp/* /var/cache/apk/*
 
@@ -37,7 +37,9 @@ COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
 # 🔥 Install dependencies and set permissions
 # -------------------------------------------------------------------
 RUN set -eux; \
-    composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; \
+    mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache; \
+    composer update --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts; \
+    composer run-script post-autoload-dump || true; \
     chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # -------------------------------------------------------------------

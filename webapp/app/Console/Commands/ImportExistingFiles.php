@@ -223,7 +223,9 @@ class ImportExistingFiles extends Command
                     'subject_name' => $fileInfo['subject_name'],
                     'category' => $fileInfo['category'],
                     'file_size' => $fileInfo['size'],
-                    'file_extension' => $fileInfo['extension']
+                    'file_extension' => $fileInfo['extension'],
+                    'processing_status' => 'completed',
+                    'processed_at' => now(),
                 ]);
 
                 // Index in Elasticsearch
