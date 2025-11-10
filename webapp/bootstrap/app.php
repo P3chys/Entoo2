@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'conditional.throttle' => \App\Http\Middleware\ConditionalThrottle::class,
         ]);
+
+        // Add token caching middleware to API routes for better performance
+        // This caches Sanctum token lookups in Redis instead of hitting PostgreSQL on every request
+        $middleware->prependToGroup('api', \App\Http\Middleware\CacheSanctumToken::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
