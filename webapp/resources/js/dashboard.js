@@ -3,6 +3,8 @@
  * Handles file tree, favorites, search, and main dashboard functionality
  */
 
+import DOMPurify from 'dompurify';
+
 // Global state
 let allFiles = [];
 let subjectFiles = {}; // Cache for loaded subject files
@@ -11,6 +13,18 @@ let searchMode = false;
 
 // Route parameters - will be set by blade template
 window.dashboardRouteParams = window.dashboardRouteParams || {};
+
+/**
+ * Sanitize HTML to prevent XSS attacks
+ * @param {string} html - Raw HTML string
+ * @returns {string} - Sanitized HTML string
+ */
+function sanitizeHTML(html) {
+    return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['div', 'span', 'p', 'strong', 'button', 'a', 'h3', 'h4'],
+        ALLOWED_ATTR: ['class', 'style', 'onclick', 'title', 'href', 'id', 'data-subject']
+    });
+}
 
 /**
  * Check authentication
@@ -236,14 +250,18 @@ function buildTreeStructure(subjects) {
         const totalFiles = subject.file_count;
         const isFav = isFavorite(subjectName);
 
+        // Escape for HTML attributes and JavaScript strings
+        const subjectNameEscaped = escapeHtml(subjectName);
+        const subjectNameJS = subjectName.replace(/'/g, "\\'").replace(/"/g, '\\"');
+
         html += `
-            <div class="tree-subject glass-subject subject-row" data-subject="${subjectName}">
-                <div class="subject-header" onclick="toggleSubject(this, '${subjectName.replace(/'/g, "\\'")}')">
+            <div class="tree-subject glass-subject subject-row" data-subject="${subjectNameEscaped}">
+                <div class="subject-header" onclick="toggleSubject(this, '{subjectNameJS}')">\
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
-                        <span class="subject-name name">${subjectName}</span>
+                        <span class="subject-name name">${subjectNameEscaped}</span>
                         <span class="favorite-star star-icon ${isFav ? 'active' : ''}"
-                              onclick="toggleFavorite('${subjectName.replace(/'/g, "\\'")}', event)"
+                              onclick="toggleFavorite('${subjectNameJS}', event)"
                               title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
                             ${isFav ? '★' : '☆'}
                         </span>
@@ -259,7 +277,7 @@ function buildTreeStructure(subjects) {
         `;
     });
 
-    treeView.innerHTML = html;
+    treeView.innerHTML = sanitizeHTML(html);
 }
 
 /**
@@ -402,7 +420,7 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
         `;
     });
 
-    return `<div class="tab-container">${tabNavHTML}${tabContentHTML}</div>`;
+    return sanitizeHTML(`<div class="tab-container">${tabNavHTML}${tabContentHTML}</div>`);
 }
 
 /**
@@ -447,7 +465,7 @@ function buildFilesHTML(files) {
         `;
     });
 
-    return html;
+    return sanitizeHTML(html);
 }
 
 /**
@@ -486,12 +504,15 @@ async function filterByOwnerFromRoute() {
         notification.style.top = '80px';
         notification.style.right = '20px';
         notification.style.zIndex = '3000';
-        notification.innerHTML = `
-            Showing files by ${routeParams.filterUserName} (${files.length} files)
+        // Escape user name for safe display
+        const userNameEscaped = escapeHtml(routeParams.filterUserName);
+
+        notification.innerHTML = sanitizeHTML(`
+            Showing files by ${userNameEscaped} (${files.length} files)
             <a href="/dashboard" style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: none; background: white; color: var(--primary-color); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">
                 ✕ Clear Filter
             </a>
-        `;
+        `);
         document.body.appendChild(notification);
     } catch (error) {
         if (loading) loading.classList.add('hidden');
@@ -754,7 +775,7 @@ function displaySearchResults(results, query) {
         `;
     });
 
-    grid.innerHTML = html;
+    grid.innerHTML = sanitizeHTML(html);
 }
 
 /**
