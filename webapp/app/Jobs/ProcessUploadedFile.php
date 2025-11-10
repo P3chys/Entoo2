@@ -162,6 +162,7 @@ class ProcessUploadedFile implements ShouldQueue
     {
         Cache::tags(['files'])->flush();
         Cache::tags(['subjects'])->flush();
-        Cache::tags(['stats'])->flush();
+        // Clear stats cache (using simple key for better performance)
+        Cache::forget('system:stats:comprehensive');
     }
 }

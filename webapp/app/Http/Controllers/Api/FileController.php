@@ -317,7 +317,7 @@ class FileController extends Controller
         // Clear subjects cache (affected by file uploads/deletes)
         Cache::tags(['subjects'])->flush();
 
-        // Clear stats cache (affected by file uploads/deletes)
-        Cache::tags(['stats'])->flush();
+        // Clear stats cache (using simple key for better performance)
+        Cache::forget('system:stats:comprehensive');
     }
 }
