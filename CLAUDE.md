@@ -358,6 +358,58 @@ Access services at:
 - **Kibana**: http://localhost:5601
 - **Dozzle** (logs viewer): http://localhost:8888
 
+## Development Tools
+
+### Laravel Telescope
+
+Telescope provides debugging and monitoring capabilities for your Laravel application.
+
+**Access:** http://localhost:8000/telescope (only available in local environment)
+
+**Features:**
+- Request monitoring with timing and SQL queries
+- Exception tracking
+- Database query logging
+- Redis command monitoring
+- Cache operations tracking
+- Job monitoring
+- Mail preview
+- Dump/log inspection
+
+**Configuration:**
+- Automatically enabled in local environment only
+- Service provider: [app/Providers/TelescopeServiceProvider.php](webapp/app/Providers/TelescopeServiceProvider.php)
+- Configuration: [config/telescope.php](webapp/config/telescope.php)
+- Environment variable: `TELESCOPE_ENABLED` (optional override)
+
+### Laravel Debugbar
+
+Debugbar displays a debug toolbar at the bottom of your application pages.
+
+**Features:**
+- Timeline with PHP execution and database queries
+- Memory usage tracking
+- Query log with execution time and bindings
+- View rendering time
+- Route information
+- Session data inspection
+- Request/Response headers
+
+**Configuration:**
+- Automatically enabled in local environment only
+- Configuration: [config/debugbar.php](webapp/config/debugbar.php)
+- Environment variables:
+  - `DEBUGBAR_ENABLED` - Override enable/disable (defaults to local environment)
+  - `DEBUGBAR_HIDE_EMPTY_TABS` - Hide tabs with no content
+
+**Disabling in Development:**
+If you need to temporarily disable these tools:
+```bash
+# In .env file
+DEBUGBAR_ENABLED=false
+TELESCOPE_ENABLED=false
+```
+
 ## Environment Configuration
 
 Copy `.env.example` to `.env` in the `webapp/` directory. Key variables are overridden by docker-compose environment section:
