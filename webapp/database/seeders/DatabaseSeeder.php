@@ -15,11 +15,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Create the main user account
+        // ID 28 is referenced by existing files in Elasticsearch
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'id' => 28,
+            'name' => 'Adam Pech',
+            'email' => 'pechysadam@gmail.com',
+            'password' => bcrypt('password'), // Default password, should be changed
         ]);
+
+        $this->command->info('Created user: Adam Pech (ID: 28, Email: pechysadam@gmail.com)');
+        $this->command->warn('Default password: "password" - Please change this in production!');
+        $this->command->newLine();
+
+        // Only auto-restore if database is empty (no files)
+        $fileCount = \App\Models\UploadedFile::count();
+        if ($fileCount == 0) {
+            $this->command->warn('⚠️  DATABASE IS EMPTY! Running auto-restore...');
+            \Artisan::call('db:auto-restore', [], $this->command->getOutput());
+        } else {
+            $this->command->info("Database already has {$fileCount} files. Skipping auto-restore.");
+        }
     }
 }

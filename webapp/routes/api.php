@@ -9,14 +9,15 @@ use App\Http\Controllers\Api\SubjectController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes with rate limiting for security
+// Uses conditional.throttle middleware that can be bypassed for tests
 Route::post('/register', [AuthController::class, 'register'])
-    ->middleware('throttle:3,1'); // 3 attempts per minute
+    ->middleware('conditional.throttle:3,1'); // 3 attempts per minute
 Route::post('/login', [AuthController::class, 'login'])
-    ->middleware('throttle:5,1'); // 5 attempts per minute
+    ->middleware('conditional.throttle:5,1'); // 5 attempts per minute
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
-    ->middleware('throttle:3,10'); // 3 attempts per 10 minutes
+    ->middleware('conditional.throttle:3,10'); // 3 attempts per 10 minutes
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])
-    ->middleware('throttle:5,10'); // 5 attempts per 10 minutes
+    ->middleware('conditional.throttle:5,10'); // 5 attempts per 10 minutes
 
 // Health check (public)
 Route::get('/health', [HealthController::class, 'check']);

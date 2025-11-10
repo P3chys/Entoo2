@@ -138,3 +138,4 @@ yarn-error.log*
 .parcel-cache/
 .vite/
 DEV_README.md
+webapp/test-results/.last-run.json

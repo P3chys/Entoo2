@@ -21,6 +21,10 @@ window.openUploadModal = function(subject, category) {
     document.getElementById('uploadSelectors').style.display = 'none';
     document.getElementById('categorySelectGroup').style.display = 'none';
 
+    // Remove required from hidden fields
+    document.getElementById('subjectSelect').removeAttribute('required');
+    document.getElementById('categorySelect').removeAttribute('required');
+
     document.getElementById('uploadSubject').textContent = subject;
     document.getElementById('uploadCategory').textContent = category;
     document.getElementById('uploadModal').classList.remove('hidden');
@@ -40,6 +44,10 @@ window.openUploadModalGlobal = function() {
     document.getElementById('uploadContext').style.display = 'none';
     document.getElementById('uploadSelectors').style.display = 'block';
     document.getElementById('categorySelectGroup').style.display = 'block';
+
+    // Add required to visible fields
+    document.getElementById('subjectSelect').setAttribute('required', 'required');
+    document.getElementById('categorySelect').setAttribute('required', 'required');
 
     // Populate subject dropdown from dashboard data
     const subjectSelect = document.getElementById('subjectSelect');
