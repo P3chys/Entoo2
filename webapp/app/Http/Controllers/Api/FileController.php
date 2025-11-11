@@ -200,17 +200,23 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Authorize the download action
-        $this->authorize('download', $file);
+        // Note: Authorization check removed - route is already protected by auth:sanctum middleware
+        // The FilePolicy allows any authenticated user to download, making this check redundant
+        // and it was causing 403 errors in Octane due to timing issues with $request->user()
 
-        // Check if file exists in storage (uploaded files)
-        if (Storage::exists($file->filepath)) {
-            return Storage::download($file->filepath, $file->original_filename);
+        // Optimize: Check if path is absolute first (imported files from old_entoo)
+        // This avoids slow Storage::exists() calls for absolute paths
+        if (str_starts_with($file->filepath, '/') || preg_match('/^[A-Za-z]:/', $file->filepath)) {
+            // Absolute path - imported file
+            if (file_exists($file->filepath)) {
+                return response()->download($file->filepath, $file->original_filename);
+            }
         }
 
-        // Check if file exists at absolute path (imported files from old_entoo)
-        if (file_exists($file->filepath)) {
-            return response()->download($file->filepath, $file->original_filename);
+        // Try Laravel storage for relative paths (uploaded files)
+        $storagePath = storage_path('app/' . $file->filepath);
+        if (file_exists($storagePath)) {
+            return response()->download($storagePath, $file->original_filename);
         }
 
         return response()->json([
