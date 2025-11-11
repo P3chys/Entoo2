@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'conditional.throttle' => \App\Http\Middleware\ConditionalThrottle::class,
         ]);
+
+        // Note: CacheSanctumToken middleware temporarily disabled due to Octane compatibility issues
+        // causing 403 errors on authenticated routes. Need to implement proper Sanctum + Octane caching.
+        // $middleware->prependToGroup('api', \App\Http\Middleware\CacheSanctumToken::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -169,13 +169,13 @@ return [
         'exceptions'      => env('DEBUGBAR_COLLECTORS_EXCEPTIONS', true),       // Exception displayer
         'log'             => env('DEBUGBAR_COLLECTORS_LOG', true),              // Logs from Monolog (merged in messages if enabled)
         'db'              => env('DEBUGBAR_COLLECTORS_DB', true),               // Show database (PDO) queries and bindings
-        'views'           => env('DEBUGBAR_COLLECTORS_VIEWS', true),            // Views with their data
+        'views'           => env('DEBUGBAR_COLLECTORS_VIEWS', false),           // Views with their data (DISABLED for performance)
         'route'           => env('DEBUGBAR_COLLECTORS_ROUTE', false),           // Current route information
         'auth'            => env('DEBUGBAR_COLLECTORS_AUTH', false),            // Display Laravel authentication status
-        'gate'            => env('DEBUGBAR_COLLECTORS_GATE', true),             // Display Laravel Gate checks
+        'gate'            => env('DEBUGBAR_COLLECTORS_GATE', false),            // Display Laravel Gate checks (DISABLED for performance)
         'session'         => env('DEBUGBAR_COLLECTORS_SESSION', false),         // Display session data
-        'symfony_request' => env('DEBUGBAR_COLLECTORS_SYMFONY_REQUEST', true),  // Only one can be enabled..
-        'mail'            => env('DEBUGBAR_COLLECTORS_MAIL', true),             // Catch mail messages
+        'symfony_request' => env('DEBUGBAR_COLLECTORS_SYMFONY_REQUEST', false), // DISABLED for performance
+        'mail'            => env('DEBUGBAR_COLLECTORS_MAIL', false),            // Catch mail messages (DISABLED for performance)
         'laravel'         => env('DEBUGBAR_COLLECTORS_LARAVEL', true),          // Laravel version and environment
         'events'          => env('DEBUGBAR_COLLECTORS_EVENTS', false),          // All events fired
         'default_request' => env('DEBUGBAR_COLLECTORS_DEFAULT_REQUEST', false), // Regular or special Symfony request logger
@@ -183,8 +183,8 @@ return [
         'files'           => env('DEBUGBAR_COLLECTORS_FILES', false),           // Show the included files
         'config'          => env('DEBUGBAR_COLLECTORS_CONFIG', false),          // Display config settings
         'cache'           => env('DEBUGBAR_COLLECTORS_CACHE', false),           // Display cache events
-        'models'          => env('DEBUGBAR_COLLECTORS_MODELS', true),           // Display models
-        'livewire'        => env('DEBUGBAR_COLLECTORS_LIVEWIRE', true),         // Display Livewire (when available)
+        'models'          => env('DEBUGBAR_COLLECTORS_MODELS', false),          // Display models (DISABLED for performance)
+        'livewire'        => env('DEBUGBAR_COLLECTORS_LIVEWIRE', false),        // Display Livewire (DISABLED for performance)
         'jobs'            => env('DEBUGBAR_COLLECTORS_JOBS', false),            // Display dispatched jobs
         'pennant'         => env('DEBUGBAR_COLLECTORS_PENNANT', false),         // Display Pennant feature flags
     ],

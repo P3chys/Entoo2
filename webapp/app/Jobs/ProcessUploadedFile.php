@@ -156,12 +156,15 @@ class ProcessUploadedFile implements ShouldQueue
     }
 
     /**
-     * Clear all file-related caches using tags
+     * Clear all file-related caches
      */
     private function clearFileRelatedCaches(): void
     {
         Cache::tags(['files'])->flush();
         Cache::tags(['subjects'])->flush();
-        Cache::tags(['stats'])->flush();
+        // Clear simple cache keys for better Octane performance
+        Cache::forget('system:stats:comprehensive');
+        Cache::forget('subjects:with_counts');
+        Cache::forget('subjects:list');
     }
 }

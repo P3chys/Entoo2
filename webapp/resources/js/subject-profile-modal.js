@@ -3,6 +3,8 @@
  * Handles subject profile viewing, editing, and saving
  */
 
+import { renderSubjectProfile } from './subject-profile-renderer.js';
+
 /**
  * View subject profile in expandable panel
  */
@@ -55,81 +57,15 @@ window.viewSubjectProfile = async function(subjectName, event) {
  * Display subject profile in the expandable panel
  */
 window.displaySubjectProfileInPanel = function(panel, subjectName, profile) {
-    const token = localStorage.getItem('token');
+    // Use shared renderer with panel-specific styling
+    const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container profile-panel');
 
-    if (!profile) {
-        // No profile exists - show create option
-        panel.innerHTML = `
-            <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.5); border-top: 1px solid var(--glass-border);">
-                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                    No profile information available for <strong>${subjectName}</strong>
-                </p>
-                ${token ? `
-                    <button onclick="openProfileEditModal('${subjectName.replace(/'/g, "\\'")}', null)" class="btn btn-primary btn-small">
-                        ✏️ Create Profile
-                    </button>
-                ` : '<p style="color: var(--text-secondary); font-size: 0.9rem;">Login to create a profile</p>'}
-            </div>
-        `;
-    } else {
-        // Display existing profile
-        panel.innerHTML = `
-            <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.5); border-top: 1px solid var(--glass-border);">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">${subjectName}</h3>
-                    ${token ? `
-                        <button onclick='openProfileEditModal(${JSON.stringify(subjectName)}, ${JSON.stringify(profile)})' class="btn btn-primary btn-small">
-                            ✏️ Edit Profile
-                        </button>
-                    ` : ''}
-                </div>
-
-                ${profile.description ? `
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-secondary); font-size: 0.9rem;">Description:</strong>
-                        <p style="margin: 0.5rem 0 0 0;">${profile.description}</p>
-                    </div>
-                ` : ''}
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-                    ${profile.professor_name ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Professor:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.professor_name}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.course_code ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Course Code:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.course_code}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.semester || profile.year ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Semester:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.semester || ''} ${profile.year || ''}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.credits ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Credits:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.credits}</p>
-                        </div>
-                    ` : ''}
-                </div>
-
-                ${profile.notes ? `
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-secondary); font-size: 0.9rem;">Notes:</strong>
-                        <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">${profile.notes}</p>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }
+    // Wrap in panel container with border
+    panel.innerHTML = `
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.2);">
+            ${profileHTML}
+        </div>
+    `;
 }
 
 /**
