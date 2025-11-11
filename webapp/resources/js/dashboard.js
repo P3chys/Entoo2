@@ -4,6 +4,7 @@
  */
 
 import DOMPurify from 'dompurify';
+import { renderSubjectProfile } from './subject-profile-renderer.js';
 
 // Global state
 let allFiles = [];
@@ -290,7 +291,6 @@ function buildTreeStructure(subjects) {
 function buildSubjectTabsHTML(categories, subjectName, profile) {
     const categoryOrder = ['Prednasky', 'Otazky', 'Materialy', 'Seminare'];
     const subjectId = subjectName.replace(/[^a-zA-Z0-9]/g, '_');
-    const token = localStorage.getItem('token');
 
     // Build tab navigation - Profile tab + 4 category tabs
     let tabNavHTML = '<div class="tab-nav">';
@@ -327,79 +327,8 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
     // Build tab content - Profile content + 4 category contents
     let tabContentHTML = '';
 
-    // Profile tab content
-    let profileHTML = '';
-    if (!profile) {
-        profileHTML = `
-            <div style="padding: 1rem; background: rgba(255, 255, 255, 0.5); border-radius: var(--radius-md);">
-                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                    No profile information available for <strong>${subjectName}</strong>
-                </p>
-                ${token ? `
-                    <button onclick="openProfileEditModal('${subjectName.replace(/'/g, "\\'")}', null)" class="btn btn-primary btn-small">
-                        ✏️ Create Profile
-                    </button>
-                ` : '<p style="color: var(--text-secondary); font-size: 0.9rem;">Login to create a profile</p>'}
-            </div>
-        `;
-    } else {
-        profileHTML = `
-            <div style="padding: 1rem; background: rgba(255, 255, 255, 0.5); border-radius: var(--radius-md);">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">${subjectName}</h3>
-                    ${token ? `
-                        <button onclick='openProfileEditModal(${JSON.stringify(subjectName)}, ${JSON.stringify(profile)})' class="btn btn-primary btn-small">
-                            ✏️ Edit Profile
-                        </button>
-                    ` : ''}
-                </div>
-
-                ${profile.description ? `
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-secondary); font-size: 0.9rem;">Description:</strong>
-                        <p style="margin: 0.5rem 0 0 0;">${profile.description}</p>
-                    </div>
-                ` : ''}
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-                    ${profile.professor_name ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Professor:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.professor_name}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.course_code ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Course Code:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.course_code}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.semester || profile.year ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Semester:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.semester || ''} ${profile.year || ''}</p>
-                        </div>
-                    ` : ''}
-
-                    ${profile.credits ? `
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 0.9rem;">Credits:</strong>
-                            <p style="margin: 0.25rem 0 0 0;">${profile.credits}</p>
-                        </div>
-                    ` : ''}
-                </div>
-
-                ${profile.notes ? `
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-secondary); font-size: 0.9rem;">Notes:</strong>
-                        <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">${profile.notes}</p>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }
+    // Profile tab content - use shared renderer
+    const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container');
 
     tabContentHTML += `
         <div class="tab-content active" id="tab-${subjectId}-Profile">
