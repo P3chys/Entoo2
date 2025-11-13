@@ -51,3 +51,8 @@ Route::get('/dashboard/user/{userId}/{userName?}', function ($userId, $userName 
 Route::get('/favorites', function () {
     return view('favorites');
 })->name('favorites');
+
+// Admin dashboard (requires admin authentication)
+Route::get('/admin', function () {
+    return view('admin.dashboard');
+})->name('admin.dashboard');

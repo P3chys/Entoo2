@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register custom middleware aliases
         $middleware->alias([
             'conditional.throttle' => \App\Http\Middleware\ConditionalThrottle::class,
+            'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
 
         // Note: CacheSanctumToken middleware temporarily disabled due to Octane compatibility issues
