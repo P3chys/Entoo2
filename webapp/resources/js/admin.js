@@ -86,6 +86,13 @@ class AdminDashboard {
                 e.preventDefault();
                 this.saveUser();
             });
+
+            // Clear error styling when user starts typing
+            userForm.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', () => {
+                    input.classList.remove('input-error');
+                });
+            });
         }
 
         // Search and filters
@@ -485,17 +492,51 @@ class AdminDashboard {
     }
 
     async saveUser() {
-        const userId = document.getElementById('userId').value;
-        const name = document.getElementById('userName').value;
-        const email = document.getElementById('userEmail').value;
-        const password = document.getElementById('userPassword').value;
-        const isAdmin = document.getElementById('userIsAdmin').checked;
+        // Clear previous validation errors
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.classList.remove('input-error');
+        });
 
-        const data = { name, email, is_admin: isAdmin };
+        const userId = document.getElementById('userId')?.value || '';
+        const name = document.getElementById('userName')?.value?.trim() || '';
+        const email = document.getElementById('userEmail')?.value?.trim() || '';
+        const password = document.getElementById('userPassword')?.value || '';
+        const isAdmin = document.getElementById('userIsAdmin')?.checked || false;
+
+        // Client-side validation
+        let hasError = false;
+
+        if (!name) {
+            document.getElementById('userName').classList.add('input-error');
+            hasError = true;
+        }
+
+        if (!email) {
+            document.getElementById('userEmail').classList.add('input-error');
+            hasError = true;
+        }
+
+        if (!userId && !password) {
+            document.getElementById('userPassword').classList.add('input-error');
+            this.showNotification('Password is required for new users', 'error');
+            hasError = true;
+        }
+
+        if (hasError) {
+            return;
+        }
+
+        const data = {
+            name: name,
+            email: email,
+            is_admin: isAdmin
+        };
 
         if (password) {
             data.password = password;
         }
+
+        console.log('Sending user data:', data); // Debug log
 
         try {
             if (userId) {
@@ -505,10 +546,6 @@ class AdminDashboard {
                 });
                 this.showNotification('User updated successfully', 'success');
             } else {
-                if (!password) {
-                    this.showNotification('Password is required for new users', 'error');
-                    return;
-                }
                 await apiRequest('/api/admin/users', {
                     method: 'POST',
                     body: JSON.stringify(data)
@@ -521,6 +558,22 @@ class AdminDashboard {
             this.loadStats();
         } catch (error) {
             console.error('Error saving user:', error);
+
+            // Highlight fields with errors
+            if (error.errors) {
+                Object.keys(error.errors).forEach(field => {
+                    const fieldMap = {
+                        'name': 'userName',
+                        'email': 'userEmail',
+                        'password': 'userPassword'
+                    };
+                    const inputId = fieldMap[field];
+                    if (inputId) {
+                        document.getElementById(inputId)?.classList.add('input-error');
+                    }
+                });
+            }
+
             const message = error.errors ? Object.values(error.errors).flat().join(', ') : 'Failed to save user';
             this.showNotification(message, 'error');
         }
