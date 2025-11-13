@@ -519,10 +519,21 @@ class AdminDashboard {
             input.classList.remove('input-error');
         });
 
+        const userNameEl = document.getElementById('userName');
+        const userEmailEl = document.getElementById('userEmail');
+        const userPasswordEl = document.getElementById('userPassword');
+
+        console.log('Input elements:', {
+            nameEl: userNameEl,
+            nameValue: userNameEl?.value,
+            emailEl: userEmailEl,
+            emailValue: userEmailEl?.value
+        });
+
         const userId = document.getElementById('userId')?.value || '';
-        const name = document.getElementById('userName')?.value?.trim() || '';
-        const email = document.getElementById('userEmail')?.value?.trim() || '';
-        const password = document.getElementById('userPassword')?.value || '';
+        const name = userNameEl?.value?.trim() || '';
+        const email = userEmailEl?.value?.trim() || '';
+        const password = userPasswordEl?.value || '';
         const isAdmin = document.getElementById('userIsAdmin')?.checked || false;
 
         console.log('Form values:', { userId, name, email, password: password ? '***' : '', isAdmin });

@@ -151,23 +151,23 @@
         </div>
         <div class="modal-body">
             <form id="userForm">
-                <input type="hidden" id="userId">
+                <input type="hidden" id="userId" name="user_id">
                 <div class="form-group">
                     <label for="userName">Name</label>
-                    <input type="text" id="userName" required>
+                    <input type="text" id="userName" name="name" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="userEmail">Email</label>
-                    <input type="email" id="userEmail" required>
+                    <input type="email" id="userEmail" name="email" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="userPassword">Password</label>
-                    <input type="password" id="userPassword">
+                    <input type="password" id="userPassword" name="password" autocomplete="new-password">
                     <small id="passwordHelp" class="form-text">Leave blank to keep current password</small>
                 </div>
                 <div class="form-group checkbox-group">
                     <label>
-                        <input type="checkbox" id="userIsAdmin">
+                        <input type="checkbox" id="userIsAdmin" name="is_admin">
                         <span>Admin User</span>
                     </label>
                 </div>
