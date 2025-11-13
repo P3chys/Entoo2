@@ -49,9 +49,17 @@ class AdminDashboard {
     async checkAdminAccess() {
         try {
             const response = await apiRequest('/api/user');
-            if (!response.is_admin) {
+            const user = response.user || response;
+
+            console.log('Admin check - User data:', user);
+
+            if (!user || !user.is_admin) {
+                console.log('Not admin, redirecting to dashboard');
                 window.location.href = '/dashboard';
+                return;
             }
+
+            console.log('Admin access granted');
         } catch (error) {
             console.error('Error checking admin access:', error);
             window.location.href = '/login';
