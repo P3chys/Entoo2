@@ -34,9 +34,6 @@
                     <a href="/dashboard" class="nav-link">
                         Dashboard
                     </a>
-                    <a href="/admin" class="nav-link" id="adminLink" style="display: none;">
-                        Admin
-                    </a>
                     <div class="divider-vertical" style="height: 24px;"></div>
                     <a href="#" onclick="showProfileModal(event)" class="nav-link user-profile-link" id="userInfo">
                         <div class="avatar avatar-sm" id="userAvatar"></div>
@@ -122,7 +119,6 @@
             const authLinks = document.getElementById('authLinks');
             const userAvatar = document.getElementById('userAvatar');
             const userName = document.getElementById('userName');
-            const adminLink = document.getElementById('adminLink');
 
             if (token && user) {
                 guestLinks.style.display = 'none';
@@ -134,11 +130,6 @@
                 }
                 if (userAvatar) {
                     userAvatar.textContent = name.charAt(0).toUpperCase();
-                }
-
-                // Show admin link if user is admin
-                if (adminLink) {
-                    adminLink.style.display = user.is_admin ? 'inline-flex' : 'none';
                 }
             } else {
                 guestLinks.style.display = 'flex';

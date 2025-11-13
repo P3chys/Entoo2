@@ -1,4 +1,27 @@
-import { apiRequest } from './utils/api.js';
+/**
+ * Make authenticated API request
+ */
+async function apiRequest(url, options = {}) {
+    const token = localStorage.getItem('token');
+    const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw error;
+    }
+
+    return response.json();
+}
 
 class AdminDashboard {
     constructor() {
