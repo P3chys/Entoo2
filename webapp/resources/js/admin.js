@@ -89,8 +89,10 @@ class AdminDashboard {
         }
 
         const userForm = document.getElementById('userForm');
+        console.log('Binding userForm events, form found:', !!userForm);
         if (userForm) {
             userForm.addEventListener('submit', (e) => {
+                console.log('Form submit event triggered');
                 e.preventDefault();
                 this.saveUser();
             });
@@ -510,6 +512,8 @@ class AdminDashboard {
     }
 
     async saveUser() {
+        console.log('saveUser() called');
+
         // Clear previous validation errors
         document.querySelectorAll('.form-group input').forEach(input => {
             input.classList.remove('input-error');
@@ -520,6 +524,8 @@ class AdminDashboard {
         const email = document.getElementById('userEmail')?.value?.trim() || '';
         const password = document.getElementById('userPassword')?.value || '';
         const isAdmin = document.getElementById('userIsAdmin')?.checked || false;
+
+        console.log('Form values:', { userId, name, email, password: password ? '***' : '', isAdmin });
 
         // Client-side validation
         let hasError = false;
