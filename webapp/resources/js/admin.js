@@ -465,6 +465,11 @@ class AdminDashboard {
         const passwordHelp = document.getElementById('passwordHelp');
         const passwordInput = document.getElementById('userPassword');
 
+        // Clear all validation errors
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.classList.remove('input-error');
+        });
+
         if (userId) {
             title.textContent = 'Edit User';
             passwordHelp.style.display = 'block';
@@ -474,8 +479,13 @@ class AdminDashboard {
             title.textContent = 'Create User';
             passwordHelp.style.display = 'none';
             passwordInput.required = true;
-            document.getElementById('userForm').reset();
+
+            // Explicitly clear all form fields
             document.getElementById('userId').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userIsAdmin').checked = false;
         }
 
         modal.classList.add('show');

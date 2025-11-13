@@ -40,6 +40,9 @@ class AdminController extends Controller
      */
     public function createUser(Request $request)
     {
+        // Debug: Log raw request data
+        \Log::info('Create user - Raw request:', $request->all());
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -47,12 +50,18 @@ class AdminController extends Controller
             'is_admin' => 'boolean',
         ]);
 
+        // Debug: Log validated data
+        \Log::info('Create user - Validated data:', $validated);
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'is_admin' => $validated['is_admin'] ?? false,
         ]);
+
+        // Debug: Log created user
+        \Log::info('Create user - Created user:', $user->toArray());
 
         return response()->json([
             'message' => 'User created successfully',
