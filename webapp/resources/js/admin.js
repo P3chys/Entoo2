@@ -51,15 +51,10 @@ class AdminDashboard {
             const response = await apiRequest('/api/user');
             const user = response.user || response;
 
-            console.log('Admin check - User data:', user);
-
             if (!user || !user.is_admin) {
-                console.log('Not admin, redirecting to dashboard');
                 window.location.href = '/dashboard';
                 return;
             }
-
-            console.log('Admin access granted');
         } catch (error) {
             console.error('Error checking admin access:', error);
             window.location.href = '/login';
@@ -89,10 +84,8 @@ class AdminDashboard {
         }
 
         const userForm = document.getElementById('userForm');
-        console.log('Binding userForm events, form found:', !!userForm);
         if (userForm) {
             userForm.addEventListener('submit', (e) => {
-                console.log('Form submit event triggered');
                 e.preventDefault();
                 this.saveUser();
             });
@@ -512,8 +505,6 @@ class AdminDashboard {
     }
 
     async saveUser() {
-        console.log('saveUser() called');
-
         // Clear previous validation errors
         document.querySelectorAll('.form-group input').forEach(input => {
             input.classList.remove('input-error');
@@ -528,8 +519,6 @@ class AdminDashboard {
         const email = (formData.get('email') || '').trim();
         const password = formData.get('password') || '';
         const isAdmin = formData.get('is_admin') === 'on';
-
-        console.log('Form values from FormData:', { userId, name, email, password: password ? '***' : '', isAdmin });
 
         // Client-side validation
         let hasError = false;
@@ -563,8 +552,6 @@ class AdminDashboard {
         if (password) {
             data.password = password;
         }
-
-        console.log('Sending user data:', data); // Debug log
 
         try {
             if (userId) {

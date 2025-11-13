@@ -12,25 +12,42 @@ use Illuminate\Validation\Rule;
 class AdminController extends Controller
 {
     /**
-     * Get all users with pagination
+     * Clear all admin-related caches
+     */
+    private function clearAdminCache()
+    {
+        \Cache::forget('admin:stats');
+        // Clear all cached user pages (wildcards not supported, so we clear what we know)
+        for ($i = 1; $i <= 10; $i++) {
+            \Cache::forget("admin:users:page:{$i}:search:" . md5(''));
+        }
+    }
+
+    /**
+     * Get all users with pagination (cached per page/search)
      */
     public function getUsers(Request $request)
     {
         $perPage = $request->input('per_page', 15);
-        $search = $request->input('search');
+        $search = $request->input('search', '');
+        $page = $request->input('page', 1);
 
-        $query = User::query();
+        $cacheKey = "admin:users:page:{$page}:search:" . md5($search);
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('email', 'ILIKE', "%{$search}%");
-            });
-        }
+        $users = \Cache::remember($cacheKey, 300, function () use ($search, $perPage) {
+            $query = User::query();
 
-        $users = $query->withCount('uploadedFiles')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'ILIKE', "%{$search}%")
+                      ->orWhere('email', 'ILIKE', "%{$search}%");
+                });
+            }
+
+            return $query->withCount('uploadedFiles')
+                ->orderBy('created_at', 'desc')
+                ->paginate($perPage);
+        });
 
         return response()->json($users);
     }
@@ -40,18 +57,12 @@ class AdminController extends Controller
      */
     public function createUser(Request $request)
     {
-        // Debug: Log raw request data
-        \Log::info('Create user - Raw request:', $request->all());
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'is_admin' => 'boolean',
         ]);
-
-        // Debug: Log validated data
-        \Log::info('Create user - Validated data:', $validated);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -60,8 +71,8 @@ class AdminController extends Controller
             'is_admin' => $validated['is_admin'] ?? false,
         ]);
 
-        // Debug: Log created user
-        \Log::info('Create user - Created user:', $user->toArray());
+        // Clear admin cache
+        $this->clearAdminCache();
 
         return response()->json([
             'message' => 'User created successfully',
@@ -87,6 +98,9 @@ class AdminController extends Controller
 
         $user->update($validated);
 
+        // Clear admin cache
+        $this->clearAdminCache();
+
         return response()->json([
             'message' => 'User updated successfully',
             'user' => $user->fresh(),
@@ -107,45 +121,53 @@ class AdminController extends Controller
 
         $user->delete();
 
+        // Clear admin cache
+        $this->clearAdminCache();
+
         return response()->json([
             'message' => 'User deleted successfully',
         ]);
     }
 
     /**
-     * Get all files with pagination and filters
+     * Get all files with pagination and filters (cached per page/filters)
      */
     public function getFiles(Request $request)
     {
         $perPage = $request->input('per_page', 15);
-        $search = $request->input('search');
-        $subject = $request->input('subject');
-        $category = $request->input('category');
-        $userId = $request->input('user_id');
+        $search = $request->input('search', '');
+        $subject = $request->input('subject', '');
+        $category = $request->input('category', '');
+        $userId = $request->input('user_id', '');
+        $page = $request->input('page', 1);
 
-        $query = UploadedFile::with('user:id,name,email');
+        $cacheKey = "admin:files:page:{$page}:" . md5($search . $subject . $category . $userId);
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('original_filename', 'ILIKE', "%{$search}%")
-                  ->orWhere('subject_name', 'ILIKE', "%{$search}%");
-            });
-        }
+        $files = \Cache::remember($cacheKey, 300, function () use ($search, $subject, $category, $userId, $perPage) {
+            $query = UploadedFile::with('user:id,name,email');
 
-        if ($subject) {
-            $query->where('subject_name', $subject);
-        }
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('original_filename', 'ILIKE', "%{$search}%")
+                      ->orWhere('subject_name', 'ILIKE', "%{$search}%");
+                });
+            }
 
-        if ($category) {
-            $query->where('category', $category);
-        }
+            if ($subject) {
+                $query->where('subject_name', $subject);
+            }
 
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
+            if ($category) {
+                $query->where('category', $category);
+            }
 
-        $files = $query->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+
+            return $query->orderBy('created_at', 'desc')
+                ->paginate($perPage);
+        });
 
         return response()->json($files);
     }
@@ -170,27 +192,32 @@ class AdminController extends Controller
         // Delete database record
         $file->delete();
 
+        // Clear admin cache
+        $this->clearAdminCache();
+
         return response()->json([
             'message' => 'File deleted successfully',
         ]);
     }
 
     /**
-     * Get dashboard statistics
+     * Get dashboard statistics (cached for 5 minutes)
      */
     public function getStats()
     {
-        $stats = [
-            'total_users' => User::count(),
-            'total_files' => UploadedFile::count(),
-            'total_subjects' => UploadedFile::distinct('subject_name')->count('subject_name'),
-            'total_storage' => UploadedFile::sum('file_size'),
-            'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at']),
-            'recent_files' => UploadedFile::with('user:id,name')
-                ->orderBy('created_at', 'desc')
-                ->take(5)
-                ->get(['id', 'original_filename', 'subject_name', 'user_id', 'created_at', 'file_size']),
-        ];
+        $stats = \Cache::remember('admin:stats', 300, function () {
+            return [
+                'total_users' => User::count(),
+                'total_files' => UploadedFile::count(),
+                'total_subjects' => UploadedFile::distinct('subject_name')->count('subject_name'),
+                'total_storage' => UploadedFile::sum('file_size'),
+                'recent_users' => User::orderBy('created_at', 'desc')->take(5)->get(['id', 'name', 'email', 'created_at']),
+                'recent_files' => UploadedFile::with('user:id,name')
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get(['id', 'original_filename', 'subject_name', 'user_id', 'created_at', 'file_size']),
+            ];
+        });
 
         return response()->json($stats);
     }
