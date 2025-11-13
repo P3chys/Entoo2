@@ -519,24 +519,17 @@ class AdminDashboard {
             input.classList.remove('input-error');
         });
 
-        const userNameEl = document.getElementById('userName');
-        const userEmailEl = document.getElementById('userEmail');
-        const userPasswordEl = document.getElementById('userPassword');
+        // Use FormData to reliably read all form values
+        const form = document.getElementById('userForm');
+        const formData = new FormData(form);
 
-        console.log('Input elements:', {
-            nameEl: userNameEl,
-            nameValue: userNameEl?.value,
-            emailEl: userEmailEl,
-            emailValue: userEmailEl?.value
-        });
+        const userId = formData.get('user_id') || '';
+        const name = (formData.get('name') || '').trim();
+        const email = (formData.get('email') || '').trim();
+        const password = formData.get('password') || '';
+        const isAdmin = formData.get('is_admin') === 'on';
 
-        const userId = document.getElementById('userId')?.value || '';
-        const name = userNameEl?.value?.trim() || '';
-        const email = userEmailEl?.value?.trim() || '';
-        const password = userPasswordEl?.value || '';
-        const isAdmin = document.getElementById('userIsAdmin')?.checked || false;
-
-        console.log('Form values:', { userId, name, email, password: password ? '***' : '', isAdmin });
+        console.log('Form values from FormData:', { userId, name, email, password: password ? '***' : '', isAdmin });
 
         // Client-side validation
         let hasError = false;
