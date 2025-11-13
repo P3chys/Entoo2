@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\FileController;
@@ -61,4 +62,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subject-profiles', [\App\Http\Controllers\Api\SubjectProfileController::class, 'store']);
     Route::put('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'update']);
     Route::delete('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'destroy']);
+});
+
+// Admin routes (require authentication + admin role)
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Dashboard stats
+    Route::get('/stats', [AdminController::class, 'getStats']);
+
+    // User management
+    Route::get('/users', [AdminController::class, 'getUsers']);
+    Route::post('/users', [AdminController::class, 'createUser']);
+    Route::put('/users/{user}', [AdminController::class, 'updateUser']);
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
+
+    // File management
+    Route::get('/files', [AdminController::class, 'getFiles']);
+    Route::delete('/files/{file}', [AdminController::class, 'deleteFile']);
 });

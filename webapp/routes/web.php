@@ -51,3 +51,10 @@ Route::get('/dashboard/user/{userId}/{userName?}', function ($userId, $userName 
 Route::get('/favorites', function () {
     return view('favorites');
 })->name('favorites');
+
+// Admin dashboard
+// Security: admin.js checks user.is_admin on page load and redirects non-admins
+// All admin API endpoints are protected with auth:sanctum + admin middleware
+Route::get('/admin', function () {
+    return view('admin.dashboard');
+})->name('admin.dashboard');
