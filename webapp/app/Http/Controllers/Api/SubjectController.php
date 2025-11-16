@@ -8,6 +8,7 @@ use App\Services\ElasticsearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class SubjectController extends Controller
 {
@@ -17,11 +18,44 @@ class SubjectController extends Controller
     {
         $this->elasticsearchService = $elasticsearchService;
     }
-    /**
-     * Get all unique subjects (visible to all authenticated users)
-     * Cached for 30 minutes for better performance
-     * Uses Elasticsearch for much faster performance
-     */
+
+    #[OA\Get(
+        path: '/api/subjects',
+        summary: 'Get all unique subjects',
+        description: 'Returns list of all subjects. Optionally includes file counts per subject. Uses Elasticsearch for faster performance. Cached for 30 minutes.',
+        security: [['sanctum' => []]],
+        tags: ['Subjects'],
+        parameters: [
+            new OA\Parameter(name: 'with_counts', in: 'query', required: false, schema: new OA\Schema(type: 'boolean', default: false), description: 'Include file counts per subject'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Subjects list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'subjects',
+                            type: 'array',
+                            items: new OA\Items(
+                                oneOf: [
+                                    new OA\Schema(type: 'string', example: 'Matematická analýza'),
+                                    new OA\Schema(
+                                        type: 'object',
+                                        properties: [
+                                            new OA\Property(property: 'subject_name', type: 'string'),
+                                            new OA\Property(property: 'file_count', type: 'integer'),
+                                        ]
+                                    ),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(Request $request)
     {
         $withCounts = $request->boolean('with_counts', false);
@@ -49,11 +83,39 @@ class SubjectController extends Controller
             ->header('Cache-Control', 'public, max-age=300');
     }
 
-    /**
-     * Get categories and file counts for a subject
-     * Always returns all valid categories, even if empty
-     * Cached for 5 minutes per subject
-     */
+    #[OA\Get(
+        path: '/api/subjects/{subjectName}',
+        summary: 'Get categories and file counts for a subject',
+        description: 'Returns all valid categories with file counts for a specific subject. Always returns all categories, even if empty (count=0). Cached for 5 minutes.',
+        security: [['sanctum' => []]],
+        tags: ['Subjects'],
+        parameters: [
+            new OA\Parameter(name: 'subjectName', in: 'path', required: true, schema: new OA\Schema(type: 'string'), description: 'Subject name'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Subject categories with file counts',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'subject_name', type: 'string', example: 'Matematická analýza'),
+                        new OA\Property(
+                            property: 'categories',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'category', type: 'string', example: 'Materialy'),
+                                    new OA\Property(property: 'file_count', type: 'integer', example: 15),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function show(Request $request, string $subjectName)
     {
         $cacheKey = 'subject:' . md5($subjectName) . ':categories';
@@ -86,9 +148,30 @@ class SubjectController extends Controller
         ]);
     }
 
-    /**
-     * Get available categories
-     */
+    #[OA\Get(
+        path: '/api/categories',
+        summary: 'Get available categories',
+        description: 'Returns the list of all valid file categories in the system.',
+        security: [['sanctum' => []]],
+        tags: ['Subjects'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Categories list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'categories',
+                            type: 'array',
+                            items: new OA\Items(type: 'string'),
+                            example: ['Prednasky', 'Otazky', 'Materialy', 'Seminare']
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function categories(Request $request)
     {
         $categories = ['Prednasky', 'Otazky', 'Materialy', 'Seminare'];

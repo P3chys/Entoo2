@@ -354,6 +354,8 @@ docker exec -it php php artisan migrate:fresh --seed  # Fresh start with seeds
 
 Access services at:
 - **Application**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/api/documentation (Swagger UI)
+- **Telescope**: http://localhost:8000/telescope (local only)
 - **Elasticsearch**: http://localhost:9200
 - **Kibana**: http://localhost:5601
 - **Dozzle** (logs viewer): http://localhost:8888
@@ -382,33 +384,75 @@ Telescope provides debugging and monitoring capabilities for your Laravel applic
 - Configuration: [config/telescope.php](webapp/config/telescope.php)
 - Environment variable: `TELESCOPE_ENABLED` (optional override)
 
-### Laravel Debugbar
-
-Debugbar displays a debug toolbar at the bottom of your application pages.
-
-**Features:**
-- Timeline with PHP execution and database queries
-- Memory usage tracking
-- Query log with execution time and bindings
-- View rendering time
-- Route information
-- Session data inspection
-- Request/Response headers
-
-**Configuration:**
-- Automatically enabled in local environment only
-- Configuration: [config/debugbar.php](webapp/config/debugbar.php)
-- Environment variables:
-  - `DEBUGBAR_ENABLED` - Override enable/disable (defaults to local environment)
-  - `DEBUGBAR_HIDE_EMPTY_TABS` - Hide tabs with no content
-
 **Disabling in Development:**
-If you need to temporarily disable these tools:
+If you need to temporarily disable Telescope:
 ```bash
 # In .env file
-DEBUGBAR_ENABLED=false
 TELESCOPE_ENABLED=false
 ```
+
+### API Documentation (Swagger/OpenAPI)
+
+Complete OpenAPI 3.0.0 documentation is generated for all API endpoints using L5-Swagger.
+
+**Access:** http://localhost:8000/api/documentation (interactive Swagger UI)
+
+**Features:**
+- Complete API endpoint documentation with examples
+- Request/response schemas with validation rules
+- Try-it-out functionality for testing endpoints
+- Authentication support (Bearer token)
+- Organized by tags (Authentication, Files, Search, etc.)
+- 28 documented endpoints across 8 controllers
+
+**Exported Documentation:**
+- **File**: [documentation/entoo-api-swagger.json](documentation/entoo-api-swagger.json)
+- **Format**: OpenAPI 3.0.0 JSON (117 KB)
+- **Use**: Import into Confluence, Postman, or other API tools
+
+**Regenerate Documentation:**
+```bash
+# After adding/modifying OpenAPI annotations
+docker exec php php artisan l5-swagger:generate
+
+# Export to documentation folder
+docker exec php cat storage/api-docs/api-docs.json > documentation/entoo-api-swagger.json
+```
+
+**Adding Documentation to New Endpoints:**
+1. Add `use OpenApi\Attributes as OA;` to controller
+2. Add OpenAPI attributes above controller methods:
+```php
+#[OA\Get(
+    path: '/api/your-endpoint',
+    summary: 'Brief description',
+    description: 'Detailed description',
+    security: [['sanctum' => []]],  // If authentication required
+    tags: ['YourTag'],
+    parameters: [
+        new OA\Parameter(name: 'param', in: 'query', required: false,
+            schema: new OA\Schema(type: 'string'), description: 'Param description'),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Success response',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                ]
+            )
+        ),
+        new OA\Response(response: 401, description: 'Unauthenticated'),
+    ]
+)]
+public function yourMethod(Request $request)
+```
+3. Regenerate documentation with `php artisan l5-swagger:generate`
+
+**Configuration:**
+- Config file: [config/l5-swagger.php](webapp/config/l5-swagger.php)
+- Base metadata: [app/Http/Controllers/Api/OpenApiController.php](webapp/app/Http/Controllers/Api/OpenApiController.php)
 
 ## Environment Configuration
 
@@ -427,9 +471,11 @@ ELASTICSEARCH_HOST=http://elasticsearch:9200
 
 1. Add route in `routes/api.php`
 2. Create/modify controller in `app/Http/Controllers/Api/`
-3. Update model if needed in `app/Models/`
-4. Add validation using FormRequest if complex
-5. Test with `php artisan test`
+3. Add OpenAPI annotations (see API Documentation section for examples)
+4. Update model if needed in `app/Models/`
+5. Add validation using FormRequest if complex
+6. Test with `php artisan test`
+7. Regenerate API documentation: `php artisan l5-swagger:generate`
 
 ### Adding a New Artisan Command
 

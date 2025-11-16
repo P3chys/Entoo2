@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use OpenApi\Attributes as OA;
 
 class FileController extends Controller
 {
@@ -26,11 +27,34 @@ class FileController extends Controller
         $this->elasticsearchService = $elasticsearchService;
     }
 
-    /**
-     * List all files (visible to all authenticated users)
-     * Cached for 5 minutes
-     * Uses Elasticsearch for much faster performance when filtering by subject
-     */
+    #[OA\Get(
+        path: '/api/files',
+        summary: 'List all files with optional filtering',
+        description: 'Retrieves files with optional filters. Uses Elasticsearch for subject-only queries (faster). Cached for 5 minutes.',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'subject_name', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Filter by subject name'),
+            new OA\Parameter(name: 'category', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['Prednasky', 'Otazky', 'Materialy', 'Seminare']), description: 'Filter by category'),
+            new OA\Parameter(name: 'extension', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Filter by file extension'),
+            new OA\Parameter(name: 'user_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), description: 'Filter by uploader user ID'),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 20, maximum: 1000), description: 'Items per page'),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1), description: 'Page number'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Files list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'total', type: 'integer', example: 100),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function index(Request $request)
     {
         // Use Elasticsearch when filtering by subject only (most common use case)
@@ -95,9 +119,43 @@ class FileController extends Controller
         return response()->json($files);
     }
 
-    /**
-     * Upload a new file
-     */
+    #[OA\Post(
+        path: '/api/files',
+        summary: 'Upload a new file',
+        description: 'Uploads a file for a subject. File is processed asynchronously for text extraction and Elasticsearch indexing.',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['file', 'subject_name', 'category'],
+                    properties: [
+                        new OA\Property(property: 'file', type: 'string', format: 'binary', description: 'File to upload (max 50MB). Supported: PDF, DOC, DOCX, PPT, PPTX, TXT'),
+                        new OA\Property(property: 'subject_name', type: 'string', maxLength: 200, example: 'Matematická analýza'),
+                        new OA\Property(property: 'category', type: 'string', enum: ['Prednasky', 'Otazky', 'Materialy', 'Seminare'], example: 'Materialy'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'File uploaded successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'File uploaded successfully and is being processed'),
+                        new OA\Property(property: 'file', type: 'object'),
+                        new OA\Property(property: 'status', type: 'string', example: 'processing'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error or unsupported file type'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 500, description: 'Upload failed'),
+        ]
+    )]
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -160,9 +218,29 @@ class FileController extends Controller
         }
     }
 
-    /**
-     * Get file details
-     */
+    #[OA\Get(
+        path: '/api/files/{id}',
+        summary: 'Get file details',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'File ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'File details',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'file', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'File not found'),
+            new OA\Response(response: 403, description: 'Not authorized'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function show(Request $request, int $id)
     {
         $file = UploadedFile::findOrFail($id);
@@ -173,9 +251,33 @@ class FileController extends Controller
         return response()->json(['file' => $file]);
     }
 
-    /**
-     * Get processing status for a file
-     */
+    #[OA\Get(
+        path: '/api/files/{id}/status',
+        summary: 'Get file processing status',
+        description: 'Returns the current processing status of an uploaded file (pending/processing/completed/failed)',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'File ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Processing status',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'id', type: 'integer', example: 1),
+                        new OA\Property(property: 'processing_status', type: 'string', enum: ['pending', 'processing', 'completed', 'failed'], example: 'completed'),
+                        new OA\Property(property: 'processing_error', type: 'string', nullable: true),
+                        new OA\Property(property: 'processed_at', type: 'string', format: 'date-time', nullable: true),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'File not found'),
+            new OA\Response(response: 403, description: 'Not authorized'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function status(Request $request, int $id)
     {
         $file = UploadedFile::findOrFail($id);
@@ -191,11 +293,28 @@ class FileController extends Controller
         ]);
     }
 
-    /**
-     * Download file
-     *
-     * Authorization: All authenticated users can download files (document sharing platform)
-     */
+    #[OA\Get(
+        path: '/api/files/{id}/download',
+        summary: 'Download a file',
+        description: 'Downloads the file. All authenticated users can download any file (document sharing platform).',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'File ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'File download',
+                content: new OA\MediaType(
+                    mediaType: 'application/octet-stream',
+                    schema: new OA\Schema(type: 'string', format: 'binary')
+                )
+            ),
+            new OA\Response(response: 404, description: 'File not found'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function download(Request $request, int $id)
     {
         $file = UploadedFile::findOrFail($id);
@@ -224,9 +343,31 @@ class FileController extends Controller
         ], 404);
     }
 
-    /**
-     * Delete file (only owner can delete)
-     */
+    #[OA\Delete(
+        path: '/api/files/{id}',
+        summary: 'Delete a file',
+        description: 'Deletes a file from storage, database, and Elasticsearch. Only the file owner can delete it.',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'File ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'File deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'File deleted successfully'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'File not found'),
+            new OA\Response(response: 403, description: 'Not authorized (only owner can delete)'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function destroy(Request $request, int $id)
     {
         $file = UploadedFile::findOrFail($id);
@@ -268,10 +409,35 @@ class FileController extends Controller
         }
     }
 
-    /**
-     * Browse files by subject and category
-     * Cached for 5 minutes
-     */
+    #[OA\Get(
+        path: '/api/files/browse',
+        summary: 'Browse files by subject and category',
+        description: 'Browse files with optional filtering. Cached for 5 minutes. Paginated results (20 per page).',
+        security: [['sanctum' => []]],
+        tags: ['Files'],
+        parameters: [
+            new OA\Parameter(name: 'subject_name', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Filter by subject name'),
+            new OA\Parameter(name: 'category', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['Prednasky', 'Otazky', 'Materialy', 'Seminare']), description: 'Filter by category'),
+            new OA\Parameter(name: 'user_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), description: 'Filter by user ID'),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1), description: 'Page number'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Files list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'current_page', type: 'integer'),
+                        new OA\Property(property: 'last_page', type: 'integer'),
+                        new OA\Property(property: 'total', type: 'integer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function browse(Request $request)
     {
         $request->validate([

@@ -11,12 +11,51 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
-    /**
-     * Register a new user
-     */
+    #[OA\Post(
+        path: '/api/auth/register',
+        summary: 'Register a new user',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'email', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'password123'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'password123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'User registered successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User registered successfully'),
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                        new OA\Property(property: 'token', type: 'string', example: '1|abcdef1234567890'),
+                        new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -41,9 +80,44 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Login user and create token
-     */
+    #[OA\Post(
+        path: '/api/auth/login',
+        summary: 'Login user and create token',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Login successful'),
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                            ]
+                        ),
+                        new OA\Property(property: 'token', type: 'string', example: '1|abcdef1234567890'),
+                        new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Invalid credentials'),
+        ]
+    )]
     public function login(Request $request)
     {
         $request->validate([
@@ -73,9 +147,24 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout user (revoke token)
-     */
+    #[OA\Post(
+        path: '/api/auth/logout',
+        summary: 'Logout user (revoke current token)',
+        security: [['sanctum' => []]],
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logged out successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Logged out successfully'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -85,9 +174,32 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get authenticated user
-     */
+    #[OA\Get(
+        path: '/api/auth/user',
+        summary: 'Get authenticated user information',
+        security: [['sanctum' => []]],
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User information',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function user(Request $request)
     {
         return response()->json([
@@ -95,9 +207,51 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get user profile with uploaded files stats
-     */
+    #[OA\Get(
+        path: '/api/auth/profile',
+        summary: 'Get user profile with uploaded files statistics',
+        security: [['sanctum' => []]],
+        tags: ['Authentication'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User profile with statistics',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                            ]
+                        ),
+                        new OA\Property(
+                            property: 'stats',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'total_files', type: 'integer', example: 42),
+                                new OA\Property(property: 'total_size', type: 'integer', example: 104857600),
+                                new OA\Property(property: 'total_size_formatted', type: 'string', example: '100 MB'),
+                                new OA\Property(
+                                    property: 'files_by_category',
+                                    type: 'object',
+                                    example: ['Materialy' => 15, 'Otazky' => 10]
+                                ),
+                            ]
+                        ),
+                        new OA\Property(
+                            property: 'recent_uploads',
+                            type: 'array',
+                            items: new OA\Items(type: 'object')
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function profile(Request $request)
     {
         $user = $request->user();
@@ -130,9 +284,36 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Change user password
-     */
+    #[OA\Post(
+        path: '/api/auth/change-password',
+        summary: 'Change user password',
+        security: [['sanctum' => []]],
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['current_password', 'new_password', 'new_password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'current_password', type: 'string', format: 'password', example: 'oldpassword123'),
+                    new OA\Property(property: 'new_password', type: 'string', format: 'password', minLength: 8, example: 'newpassword123'),
+                    new OA\Property(property: 'new_password_confirmation', type: 'string', format: 'password', example: 'newpassword123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Password changed successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Password changed successfully. Please log in again.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error or incorrect current password'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function changePassword(Request $request)
     {
         $validated = $request->validate([
@@ -162,9 +343,32 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Request password reset (forgot password)
-     */
+    #[OA\Post(
+        path: '/api/auth/forgot-password',
+        summary: 'Request password reset email',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Password reset link sent',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Password reset instructions have been sent to your email address.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error or unable to send reset link'),
+        ]
+    )]
     public function forgotPassword(Request $request)
     {
         $request->validate([
@@ -188,9 +392,35 @@ class AuthController extends Controller
         ], 422);
     }
 
-    /**
-     * Reset password using token
-     */
+    #[OA\Post(
+        path: '/api/auth/reset-password',
+        summary: 'Reset password using token',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'token', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'token', type: 'string', example: 'reset_token_from_email'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'newpassword123'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'newpassword123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Password reset successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Password has been reset successfully. Please log in with your new password.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error, invalid or expired token'),
+        ]
+    )]
     public function resetPassword(Request $request)
     {
         $validated = $request->validate([

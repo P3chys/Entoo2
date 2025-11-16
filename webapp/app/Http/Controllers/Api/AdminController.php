@@ -8,6 +8,7 @@ use App\Models\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use OpenApi\Attributes as OA;
 
 class AdminController extends Controller
 {
@@ -23,9 +24,34 @@ class AdminController extends Controller
         }
     }
 
-    /**
-     * Get all users with pagination (cached per page/search)
-     */
+    #[OA\Get(
+        path: '/api/admin/users',
+        summary: 'Get all users with pagination',
+        description: 'Returns a paginated list of all users with file counts. Supports search by name or email. Cached for 5 minutes per page/search combination. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15), description: 'Results per page'),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1), description: 'Page number'),
+            new OA\Parameter(name: 'search', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Search by name or email'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated users list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'current_page', type: 'integer'),
+                        new OA\Property(property: 'total', type: 'integer'),
+                        new OA\Property(property: 'per_page', type: 'integer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function getUsers(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -52,9 +78,40 @@ class AdminController extends Controller
         return response()->json($users);
     }
 
-    /**
-     * Create a new user
-     */
+    #[OA\Post(
+        path: '/api/admin/users',
+        summary: 'Create a new user',
+        description: 'Creates a new user account. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'email', 'password'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', maxLength: 255, example: 'John Doe'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', maxLength: 255, example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'password123'),
+                    new OA\Property(property: 'is_admin', type: 'boolean', example: false),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'User created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User created successfully'),
+                        new OA\Property(property: 'user', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error (e.g., email already exists)'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function createUser(Request $request)
     {
         $validated = $request->validate([
@@ -80,9 +137,43 @@ class AdminController extends Controller
         ], 201);
     }
 
-    /**
-     * Update a user
-     */
+    #[OA\Put(
+        path: '/api/admin/users/{userId}',
+        summary: 'Update a user',
+        description: 'Updates user information. All fields are optional. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'userId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'User ID'),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', maxLength: 255, example: 'John Doe'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', maxLength: 255, example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', minLength: 8, example: 'newpassword123'),
+                    new OA\Property(property: 'is_admin', type: 'boolean', example: false),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User updated successfully'),
+                        new OA\Property(property: 'user', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'User not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function updateUser(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -107,9 +198,38 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Delete a user
-     */
+    #[OA\Delete(
+        path: '/api/admin/users/{userId}',
+        summary: 'Delete a user',
+        description: 'Deletes a user account. Cannot delete your own account. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'userId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'User ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User deleted successfully'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden - Cannot delete own account or admin only',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'You cannot delete your own account'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'User not found'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function deleteUser(User $user)
     {
         // Prevent deleting yourself
@@ -129,9 +249,37 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Get all files with pagination and filters (cached per page/filters)
-     */
+    #[OA\Get(
+        path: '/api/admin/files',
+        summary: 'Get all files with pagination and filters',
+        description: 'Returns a paginated list of all files. Supports filtering by search query, subject, category, and user. Cached for 5 minutes per page/filter combination. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15), description: 'Results per page'),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1), description: 'Page number'),
+            new OA\Parameter(name: 'search', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Search by filename or subject name'),
+            new OA\Parameter(name: 'subject', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Filter by subject name'),
+            new OA\Parameter(name: 'category', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['Prednasky', 'Otazky', 'Materialy', 'Seminare']), description: 'Filter by category'),
+            new OA\Parameter(name: 'user_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), description: 'Filter by user ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated files list',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'current_page', type: 'integer'),
+                        new OA\Property(property: 'total', type: 'integer'),
+                        new OA\Property(property: 'per_page', type: 'integer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function getFiles(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -172,9 +320,30 @@ class AdminController extends Controller
         return response()->json($files);
     }
 
-    /**
-     * Delete a file (admin can delete any file)
-     */
+    #[OA\Delete(
+        path: '/api/admin/files/{fileId}',
+        summary: 'Delete a file',
+        description: 'Deletes a file from storage, database, and Elasticsearch index. Admin can delete any file. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'fileId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'File ID'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'File deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'File deleted successfully'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'File not found'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function deleteFile(UploadedFile $file)
     {
         // Delete physical file
@@ -200,9 +369,57 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Get dashboard statistics (cached for 5 minutes)
-     */
+    #[OA\Get(
+        path: '/api/admin/stats',
+        summary: 'Get admin dashboard statistics',
+        description: 'Returns comprehensive statistics for the admin dashboard including total counts, recent users, and recent files. Cached for 5 minutes. Admin only.',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin dashboard statistics',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'total_users', type: 'integer', example: 42),
+                        new OA\Property(property: 'total_files', type: 'integer', example: 1250),
+                        new OA\Property(property: 'total_subjects', type: 'integer', example: 35),
+                        new OA\Property(property: 'total_storage', type: 'integer', example: 524288000),
+                        new OA\Property(
+                            property: 'recent_users',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'integer'),
+                                    new OA\Property(property: 'name', type: 'string'),
+                                    new OA\Property(property: 'email', type: 'string'),
+                                    new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                ]
+                            )
+                        ),
+                        new OA\Property(
+                            property: 'recent_files',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'integer'),
+                                    new OA\Property(property: 'original_filename', type: 'string'),
+                                    new OA\Property(property: 'subject_name', type: 'string'),
+                                    new OA\Property(property: 'user_id', type: 'integer'),
+                                    new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                    new OA\Property(property: 'file_size', type: 'integer'),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Forbidden - Admin only'),
+        ]
+    )]
     public function getStats()
     {
         $stats = \Cache::remember('admin:stats', 300, function () {

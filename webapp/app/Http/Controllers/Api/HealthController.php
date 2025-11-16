@@ -9,6 +9,7 @@ use App\Services\ElasticsearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class HealthController extends Controller
 {
@@ -19,9 +20,32 @@ class HealthController extends Controller
         $this->elasticsearchService = $elasticsearchService;
     }
 
-    /**
-     * Check system health
-     */
+    #[OA\Get(
+        path: '/api/health',
+        summary: 'Check system health',
+        description: 'Returns the health status of the application and its dependencies (database, Elasticsearch).',
+        tags: ['Health'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Health check response',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', enum: ['ok', 'degraded'], example: 'ok'),
+                        new OA\Property(property: 'timestamp', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00+00:00'),
+                        new OA\Property(
+                            property: 'services',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'database', type: 'string', enum: ['connected', 'error'], example: 'connected'),
+                                new OA\Property(property: 'elasticsearch', type: 'string', enum: ['connected', 'unreachable', 'error'], example: 'connected'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function check()
     {
         $health = [
@@ -54,11 +78,49 @@ class HealthController extends Controller
         return response()->json($health);
     }
 
-    /**
-     * Get system statistics
-     * Cached for 30 minutes for better performance
-     * Uses Elasticsearch for much faster aggregations
-     */
+    #[OA\Get(
+        path: '/api/stats',
+        summary: 'Get system statistics',
+        description: 'Returns comprehensive system statistics including file counts, storage usage, and user counts. Cached for 30 minutes. Uses Elasticsearch for fast aggregations.',
+        tags: ['Health'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'System statistics',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'total_files', type: 'integer', example: 1250),
+                        new OA\Property(property: 'total_users', type: 'integer', example: 42),
+                        new OA\Property(property: 'total_subjects', type: 'integer', example: 35),
+                        new OA\Property(property: 'total_storage_bytes', type: 'integer', example: 524288000),
+                        new OA\Property(property: 'total_storage_formatted', type: 'string', example: '500 MB'),
+                        new OA\Property(
+                            property: 'files_by_category',
+                            type: 'object',
+                            example: ['Materialy' => 400, 'Prednasky' => 350, 'Otazky' => 300, 'Seminare' => 200]
+                        ),
+                        new OA\Property(
+                            property: 'files_by_extension',
+                            type: 'object',
+                            example: ['pdf' => 800, 'docx' => 250, 'pptx' => 150, 'txt' => 50]
+                        ),
+                        new OA\Property(
+                            property: 'top_subjects',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'subject_name', type: 'string'),
+                                    new OA\Property(property: 'file_count', type: 'integer'),
+                                ]
+                            )
+                        ),
+                        new OA\Property(property: 'cached_at', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00+00:00'),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function stats()
     {
         // Use simple cache key without tags for better performance in Octane
