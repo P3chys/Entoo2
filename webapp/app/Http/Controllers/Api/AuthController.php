@@ -371,9 +371,19 @@ class AuthController extends Controller
     )]
     public function forgotPassword(Request $request)
     {
+        // Validate email format first
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
         ]);
+
+        // Check if user exists - return 422 if not
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unable to send password reset link. Please try again.',
+                'errors' => ['email' => ['We could not find a user with that email address.']]
+            ], 422);
+        }
 
         // Send password reset link
         $status = Password::sendResetLink(
@@ -423,11 +433,21 @@ class AuthController extends Controller
     )]
     public function resetPassword(Request $request)
     {
+        // Validate all fields including password requirements
         $validated = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'token' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
+
+        // Check if user exists - return 422 if not
+        $user = User::where('email', $validated['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Password reset failed. The token may be invalid or expired.',
+                'errors' => ['email' => ['We could not find a user with that email address.']]
+            ], 422);
+        }
 
         // Reset the password with token verification
         $status = Password::reset(

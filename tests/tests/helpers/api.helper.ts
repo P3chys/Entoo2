@@ -28,6 +28,8 @@ export async function getAuthToken(page: Page): Promise<string | null> {
  */
 export function getBypassHeaders(additionalHeaders: Record<string, string> = {}): Record<string, string> {
   return {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
     'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
     ...additionalHeaders,
   };

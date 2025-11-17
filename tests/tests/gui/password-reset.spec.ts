@@ -5,7 +5,7 @@
 
 import { test, expect } from '@playwright/test';
 import { login, registerTestUser } from '../helpers/auth.helper';
-import { apiRequest } from '../helpers/api.helper';
+import { apiRequest, getBypassHeaders } from '../helpers/api.helper';
 
 test.describe('Password Reset GUI Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -56,14 +56,16 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     // Request password reset
     const response = await request.post('http://localhost:8000/api/forgot-password', {
       data: {
         email: testEmail
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(response.status()).toBe(200);
@@ -75,7 +77,8 @@ test.describe('Password Reset GUI Tests', () => {
     const response = await request.post('http://localhost:8000/api/forgot-password', {
       data: {
         email: 'nonexistent@example.com'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(response.status()).toBe(422);
@@ -91,16 +94,18 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
-    // Try to request password reset multiple times
+    // Try to request password reset multiple times WITHOUT bypass header to test rate limiting
     let rateLimited = false;
     for (let i = 0; i < 5; i++) {
       const response = await request.post('http://localhost:8000/api/forgot-password', {
         data: {
           email: testEmail
         }
+        // NOTE: Intentionally NOT using bypass headers to test rate limiting
       });
 
       if (response.status() === 429) {
@@ -129,14 +134,16 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'OldPassword123!',
         password_confirmation: 'OldPassword123!'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     // 2. Request password reset
     const forgotResponse = await request.post('http://localhost:8000/api/forgot-password', {
       data: {
         email: testEmail
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(forgotResponse.status()).toBe(200);
@@ -160,7 +167,8 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     // Try to reset with invalid token
@@ -170,7 +178,8 @@ test.describe('Password Reset GUI Tests', () => {
         token: 'invalid-token-12345',
         password: 'NewPassword123!',
         password_confirmation: 'NewPassword123!'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(response.status()).toBe(422);
@@ -187,7 +196,8 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     const response = await request.post('http://localhost:8000/api/reset-password', {
@@ -196,7 +206,8 @@ test.describe('Password Reset GUI Tests', () => {
         token: 'some-token',
         password: 'NewPassword123!',
         password_confirmation: 'DifferentPassword123!'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(response.status()).toBe(422);
@@ -211,7 +222,8 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     const response = await request.post('http://localhost:8000/api/reset-password', {
@@ -220,7 +232,8 @@ test.describe('Password Reset GUI Tests', () => {
         token: 'some-token',
         password: 'short',
         password_confirmation: 'short'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     expect(response.status()).toBe(422);
@@ -235,10 +248,11 @@ test.describe('Password Reset GUI Tests', () => {
         email: testEmail,
         password: 'password123',
         password_confirmation: 'password123'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
-    // Try to reset password multiple times
+    // Try to reset password multiple times WITHOUT bypass header to test rate limiting
     let rateLimited = false;
     for (let i = 0; i < 7; i++) {
       const response = await request.post('http://localhost:8000/api/reset-password', {
@@ -248,6 +262,7 @@ test.describe('Password Reset GUI Tests', () => {
           password: 'NewPassword123!',
           password_confirmation: 'NewPassword123!'
         }
+        // NOTE: Intentionally NOT using bypass headers to test rate limiting
       });
 
       if (response.status() === 429) {
@@ -273,7 +288,8 @@ test.describe('Password Reset GUI Tests', () => {
         token: 'definitely-invalid-token',
         password: 'NewPassword123!',
         password_confirmation: 'NewPassword123!'
-      }
+      },
+      headers: getBypassHeaders()
     });
 
     // If implementation is complete, should reject invalid token
