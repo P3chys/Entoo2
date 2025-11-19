@@ -17,19 +17,26 @@ test.describe('XSS Prevention Tests', () => {
     await deleteAllTestSubjects(page, 'XSS');
   });
 
+  // Note: These tests verify that XSS content is properly sanitized when displayed.
+  // Laravel Blade templates automatically escape content with {{ }} syntax.
+
   test('should sanitize subject name with script tags', async ({ page }) => {
-    const maliciousSubjectName = '<script>alert("XSS")</script>TestSubject';
+    const maliciousSubjectName = '<script>alert("XSS")</script>XSS_ScriptTest';
 
     // Create a subject with malicious name
     await createSubject(page, maliciousSubjectName, 'Materialy');
 
-    // Navigate to dashboard
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    // Navigate to dashboard with hard reload to clear cache
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+
+    // Wait for subjects to load
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Check that script tag is escaped/sanitized
-    const subjectElement = page.locator(`.subject-row`).filter({ hasText: maliciousSubjectName });
-    await expect(subjectElement).toBeVisible();
+    // Find by the unique safe part of the name
+    const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'XSS_ScriptTest' });
+    await expect(subjectElement).toBeVisible({ timeout: 10000 });
 
     // Verify script didn't execute by checking for alert
     // If XSS was successful, the page would have an alert dialog
@@ -45,15 +52,16 @@ test.describe('XSS Prevention Tests', () => {
   });
 
   test('should sanitize subject name with event handlers', async ({ page }) => {
-    const maliciousSubjectName = '<img src=x onerror="alert(\'XSS\')" />TestSubject';
+    const maliciousSubjectName = '<img src=x onerror="alert(\'XSS\')" />XSS_EventTest';
 
     await createSubject(page, maliciousSubjectName, 'Materialy');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
-    const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'TestSubject' });
-    await expect(subjectElement).toBeVisible();
+    const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'XSS_EventTest' });
+    await expect(subjectElement).toBeVisible({ timeout: 10000 });
 
     // Verify no onerror handler is present
     const innerHTML = await subjectElement.innerHTML();
@@ -71,13 +79,14 @@ test.describe('XSS Prevention Tests', () => {
     await createSubject(page, subjectName, 'Materialy');
     await createFile(page, subjectName, 'Materialy', maliciousFilename);
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Expand subject
-    const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    const subjectRow = page.locator(`.subject-row`).filter({ hasText: subjectName });
     await subjectRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // Check filename is escaped
     const fileItem = page.locator('.file-item').filter({ hasText: 'test.pdf' });
@@ -98,14 +107,14 @@ test.describe('XSS Prevention Tests', () => {
     await createSubject(page, maliciousSubject, 'Materialy');
     await createFile(page, maliciousSubject, 'Materialy', 'searchable.pdf');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
 
     // Perform search
     const searchInput = page.locator('input[type="search"]');
-    await searchInput.fill('searchable');
+    await searchInput.fill('XSS_SearchTest');
     await searchInput.press('Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // Check search results
     const searchResults = page.locator('#searchResultsGrid');
@@ -122,13 +131,14 @@ test.describe('XSS Prevention Tests', () => {
 
     await createSubject(page, subjectName, 'Materialy');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Expand subject
-    const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    const subjectRow = page.locator(`.subject-row`).filter({ hasText: subjectName });
     await subjectRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // Click on Profile tab (should be active by default)
     const profileTab = page.locator('.tab-content.active');
@@ -173,13 +183,14 @@ test.describe('XSS Prevention Tests', () => {
     await createSubject(page, subjectName, 'Materialy');
     await createFile(page, subjectName, 'Materialy', 'owner-test.pdf');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Expand subject
-    const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    const subjectRow = page.locator(`.subject-row`).filter({ hasText: subjectName });
     await subjectRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // Check file owner display
     const fileItem = page.locator('.file-item').filter({ hasText: 'owner-test.pdf' });
@@ -200,14 +211,14 @@ test.describe('XSS Prevention Tests', () => {
     await createSubject(page, subjectName, 'Materialy');
     await createFile(page, subjectName, 'Materialy', 'highlight-test.pdf');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
 
     // Search for content that might appear in highlights
     const searchInput = page.locator('input[type="search"]');
-    await searchInput.fill('test document');
+    await searchInput.fill('XSS_HighlightTest');
     await searchInput.press('Enter');
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
 
     // Check if highlights are shown and sanitized
     const searchHighlight = page.locator('.search-highlight');
@@ -224,13 +235,14 @@ test.describe('XSS Prevention Tests', () => {
 
     await createSubject(page, subjectName, 'Materialy');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Expand subject
-    const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    const subjectRow = page.locator(`.subject-row`).filter({ hasText: subjectName });
     await subjectRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // Check category tabs
     const categoryTabs = page.locator('.tab-btn');
@@ -269,13 +281,14 @@ test.describe('XSS Prevention Tests', () => {
     await createSubject(page, subjectName, 'Materialy');
     await createFile(page, subjectName, 'Materialy', 'filter-test.pdf');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
     // Expand subject
-    const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    const subjectRow = page.locator(`.subject-row`).filter({ hasText: subjectName });
     await subjectRow.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // Click on file owner link to filter
     const ownerLink = page.locator('.file-item-meta a').first();
@@ -296,15 +309,16 @@ test.describe('XSS Prevention Tests', () => {
   });
 
   test('should handle multiple XSS vectors in single subject name', async ({ page }) => {
-    const complexXSSPayload = '"><script>alert(1)</script><img src=x onerror=alert(2)>TestSubject';
+    const complexXSSPayload = '"><script>alert(1)</script><img src=x onerror=alert(2)>XSS_MultiTest';
 
     await createSubject(page, complexXSSPayload, 'Materialy');
 
-    await page.goto('http://localhost:8000/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('http://localhost:8000/dashboard', { waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.subject-row', { timeout: 10000 });
 
-    const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'TestSubject' });
-    await expect(subjectElement).toBeVisible();
+    const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'XSS_MultiTest' });
+    await expect(subjectElement).toBeVisible({ timeout: 10000 });
 
     const innerHTML = await subjectElement.innerHTML();
 

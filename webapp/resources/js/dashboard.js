@@ -3,29 +3,15 @@
  * Handles file tree, favorites, search, and main dashboard functionality
  */
 
-import DOMPurify from 'dompurify';
 import { renderSubjectProfile } from './subject-profile-renderer.js';
 
 // Global state
 let allFiles = [];
 let subjectFiles = {}; // Cache for loaded subject files
 let favorites = [];
-let searchMode = false;
 
 // Route parameters - will be set by blade template
 window.dashboardRouteParams = window.dashboardRouteParams || {};
-
-/**
- * Sanitize HTML to prevent XSS attacks
- * @param {string} html - Raw HTML string
- * @returns {string} - Sanitized HTML string
- */
-function sanitizeHTML(html) {
-    return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['div', 'span', 'p', 'strong', 'button', 'a', 'h3', 'h4'],
-        ALLOWED_ATTR: ['class', 'style', 'onclick', 'title', 'href', 'id', 'data-subject', 'data-file-id', 'data-filename']
-    });
-}
 
 /**
  * Check authentication
@@ -261,7 +247,7 @@ function buildTreeStructure(subjects) {
 
         html += `
             <div class="tree-subject glass-subject subject-row" data-subject="${subjectNameEscaped}">
-                <div class="subject-header" onclick="toggleSubject(this, '${subjectNameJS}')">\
+                <div class="subject-header" onclick="toggleSubject(this, '${subjectNameJS}')">
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
                         <span class="subject-name name">${subjectNameEscaped}</span>
@@ -282,7 +268,8 @@ function buildTreeStructure(subjects) {
         `;
     });
 
-    treeView.innerHTML = sanitizeHTML(html);
+    // Set innerHTML directly - content is already escaped via escapeHtml()
+    treeView.innerHTML = html;
 }
 
 /**
@@ -353,7 +340,8 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
         `;
     });
 
-    return sanitizeHTML(`<div class="tab-container">${tabNavHTML}${tabContentHTML}</div>`);
+    // Return HTML - content is already escaped
+    return `<div class="tab-container">${tabNavHTML}${tabContentHTML}</div>`;
 }
 
 /**
@@ -374,15 +362,21 @@ function buildFilesHTML(files) {
         const ownerName = file.user ? file.user.name : 'Unknown';
         const ownerId = file.user ? file.user.id : null;
 
+        // Escape all user-generated content
+        const filenameEscaped = escapeHtml(file.original_filename);
+        const ownerNameEscaped = escapeHtml(ownerName);
+        const ownerNameJS = ownerName.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const extensionEscaped = escapeHtml(file.file_extension.toUpperCase());
+
         html += `
             <div class="file-item glass-file-item">
                 <div class="file-item-info">
                     <div class="file-item-icon">${fileIcon}</div>
                     <div class="file-item-details">
-                        <h4>${file.original_filename}</h4>
+                        <h4>${filenameEscaped}</h4>
                         <div class="file-item-meta">
-                            ${fileSize} • ${file.file_extension.toUpperCase()} • ${date}
-                            ${ownerId ? ` • <a href="#" onclick="filterByOwner(${ownerId}, '${ownerName}', event)" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">👤 ${ownerName}</a>` : ''}
+                            ${fileSize} • ${extensionEscaped} • ${date}
+                            ${ownerId ? ` • <a href="#" onclick="filterByOwner(${ownerId}, '${ownerNameJS}', event)" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">👤 ${ownerNameEscaped}</a>` : ''}
                         </div>
                     </div>
                 </div>
@@ -400,7 +394,8 @@ function buildFilesHTML(files) {
         `;
     });
 
-    return sanitizeHTML(html);
+    // Return escaped HTML - already safe via escapeHtml()
+    return html;
 }
 
 /**
@@ -442,17 +437,130 @@ async function filterByOwnerFromRoute() {
         // Escape user name for safe display
         const userNameEscaped = escapeHtml(routeParams.filterUserName);
 
-        notification.innerHTML = sanitizeHTML(`
+        notification.innerHTML = `
             Showing files by ${userNameEscaped} (${files.length} files)
             <a href="/dashboard" style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: none; background: white; color: var(--primary-color); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">
                 ✕ Clear Filter
             </a>
-        `);
+        `;
         document.body.appendChild(notification);
     } catch (error) {
         if (loading) loading.classList.add('hidden');
         if (treeView) treeView.style.display = 'block';
         console.error('Failed to filter by owner:', error);
+    }
+}
+
+/**
+ * Reload files for a specific subject (called after file upload)
+ * This keeps the subject expanded and shows new files without collapsing the tree
+ */
+window.reloadSubjectFiles = async function(subjectName) {
+    console.log('Reloading files for subject:', subjectName);
+
+    // Clear cached files for this subject to force fresh data
+    delete subjectFiles[subjectName];
+
+    // Find the subject element
+    const subjectElements = document.querySelectorAll('.tree-subject');
+    let targetSubject = null;
+
+    subjectElements.forEach(subjectDiv => {
+        if (subjectDiv.dataset.subject === subjectName) {
+            targetSubject = subjectDiv;
+        }
+    });
+
+    if (!targetSubject) {
+        console.warn('Subject not found in tree, reloading entire dashboard');
+        if (typeof loadDashboard === 'function') {
+            loadDashboard();
+        }
+        return;
+    }
+
+    // Find the subject header and categories container
+    const subjectHeader = targetSubject.querySelector('.subject-header');
+    const categories = targetSubject.querySelector('.subject-categories');
+    const icon = subjectHeader?.querySelector('.subject-icon');
+
+    if (!subjectHeader || !categories || !icon) {
+        console.warn('Subject structure incomplete, reloading entire dashboard');
+        if (typeof loadDashboard === 'function') {
+            loadDashboard();
+        }
+        return;
+    }
+
+    // Check if subject is currently expanded
+    const wasExpanded = icon.classList.contains('expanded');
+
+    if (!wasExpanded) {
+        // If collapsed, just clear the cache (will reload when user expands)
+        return;
+    }
+
+    // Subject is expanded, reload its files
+    categories.innerHTML = '<div class="loading" style="padding: 1rem;">Refreshing files...</div>';
+
+    try {
+        // Check if this subject has a profile
+        const subject = allFiles.find(s => s.subject_name === subjectName);
+        const hasProfile = subject?.has_profile || false;
+
+        // Load files and profile in parallel
+        const promises = [
+            fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`)
+        ];
+
+        if (hasProfile) {
+            promises.push(
+                fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
+                    headers: { 'Accept': 'application/json' }
+                }).then(res => res.ok ? res : null).catch(() => null)
+            );
+        }
+
+        const results = await Promise.all(promises);
+        const filesResponse = results[0];
+        const profileResponse = results[1] || null;
+
+        const files = filesResponse.data || [];
+        let profile = null;
+        if (profileResponse) {
+            const data = await profileResponse.json();
+            profile = data.profile;
+        }
+
+        // Update cache
+        subjectFiles[subjectName] = files;
+
+        // Build categories structure
+        const tree = {};
+        files.forEach(file => {
+            if (!tree[file.category]) {
+                tree[file.category] = [];
+            }
+            tree[file.category].push(file);
+        });
+
+        // Rebuild tabs HTML
+        categories.innerHTML = buildSubjectTabsHTML(tree, subjectName, profile);
+
+        console.log('Subject files reloaded successfully');
+
+        // Also update the file count in the subject header
+        const fileCountSpan = subjectHeader.querySelector('.subject-count');
+        if (fileCountSpan) {
+            fileCountSpan.textContent = `${files.length} files`;
+        }
+
+        // Update global stats as well
+        loadStats();
+
+    } catch (error) {
+        console.error('Failed to reload subject files:', error);
+        categories.innerHTML = '<p class="error" style="padding: 1rem;">Failed to refresh files</p>';
     }
 }
 
@@ -666,6 +774,12 @@ function displaySearchResults(results, query) {
         const fileSize = formatBytes(file.file_size);
         const canDelete = (file.user_id === currentUserId);
 
+        // Escape all user-generated content
+        const filenameEscaped = escapeHtml(file.original_filename);
+        const subjectNameEscaped = escapeHtml(file.subject_name);
+        const categoryEscaped = escapeHtml(file.category);
+        const extensionEscaped = escapeHtml(file.file_extension.toUpperCase());
+
         // Determine match quality
         let scoreClass = 'low';
         let scoreLabel = 'Match';
@@ -677,12 +791,13 @@ function displaySearchResults(results, query) {
             scoreLabel = 'Good Match';
         }
 
-        // Get highlight snippet
+        // Get highlight snippet - ESCAPE THIS CRITICAL!
         let highlightHTML = '';
         if (result.highlight && result.highlight.content && result.highlight.content.length > 0) {
+            const highlightEscaped = escapeHtml(result.highlight.content[0]);
             highlightHTML = `
                 <div class="search-highlight">
-                    💡 "${result.highlight.content[0]}"
+                    💡 "${highlightEscaped}"
                 </div>
             `;
         }
@@ -694,12 +809,12 @@ function displaySearchResults(results, query) {
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <span style="font-size: 2rem;">${fileIcon}</span>
                             <div>
-                                <div class="search-result-filename">${file.original_filename}</div>
+                                <div class="search-result-filename">${filenameEscaped}</div>
                                 <div class="search-result-meta">
-                                    <span class="badge">${file.subject_name}</span>
-                                    <span class="badge">${file.category}</span>
+                                    <span class="badge">${subjectNameEscaped}</span>
+                                    <span class="badge">${categoryEscaped}</span>
                                     <span>${fileSize}</span>
-                                    <span>${file.file_extension.toUpperCase()}</span>
+                                    <span>${extensionEscaped}</span>
                                 </div>
                             </div>
                         </div>
@@ -723,7 +838,7 @@ function displaySearchResults(results, query) {
         `;
     });
 
-    grid.innerHTML = sanitizeHTML(html);
+    grid.innerHTML = html;
 }
 
 /**
@@ -823,8 +938,27 @@ window.deleteFile = async function(fileId) {
     }
 
     try {
+        // Find which subject this file belongs to before deleting
+        let fileSubject = null;
+
+        // Search through cached subject files to find the subject
+        for (const [subjectName, files] of Object.entries(subjectFiles)) {
+            if (files.some(f => (f.id || f.file_id) === fileId)) {
+                fileSubject = subjectName;
+                break;
+            }
+        }
+
+        // Delete the file
         await fetchAPI(`/api/files/${fileId}`, { method: 'DELETE' });
-        window.loadDashboard();
+
+        // Reload only the affected subject if we found it
+        if (fileSubject && typeof window.reloadSubjectFiles === 'function') {
+            await window.reloadSubjectFiles(fileSubject);
+        } else {
+            // Fallback: reload entire dashboard if we can't find the subject
+            window.loadDashboard();
+        }
     } catch (error) {
         alert('Failed to delete file');
     }

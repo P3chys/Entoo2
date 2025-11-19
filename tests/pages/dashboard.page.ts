@@ -124,6 +124,7 @@ export class DashboardPage {
    * Open upload modal (context mode)
    */
   async openUploadModal() {
+    await this.uploadBtnCategory.first().waitFor({ state: 'visible', timeout: 10000 });
     await this.uploadBtnCategory.first().click();
     await this.page.waitForTimeout(500);
   }
