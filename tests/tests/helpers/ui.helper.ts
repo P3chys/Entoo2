@@ -167,13 +167,16 @@ export async function waitForLoading(page: Page, timeout: number = 10000): Promi
 
 /**
  * Expand subject in file tree
+ * Uses filter() to safely handle special characters in subject names
  */
 export async function expandSubject(
   page: Page,
   subjectName: string
 ): Promise<void> {
-  // Find the subject row
-  const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+  // Find the subject row using safe filter
+  const subjectRow = page.locator('.subject-row')
+    .filter({ hasText: subjectName })
+    .first();
 
   // Check if already expanded
   const isExpanded = await subjectRow.locator('.expanded').count() > 0;
@@ -189,9 +192,12 @@ export async function expandSubject(
 
 /**
  * Get favorite star element for a subject
+ * Uses filter() to safely handle special characters in subject names
  */
 export function getFavoriteStar(page: Page, subjectName: string): Locator {
-  return page.locator(`.subject-row:has-text("${subjectName}") .favorite-star`);
+  return page.locator('.subject-row')
+    .filter({ hasText: subjectName })
+    .locator('.favorite-star');
 }
 
 /**

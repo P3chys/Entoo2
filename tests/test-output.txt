@@ -1,0 +1,1463 @@
+
+> entoo-e2e-tests@1.0.0 test
+> playwright test
+
+
+Running 151 tests using 1 worker
+
+Cache hit response time: 21ms (should be fast)
+Cache hit response time: 21ms (should be <50ms)
+  ok   1 [chromium] › tests\caching\cache-tags.spec.ts:6:7 › Cache Tags Functionality › should cache subjects with tags and flush correctly (141ms)
+File listing cache hit: 15ms
+  ok   2 [chromium] › tests\caching\cache-tags.spec.ts:30:7 › Cache Tags Functionality › should cache file listings with tags (96ms)
+Could not test stats caching - no test user available
+  ok   3 [chromium] › tests\caching\cache-tags.spec.ts:58:7 › Cache Tags Functionality › should cache stats with tags (68ms)
+Request times: [ [33m24[39m, [33m23[39m, [33m21[39m, [33m26[39m, [33m22[39m ]
+Average response time: 23.2ms
+  ok   4 [chromium] › tests\caching\cache-tags.spec.ts:101:7 › Cache Tags Functionality › should verify cache configuration uses Redis with phpredis (130ms)
+Categories cache hit: 13ms
+  ok   5 [chromium] › tests\caching\cache-tags.spec.ts:131:7 › Cache Tags Functionality › should handle cache tags for subject categories (118ms)
+Cache invalidation on file operations:
+- When a file is uploaded: Cache::tags(["files", "subjects", "stats"])->flush()
+- When a file is deleted: Cache::tags(["files", "subjects", "stats"])->flush()
+- This ensures all related caches are cleared immediately
+Cache is working: 12ms (first) vs 12ms (cached)
+  ok   6 [chromium] › tests\caching\cache-tags.spec.ts:158:7 › Cache Tags Functionality › should demonstrate cache invalidation works (37ms)
+  ok   7 [chromium] › tests\gui\auth.spec.ts:19:7 › Authentication GUI Tests › should display login page (3.8s)
+  ok   8 [chromium] › tests\gui\auth.spec.ts:31:7 › Authentication GUI Tests › should successfully login with valid credentials (2.3s)
+  ok   9 [chromium] › tests\gui\auth.spec.ts:45:7 › Authentication GUI Tests › should fail login with invalid credentials (5.5s)
+  ok  10 [chromium] › tests\gui\auth.spec.ts:75:7 › Authentication GUI Tests › should successfully logout (2.2s)
+  ok  11 [chromium] › tests\gui\auth.spec.ts:91:7 › Authentication GUI Tests › should redirect to login when accessing protected route without auth (1.4s)
+  ok  12 [chromium] › tests\gui\auth.spec.ts:98:7 › Authentication GUI Tests › should display registration page (1.3s)
+  ok  13 [chromium] › tests\gui\auth.spec.ts:109:7 › Authentication GUI Tests › should successfully register new user (3.7s)
+  ok  14 [chromium] › tests\gui\auth.spec.ts:144:7 › Authentication GUI Tests › should persist authentication across page reloads (2.2s)
+  x   15 [chromium] › tests\gui\auth.spec.ts:158:7 › Authentication GUI Tests › should handle session timeout gracefully (2.2s)
+  ok  16 [chromium] › tests\gui\dashboard.spec.ts:16:7 › Dashboard GUI Tests › should load dashboard successfully (4.2s)
+  ok  17 [chromium] › tests\gui\dashboard.spec.ts:25:7 › Dashboard GUI Tests › should display file tree (2.7s)
+Found 191 subjects
+  ok  18 [chromium] › tests\gui\dashboard.spec.ts:31:7 › Dashboard GUI Tests › should display list of subjects (2.8s)
+  ok  19 [chromium] › tests\gui\dashboard.spec.ts:42:7 › Dashboard GUI Tests › should display subject names (2.9s)
+  ok  20 [chromium] › tests\gui\dashboard.spec.ts:55:7 › Dashboard GUI Tests › should display file counts for subjects (3.1s)
+  ok  21 [chromium] › tests\gui\dashboard.spec.ts:71:7 › Dashboard GUI Tests › should expand and collapse subject to show files (4.9s)
+  ok  22 [chromium] › tests\gui\dashboard.spec.ts:110:7 › Dashboard GUI Tests › should display files by category (3.3s)
+  ok  23 [chromium] › tests\gui\dashboard.spec.ts:138:7 › Dashboard GUI Tests › should display file names (3.7s)
+  ok  24 [chromium] › tests\gui\dashboard.spec.ts:172:7 › Dashboard GUI Tests › should display dashboard statistics (2.6s)
+  ok  25 [chromium] › tests\gui\dashboard.spec.ts:188:7 › Dashboard GUI Tests › should handle empty subjects (no files) (2.8s)
+  ok  26 [chromium] › tests\gui\dashboard.spec.ts:222:7 › Dashboard GUI Tests › should display user menu (2.5s)
+  ok  27 [chromium] › tests\gui\dashboard.spec.ts:232:7 › Dashboard GUI Tests › should navigate to favorites page (2.6s)
+  ok  28 [chromium] › tests\gui\dashboard.spec.ts:243:7 › Dashboard GUI Tests › should display responsive layout (2.9s)
+  ok  29 [chromium] › tests\gui\dashboard.spec.ts:260:7 › Dashboard GUI Tests › should handle keyboard navigation (2.7s)
+Dashboard loaded in 676ms
+  ok  30 [chromium] › tests\gui\dashboard.spec.ts:272:7 › Dashboard GUI Tests › should load dashboard quickly (3.3s)
+  ok  31 [chromium] › tests\gui\dashboard.spec.ts:286:7 › Dashboard GUI Tests › should display categories correctly (3.8s)
+  ok  32 [chromium] › tests\gui\favorites.spec.ts:23:7 › Favorites GUI Tests › should display favorite star for each subject (2.7s)
+  ok  33 [chromium] › tests\gui\favorites.spec.ts:40:7 › Favorites GUI Tests › should add subject to favorites (4.0s)
+  ok  34 [chromium] › tests\gui\favorites.spec.ts:77:7 › Favorites GUI Tests › should remove subject from favorites (3.3s)
+  ok  35 [chromium] › tests\gui\favorites.spec.ts:110:7 › Favorites GUI Tests › should display animation when toggling favorite (4.0s)
+  ok  36 [chromium] › tests\gui\favorites.spec.ts:135:7 › Favorites GUI Tests › should navigate to favorites view (2.5s)
+  ok  37 [chromium] › tests\gui\favorites.spec.ts:151:7 › Favorites GUI Tests › should persist favorites across sessions (3.6s)
+  ok  38 [chromium] › tests\gui\favorites.spec.ts:177:7 › Favorites GUI Tests › should handle favorite toggle errors gracefully (4.1s)
+  x   39 [chromium] › tests\gui\favorites.spec.ts:201:7 › Favorites GUI Tests › should update favorite count in real-time (2.7s)
+  x   40 [chromium] › tests\gui\file-upload.spec.ts:39:7 › File Upload GUI Tests › should display file upload button (13.1s)
+  x   41 [chromium] › tests\gui\file-upload.spec.ts:44:7 › File Upload GUI Tests › should open file upload modal (1.0m)
+  x   42 [chromium] › tests\gui\file-upload.spec.ts:58:7 › File Upload GUI Tests › should successfully upload a PDF file (1.0m)
+  x   43 [chromium] › tests\gui\file-upload.spec.ts:95:7 › File Upload GUI Tests › should successfully upload a text file (1.0m)
+  x   44 [chromium] › tests\gui\file-upload.spec.ts:117:7 › File Upload GUI Tests › should validate required fields (1.0m)
+  x   45 [chromium] › tests\gui\file-upload.spec.ts:136:7 › File Upload GUI Tests › should display uploaded files in subject (3.0s)
+  x   46 [chromium] › tests\gui\file-upload.spec.ts:158:7 › File Upload GUI Tests › should download file (3.0s)
+  x   47 [chromium] › tests\gui\file-upload.spec.ts:197:7 › File Upload GUI Tests › should delete uploaded file (1.0m)
+  x   48 [chromium] › tests\gui\file-upload.spec.ts:241:7 › File Upload GUI Tests › should show upload progress (1.0m)
+  x   49 [chromium] › tests\gui\file-upload.spec.ts:272:7 › File Upload GUI Tests › should handle file size limits (1.0m)
+  ok  50 [chromium] › tests\gui\password-reset.spec.ts:17:7 › Password Reset GUI Tests › should display forgot password link on login page (4.7s)
+  ok  51 [chromium] › tests\gui\password-reset.spec.ts:32:7 › Password Reset GUI Tests › should navigate to forgot password page (1.9s)
+  x   52 [chromium] › tests\gui\password-reset.spec.ts:48:7 › Password Reset GUI Tests › API: should send password reset email for valid email (34.2s)
+  ok  53 [chromium] › tests\gui\password-reset.spec.ts:76:7 › Password Reset GUI Tests › API: should reject password reset for invalid email (1.4s)
+  ok  54 [chromium] › tests\gui\password-reset.spec.ts:87:7 › Password Reset GUI Tests › API: should enforce rate limiting on forgot password (35.6s)
+Note: Full password reset flow requires email integration for testing
+  ok  55 [chromium] › tests\gui\password-reset.spec.ts:124:7 › Password Reset GUI Tests › API: should reset password with valid token (26.9s)
+  ok  56 [chromium] › tests\gui\password-reset.spec.ts:160:7 › Password Reset GUI Tests › API: should reject password reset with invalid token (8.9s)
+  ok  57 [chromium] › tests\gui\password-reset.spec.ts:190:7 › Password Reset GUI Tests › API: should reject password reset with mismatched passwords (1.8s)
+  ok  58 [chromium] › tests\gui\password-reset.spec.ts:216:7 › Password Reset GUI Tests › API: should reject password reset with short password (1.6s)
+  ok  59 [chromium] › tests\gui\password-reset.spec.ts:242:7 › Password Reset GUI Tests › API: should enforce rate limiting on password reset (2.6s)
+  ok  60 [chromium] › tests\gui\password-reset.spec.ts:280:7 › Password Reset GUI Tests › should validate that password reset implementation is complete (1.4s)
+  ok  61 [chromium] › tests\gui\rate-limiting.spec.ts:22:9 › Authentication Rate Limiting Tests › Rate Limiting Middleware - Applied to Routes › should have rate limiting on login endpoint (5 per minute) (961ms)
+  ok  62 [chromium] › tests\gui\rate-limiting.spec.ts:53:9 › Authentication Rate Limiting Tests › Rate Limiting Middleware - Applied to Routes › should have rate limiting on registration endpoint (3 per minute) (1.2s)
+  ok  63 [chromium] › tests\gui\rate-limiting.spec.ts:82:9 › Authentication Rate Limiting Tests › Rate Limiting Middleware - Applied to Routes › should have rate limiting on forgot-password endpoint (3 per 10 minutes) (1.1s)
+  ok  64 [chromium] › tests\gui\rate-limiting.spec.ts:105:9 › Authentication Rate Limiting Tests › Rate Limiting Middleware - Applied to Routes › should have rate limiting on reset-password endpoint (1.0s)
+  ok  65 [chromium] › tests\gui\rate-limiting.spec.ts:128:9 › Authentication Rate Limiting Tests › Rate Limiting - Multiple Attempts › login endpoint should support multiple attempts with potential rate limiting (7.6s)
+  ok  66 [chromium] › tests\gui\rate-limiting.spec.ts:156:9 › Authentication Rate Limiting Tests › Rate Limiting - Multiple Attempts › registration endpoint should support multiple attempts with potential rate limiting (958ms)
+  ok  67 [chromium] › tests\gui\rate-limiting.spec.ts:186:9 › Authentication Rate Limiting Tests › Rate Limiting - Frontend Behavior › login page should be accessible (970ms)
+  ok  68 [chromium] › tests\gui\rate-limiting.spec.ts:194:9 › Authentication Rate Limiting Tests › Rate Limiting - Frontend Behavior › registration page should be accessible (1.0s)
+  ok  69 [chromium] › tests\gui\rate-limiting.spec.ts:203:9 › Authentication Rate Limiting Tests › Rate Limiting - Frontend Behavior › should handle login attempt errors gracefully (2.2s)
+  ok  70 [chromium] › tests\gui\rate-limiting.spec.ts:221:9 › Authentication Rate Limiting Tests › Rate Limiting - Security › should have different rate limits for different endpoints (1.2s)
+  ok  71 [chromium] › tests\gui\rate-limiting.spec.ts:248:9 › Authentication Rate Limiting Tests › Rate Limiting - Security › should prevent excessive login attempts over time (2.0s)
+  ok  72 [chromium] › tests\gui\rate-limiting.spec.ts:274:9 › Authentication Rate Limiting Tests › Rate Limiting - Security › should protect registration from mass account creation (926ms)
+  ok  73 [chromium] › tests\gui\rate-limiting.spec.ts:301:9 › Authentication Rate Limiting Tests › Rate Limiting - Verification of Configuration › should verify throttle middleware is configured in routes (1.0s)
+  ok  74 [chromium] › tests\gui\search.spec.ts:31:7 › Search GUI Tests › should display search input (7.1s)
+  x   75 [chromium] › tests\gui\search.spec.ts:36:7 › Search GUI Tests › should perform basic search (11.8s)
+  x   76 [chromium] › tests\gui\search.spec.ts:54:7 › Search GUI Tests › should display search results count (19.7s)
+  x   77 [chromium] › tests\gui\search.spec.ts:64:7 › Search GUI Tests › should highlight search terms in results (23.9s)
+  ok  78 [chromium] › tests\gui\search.spec.ts:77:7 › Search GUI Tests › should search in file content (Elasticsearch) (16.1s)
+  ok  79 [chromium] › tests\gui\search.spec.ts:91:7 › Search GUI Tests › should handle empty search results (17.1s)
+  ok  80 [chromium] › tests\gui\search.spec.ts:104:7 › Search GUI Tests › should clear search (13.9s)
+  ok  81 [chromium] › tests\gui\search.spec.ts:123:7 › Search GUI Tests › should support search suggestions/autocomplete (4.9s)
+  ok  82 [chromium] › tests\gui\search.spec.ts:141:7 › Search GUI Tests › should search with special characters (19.0s)
+  x   83 [chromium] › tests\gui\search.spec.ts:154:7 › Search GUI Tests › should maintain search state on page reload (17.6s)
+  x   84 [chromium] › tests\gui\search.spec.ts:175:7 › Search GUI Tests › should search by file name (10.2s)
+  x   85 [chromium] › tests\gui\search.spec.ts:200:7 › Search GUI Tests › should search by subject name (1.0m)
+  x   86 [chromium] › tests\gui\search.spec.ts:220:7 › Search GUI Tests › should show search performance metrics (16.7s)
+  x   87 [chromium] › tests\gui\search.spec.ts:235:7 › Search GUI Tests › should handle concurrent searches (14.5s)
+  x   88 [chromium] › tests\gui\search.spec.ts:260:7 › Search GUI Tests › should filter search by category (1.0m)
+  ok  89 [chromium] › tests\gui\search.spec.ts:281:7 › Search GUI Tests › should support search keyboard shortcuts (5.7s)
+  x   90 [chromium] › tests\gui\subject-profile.spec.ts:16:7 › Subject Profile GUI Tests › should not generate 404 errors when expanding subjects without profiles (10.4s)
+  x   91 [chromium] › tests\gui\subject-profile.spec.ts:57:7 › Subject Profile GUI Tests › should display "Create Profile" option for subjects without profiles (10.3s)
+  ok  92 [chromium] › tests\gui\subject-profile.spec.ts:88:7 › Subject Profile GUI Tests › should display info button for subjects (4.1s)
+  ok  93 [chromium] › tests\gui\subject-profile.spec.ts:103:7 › Subject Profile GUI Tests › should open subject profile modal (3.8s)
+  ok  94 [chromium] › tests\gui\subject-profile.spec.ts:130:7 › Subject Profile GUI Tests › should display subject information (3.5s)
+  ok  95 [chromium] › tests\gui\subject-profile.spec.ts:166:7 › Subject Profile GUI Tests › should edit subject profile (3.4s)
+  ok  96 [chromium] › tests\gui\subject-profile.spec.ts:199:7 › Subject Profile GUI Tests › should close modal with X button (3.5s)
+  ok  97 [chromium] › tests\gui\subject-profile.spec.ts:224:7 › Subject Profile GUI Tests › should close modal with ESC key (4.2s)
+  x   98 [chromium] › tests\gui\subject-profile.spec.ts:249:7 › Subject Profile GUI Tests › should close modal by clicking outside (16.3s)
+  ok  99 [chromium] › tests\gui\subject-profile.spec.ts:277:7 › Subject Profile GUI Tests › should display teacher information (3.4s)
+  ok 100 [chromium] › tests\gui\subject-profile.spec.ts:303:7 › Subject Profile GUI Tests › should display exam information (3.8s)
+  ok 101 [chromium] › tests\gui\subject-profile.spec.ts:333:7 › Subject Profile GUI Tests › should validate required fields when saving (3.6s)
+  ok 102 [chromium] › tests\gui\subject-profile.spec.ts:366:7 › Subject Profile GUI Tests › should persist profile changes (3.6s)
+  ok 103 [chromium] › tests\gui\theme-toggle.spec.ts:12:7 › Theme Toggle Functionality › should have theme toggle button visible in navbar (1.4s)
+  ok 104 [chromium] › tests\gui\theme-toggle.spec.ts:25:7 › Theme Toggle Functionality › should toggle to dark mode when clicked (2.4s)
+  ok 105 [chromium] › tests\gui\theme-toggle.spec.ts:46:7 › Theme Toggle Functionality › should toggle back to light mode when clicked twice (2.8s)
+  ok 106 [chromium] › tests\gui\theme-toggle.spec.ts:66:7 › Theme Toggle Functionality › should persist theme selection in localStorage (3.2s)
+  ok 107 [chromium] › tests\gui\theme-toggle.spec.ts:80:7 › Theme Toggle Functionality › should load saved theme preference on page reload (3.3s)
+  ok 108 [chromium] › tests\gui\theme-toggle.spec.ts:100:7 › Theme Toggle Functionality › should apply dark mode data attribute correctly (3.1s)
+  ok 109 [chromium] › tests\gui\theme-toggle.spec.ts:124:7 › Theme Toggle Functionality › should animate icon during theme toggle (2.3s)
+  ok 110 [chromium] › tests\gui\theme-toggle.spec.ts:143:7 › Theme Toggle Functionality › should maintain theme across navigation (2.0s)
+  ok 111 [chromium] › tests\gui\theme-toggle.spec.ts:162:7 › Theme Toggle Functionality › should handle rapid toggle clicks correctly (2.2s)
+  ok 112 [chromium] › tests\gui\theme-toggle.spec.ts:183:7 › Theme Toggle Functionality › should remain functional in both themes (3.3s)
+  ok 113 [chromium] › tests\gui\theme-toggle.spec.ts:207:7 › Theme Toggle Functionality › should work alongside other navbar functionality (2.1s)
+  ok 114 [chromium] › tests\gui\xss-prevention.spec.ts:20:7 › XSS Prevention Tests › should sanitize subject name with script tags (7.4s)
+  x  115 [chromium] › tests\gui\xss-prevention.spec.ts:47:7 › XSS Prevention Tests › should sanitize subject name with event handlers (5.0s)
+  x  116 [chromium] › tests\gui\xss-prevention.spec.ts:67:7 › XSS Prevention Tests › should sanitize filename with HTML injection (6.5s)
+  x  117 [chromium] › tests\gui\xss-prevention.spec.ts:95:7 › XSS Prevention Tests › should sanitize search results with malicious content (1.0m)
+  x  118 [chromium] › tests\gui\xss-prevention.spec.ts:119:7 › XSS Prevention Tests › should sanitize profile description with XSS payload (21.0s)
+  x  119 [chromium] › tests\gui\xss-prevention.spec.ts:168:7 › XSS Prevention Tests › should sanitize user name in file owner display (1.0m)
+  x  120 [chromium] › tests\gui\xss-prevention.spec.ts:196:7 › XSS Prevention Tests › should sanitize highlight snippets in search results (1.0m)
+  x  121 [chromium] › tests\gui\xss-prevention.spec.ts:222:7 › XSS Prevention Tests › should sanitize category names in tabs (1.0m)
+  ok 122 [chromium] › tests\gui\xss-prevention.spec.ts:249:7 › XSS Prevention Tests › should prevent DOM-based XSS through URL parameters (6.2s)
+  x  123 [chromium] › tests\gui\xss-prevention.spec.ts:264:7 › XSS Prevention Tests › should sanitize filter notification with user name (1.1m)
+  x  124 [chromium] › tests\gui\xss-prevention.spec.ts:298:7 › XSS Prevention Tests › should handle multiple XSS vectors in single subject name (7.4s)
+✓ pdftotext utility is installed via poppler-utils in Dockerfile
+  ok 125 [chromium] › tests\pdf-parsing.spec.ts:11:7 › PDF Text Parsing with pdftotext › should verify pdftotext is installed and available (26ms)
+✓ Search with PDF content completed in 126ms (no timeouts)
+  ok 126 [chromium] › tests\pdf-parsing.spec.ts:18:7 › PDF Text Parsing with pdftotext › should handle PDF parsing without timeouts or memory leaks (148ms)
+PDF Parsing Improvement Summary:
+  Method: pdftotext (poppler-utils)
+  Avg Extraction Time: ~200ms per PDF
+  Avg Characters: 30,000+ per document
+  Memory Leaks: No
+  Timeouts: No
+  Reliability: 100% (was disabled, now working)
+  ok 127 [chromium] › tests\pdf-parsing.spec.ts:40:7 › PDF Text Parsing with pdftotext › should extract text from PDF files efficiently (5ms)
+✓ Search completed in 82ms
+  ok 128 [chromium] › tests\pdf-parsing.spec.ts:77:7 › PDF Text Parsing with pdftotext › should support PDF text search in Elasticsearch (98ms)
+✓ PDF parsing failures are handled gracefully:
+  - Returns empty string (no exceptions)
+  - Logs warning for troubleshooting
+  - Does not block file import
+  - No memory leaks on failure
+  ok 129 [chromium] › tests\pdf-parsing.spec.ts:104:7 › PDF Text Parsing with pdftotext › should gracefully handle PDF parsing failures (4ms)
+
+📊 PDF Parsing Improvements Summary:
+  Installation: poppler-utils added to Dockerfile (line 14)
+  Implementation: DocumentParserService updated to use pdftotext command
+  Performance: ~200ms extraction time (vs disabled before)
+  Reliability: No timeouts or memory leaks (vs major issues before)
+  Text Quality: Layout-preserved, UTF-8 encoded, 100k char limit
+  Failure Handling: Graceful degradation with logging
+  Deployment: Docker image rebuilt with poppler-utils
+  ok 130 [chromium] › tests\pdf-parsing.spec.ts:120:7 › PDF Text Parsing with pdftotext › overall PDF parsing validation (6ms)
+  ok 131 [chromium] › tests\performance\gzip-compression.spec.ts:4:7 › Gzip Compression › should enable gzip compression on API responses (33ms)
+All response headers: [
+  [32m'server'[39m,
+  [32m'date'[39m,
+  [32m'content-type'[39m,
+  [32m'content-length'[39m,
+  [32m'connection'[39m,
+  [32m'cache-control'[39m,
+  [32m'access-control-allow-origin'[39m,
+  [32m'content-encoding'[39m,
+  [32m'x-frame-options'[39m,
+  [32m'x-content-type-options'[39m,
+  [32m'x-xss-protection'[39m
+]
+⚠ Vary header not present (may be added by Nginx layer)
+  ok 132 [chromium] › tests\performance\gzip-compression.spec.ts:19:7 › Gzip Compression › should include Vary header for proper caching (108ms)
+Uncompressed size: 19094 bytes
+Gzip compression is active (content-encoding: gzip)
+  ok 133 [chromium] › tests\performance\gzip-compression.spec.ts:49:7 › Gzip Compression › should achieve at least 60% compression on JSON responses (72ms)
+JavaScript assets not found (may not be built yet)
+  ok 134 [chromium] › tests\performance\gzip-compression.spec.ts:80:7 › Gzip Compression › should compress JavaScript and CSS assets (268ms)
+  ok 135 [chromium] › tests\performance\gzip-compression.spec.ts:97:7 › Gzip Compression › should not compress small responses (< 256 bytes) (11ms)
+  ok 136 [chromium] › tests\performance\gzip-compression.spec.ts:113:7 › Gzip Compression › should handle clients without gzip support (28ms)
+✓ Elasticsearch heap: 1gb
+  ok 137 [chromium] › tests\performance-improvements.spec.ts:11:7 › Performance Improvements Validation › should have Elasticsearch with 1GB heap (357ms)
+✓ 20 concurrent requests completed in 172ms
+  ok 138 [chromium] › tests\performance-improvements.spec.ts:23:7 › Performance Improvements Validation › should handle concurrent API requests efficiently (Swoole workers) (219ms)
+✓ Indexed query completed in 80ms
+  ok 139 [chromium] › tests\performance-improvements.spec.ts:46:7 › Performance Improvements Validation › should use composite index for fast subject file queries (86ms)
+✓ Performance stability: First batch 21ms, Last batch 16ms (-22.4% change)
+  ok 140 [chromium] › tests\performance-improvements.spec.ts:65:7 › Performance Improvements Validation › should demonstrate garbage collection prevents memory leaks (3.5s)
+✓ Server configured to handle large payloads (10MB package_max_length)
+  ok 141 [chromium] › tests\performance-improvements.spec.ts:98:7 › Performance Improvements Validation › should handle file upload with increased package size (10MB limit) (22ms)
+✓ Search completed in 150ms (response format varies)
+  ok 142 [chromium] › tests\performance-improvements.spec.ts:111:7 › Performance Improvements Validation › should perform full-text search efficiently with increased ES heap (160ms)
+✓ Swoole configured with max_request=1000 for automatic worker restarts
+  ok 143 [chromium] › tests\performance-improvements.spec.ts:133:7 › Performance Improvements Validation › should restart workers after 1000 requests (max_request) (2ms)
+  Health check: 16ms
+  List subjects: 16ms
+  Get subject detail: 17ms
+  Search query: 65ms
+✓ All baseline performance tests passed
+  ok 144 [chromium] › tests\performance-improvements.spec.ts:142:7 › Performance Improvements Validation › overall performance baseline validation (128ms)
+✓ Upload response time: 72ms (target: <2000ms)
+✓ File uploaded with ID 33225, status: pending
+  ok 145 [chromium] › tests\queue-file-processing.spec.ts:48:7 › Queue-Based File Processing › should upload file and return immediately with pending status (103ms)
+✓ File uploaded with ID 33226
+  x  146 [chromium] › tests\queue-file-processing.spec.ts:92:7 › Queue-Based File Processing › should process file asynchronously and update status (1.2s)
+✓ Large file upload response: 119ms
+✓ Large file queued for processing with ID 33227
+  ok 147 [chromium] › tests\queue-file-processing.spec.ts:152:7 › Queue-Based File Processing › should handle large PDF file with queue processing (142ms)
+✓ 5 concurrent uploads completed in 1232ms
+✓ Files queued: 33229, 33228, 33232, 33231, 33230
+  x  148 [chromium] › tests\queue-file-processing.spec.ts:187:7 › Queue-Based File Processing › should process multiple files concurrently (11.7s)
+✓ Unsupported file type rejected: Unsupported file type
+  ok 149 [chromium] › tests\queue-file-processing.spec.ts:263:7 › Queue-Based File Processing › should handle file processing errors gracefully (72ms)
+✓ Queue worker verified through successful processing tests
+  ok 150 [chromium] › tests\queue-file-processing.spec.ts:291:7 › Queue-Based File Processing › should verify queue worker is running (14ms)
+✓ Upload response: 64ms
+✓ Performance improvement: ~98% faster than synchronous (3s baseline)
+✓ Target met: <2000ms (was 2-5s with synchronous processing)
+  x  151 [chromium] › tests\queue-file-processing.spec.ts:299:7 › Queue-Based File Processing › overall performance improvement validation (3.3s)
+
+
+  1) [chromium] › tests\gui\auth.spec.ts:158:7 › Authentication GUI Tests › should handle session timeout gracefully 
+
+    Error: page.goto: net::ERR_ABORTED at http://localhost:8000/dashboard
+    Call log:
+    [2m  - navigating to "http://localhost:8000/dashboard", waiting until "load"[22m
+
+
+      163 |
+      164 |     // Try to make an authenticated request
+    > 165 |     await page.goto('/dashboard');
+          |                ^
+      166 |
+      167 |     // Should redirect to login
+      168 |     await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+        at E:\Entoo2\tests\tests\gui\auth.spec.ts:165:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-auth-Authentication-GU-7c21c--session-timeout-gracefully-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-auth-Authentication-GU-7c21c--session-timeout-gracefully-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-auth-Authentication-GU-7c21c--session-timeout-gracefully-chromium\error-context.md
+
+  2) [chromium] › tests\gui\favorites.spec.ts:201:7 › Favorites GUI Tests › should update favorite count in real-time 
+
+    Error: locator.textContent: Unexpected token "alert(" while parsing css selector ".subject-row:has-text("<img src=x onerror="alert('XSS')" />TestSubject") .favorite-star". Did you mean to CSS.escape it?
+    Call log:
+    [2m  - waiting for .subject-row:has-text("<img src=x onerror="alert('XSS')" />TestSubject") .favorite-star[22m
+
+
+       at helpers\ui.helper.ts:193
+
+      191 |  * Get favorite star element for a subject
+      192 |  */
+    > 193 | export function getFavoriteStar(page: Page, subjectName: string): Locator {
+          |                           ^
+      194 |   return page.locator(`.subject-row:has-text("${subjectName}") .favorite-star`);
+      195 | }
+      196 |
+        at isSubjectFavorite (E:\Entoo2\tests\tests\helpers\ui.helper.ts:193:27)
+        at E:\Entoo2\tests\tests\gui\favorites.spec.ts:217:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-favorites-Favorites-GU-1e927-favorite-count-in-real-time-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-favorites-Favorites-GU-1e927-favorite-count-in-real-time-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-favorites-Favorites-GU-1e927-favorite-count-in-real-time-chromium\error-context.md
+
+  3) [chromium] › tests\gui\file-upload.spec.ts:39:7 › File Upload GUI Tests › should display file upload button 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    13 × locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m       - unexpected value "hidden"[22m
+
+
+      39 |   test('should display file upload button', async ({ page }) => {
+      40 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 41 |     await expect(uploadBtn.first()).toBeVisible();
+         |                                     ^
+      42 |   });
+      43 |
+      44 |   test('should open file upload modal', async ({ page }) => {
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:41:37
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-0b8c7--display-file-upload-button-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-0b8c7--display-file-upload-button-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-0b8c7--display-file-upload-button-chromium\error-context.md
+
+  4) [chromium] › tests\gui\file-upload.spec.ts:44:7 › File Upload GUI Tests › should open file upload modal 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    98 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      44 |   test('should open file upload modal', async ({ page }) => {
+      45 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 46 |     await uploadBtn.first().click();
+         |                             ^
+      47 |
+      48 |     // Modal should appear
+      49 |     const modal = page.locator('.modal, .upload-modal, #uploadModal');
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:46:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-4db7d-ould-open-file-upload-modal-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-4db7d-ould-open-file-upload-modal-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-4db7d-ould-open-file-upload-modal-chromium\error-context.md
+
+  5) [chromium] › tests\gui\file-upload.spec.ts:58:7 › File Upload GUI Tests › should successfully upload a PDF file 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    95 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      59 |     // Open upload modal
+      60 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 61 |     await uploadBtn.first().click();
+         |                             ^
+      62 |
+      63 |     await page.waitForTimeout(500);
+      64 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:61:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-40260-cessfully-upload-a-PDF-file-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-40260-cessfully-upload-a-PDF-file-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-40260-cessfully-upload-a-PDF-file-chromium\error-context.md
+
+  6) [chromium] › tests\gui\file-upload.spec.ts:95:7 › File Upload GUI Tests › should successfully upload a text file 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    95 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+       95 |   test('should successfully upload a text file', async ({ page }) => {
+       96 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    >  97 |     await uploadBtn.first().click();
+          |                             ^
+       98 |
+       99 |     await page.waitForTimeout(500);
+      100 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:97:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-fb810-essfully-upload-a-text-file-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-fb810-essfully-upload-a-text-file-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-fb810-essfully-upload-a-text-file-chromium\error-context.md
+
+  7) [chromium] › tests\gui\file-upload.spec.ts:117:7 › File Upload GUI Tests › should validate required fields 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    93 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      117 |   test('should validate required fields', async ({ page }) => {
+      118 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 119 |     await uploadBtn.first().click();
+          |                             ^
+      120 |
+      121 |     await page.waitForTimeout(500);
+      122 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:119:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-42e08-ld-validate-required-fields-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-42e08-ld-validate-required-fields-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-42e08-ld-validate-required-fields-chromium\error-context.md
+
+  8) [chromium] › tests\gui\file-upload.spec.ts:136:7 › File Upload GUI Tests › should display uploaded files in subject 
+
+    Error: locator.count: Unexpected token "alert(" while parsing css selector ".subject-row:has-text("<img src=x onerror="alert('XSS')" />TestSubject")". Did you mean to CSS.escape it?
+
+       at helpers\ui.helper.ts:171
+
+      169 |  * Expand subject in file tree
+      170 |  */
+    > 171 | export async function expandSubject(
+          |                                                             ^
+      172 |   page: Page,
+      173 |   subjectName: string
+      174 | ): Promise<void> {
+        at expandSubject (E:\Entoo2\tests\tests\helpers\ui.helper.ts:171:61)
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:145:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-790e9-y-uploaded-files-in-subject-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-790e9-y-uploaded-files-in-subject-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-790e9-y-uploaded-files-in-subject-chromium\error-context.md
+
+  9) [chromium] › tests\gui\file-upload.spec.ts:158:7 › File Upload GUI Tests › should download file 
+
+    Error: locator.count: Unexpected token "alert(" while parsing css selector ".subject-row:has-text("<img src=x onerror="alert('XSS')" />TestSubject")". Did you mean to CSS.escape it?
+
+       at helpers\ui.helper.ts:171
+
+      169 |  * Expand subject in file tree
+      170 |  */
+    > 171 | export async function expandSubject(
+          |                                                             ^
+      172 |   page: Page,
+      173 |   subjectName: string
+      174 | ): Promise<void> {
+        at expandSubject (E:\Entoo2\tests\tests\helpers\ui.helper.ts:171:61)
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:175:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Upload-GUI-Tests-should-download-file-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Upload-GUI-Tests-should-download-file-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Upload-GUI-Tests-should-download-file-chromium\error-context.md
+
+  10) [chromium] › tests\gui\file-upload.spec.ts:197:7 › File Upload GUI Tests › should delete uploaded file 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    96 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+
+
+      198 |     // First upload a file
+      199 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 200 |     await uploadBtn.first().click();
+          |                             ^
+      201 |
+      202 |     await page.waitForTimeout(500);
+      203 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:200:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-0d5bb-should-delete-uploaded-file-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-0d5bb-should-delete-uploaded-file-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-0d5bb-should-delete-uploaded-file-chromium\error-context.md
+
+  11) [chromium] › tests\gui\file-upload.spec.ts:241:7 › File Upload GUI Tests › should show upload progress 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    96 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      241 |   test('should show upload progress', async ({ page }) => {
+      242 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 243 |     await uploadBtn.first().click();
+          |                             ^
+      244 |
+      245 |     await page.waitForTimeout(500);
+      246 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:243:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-94ee8-should-show-upload-progress-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-94ee8-should-show-upload-progress-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-94ee8-should-show-upload-progress-chromium\error-context.md
+
+  12) [chromium] › tests\gui\file-upload.spec.ts:272:7 › File Upload GUI Tests › should handle file size limits 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Upload"), .upload-button, #uploadFileBtn').first()[22m
+    [2m    - locator resolved to <button type="submit" id="uploadBtn" class="btn btn-primary">📤 Upload</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    92 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      280 |
+      281 |     const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    > 282 |     await uploadBtn.first().click();
+          |                             ^
+      283 |
+      284 |     await page.waitForTimeout(500);
+      285 |
+        at E:\Entoo2\tests\tests\gui\file-upload.spec.ts:282:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-ebddd-uld-handle-file-size-limits-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-file-upload-File-Uploa-ebddd-uld-handle-file-size-limits-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-file-upload-File-Uploa-ebddd-uld-handle-file-size-limits-chromium\error-context.md
+
+  13) [chromium] › tests\gui\password-reset.spec.ts:48:7 › Password Reset GUI Tests › API: should send password reset email for valid email 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m200[39m
+    Received: [31m408[39m
+
+      69 |     });
+      70 |
+    > 71 |     expect(response.status()).toBe(200);
+         |                               ^
+      72 |     const body = await response.json();
+      73 |     expect(body.message).toContain('Password reset instructions');
+      74 |   });
+        at E:\Entoo2\tests\tests\gui\password-reset.spec.ts:71:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-password-reset-Passwor-2ee7c-reset-email-for-valid-email-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-password-reset-Passwor-2ee7c-reset-email-for-valid-email-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-password-reset-Passwor-2ee7c-reset-email-for-valid-email-chromium\error-context.md
+
+  14) [chromium] › tests\gui\search.spec.ts:36:7 › Search GUI Tests › should perform basic search ──
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  locator('.search-results, .file-list, .subject-row').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.search-results, .file-list, .subject-row').first()[22m
+    [2m    8 × locator resolved to <div data-subject="<img src=x onerror=" class="tree-subject glass-subject subject-row">…</div>[22m
+    [2m      - unexpected value "hidden"[22m
+
+
+      49 |     // Results should be displayed
+      50 |     const results = page.locator('.search-results, .file-list, .subject-row', );
+    > 51 |     await expect(results.first()).toBeVisible({ timeout: 5000 });
+         |                                   ^
+      52 |   });
+      53 |
+      54 |   test('should display search results count', async ({ page }) => {
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:51:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-perform-basic-search-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-perform-basic-search-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Tests-should-perform-basic-search-chromium\error-context.md
+
+  15) [chromium] › tests\gui\search.spec.ts:54:7 › Search GUI Tests › should display search results count 
+
+    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: [32m/\/dashboard/[39m
+    Received string:  [31m"http://localhost:8000/login"[39m
+    Timeout: 10000ms
+
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 10000ms[22m
+    [2m    13 × unexpected value "http://localhost:8000/login"[22m
+
+
+       at helpers\auth.helper.ts:128
+
+      126 |
+      127 |   // Verify we're on the dashboard
+    > 128 |   await expect(page).toHaveURL(/\/dashboard/);
+          |                      ^
+      129 | }
+      130 |
+        at setupAuth (E:\Entoo2\tests\tests\helpers\auth.helper.ts:128:22)
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:17:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-df1e3-isplay-search-results-count-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-df1e3-isplay-search-results-count-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Test-df1e3-isplay-search-results-count-chromium\error-context.md
+
+  16) [chromium] › tests\gui\search.spec.ts:64:7 › Search GUI Tests › should highlight search terms in results 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  locator('mark, .highlight, strong').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('mark, .highlight, strong').first()[22m
+    [2m    13 × locator resolved to <strong id="uploadSubject"></strong>[22m
+    [2m       - unexpected value "hidden"[22m
+
+
+      71 |     // Highlighted terms might be present
+      72 |     if (count > 0) {
+    > 73 |       await expect(highlightedTerms.first()).toBeVisible();
+         |                                              ^
+      74 |     }
+      75 |   });
+      76 |
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:73:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-adc20-ght-search-terms-in-results-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-adc20-ght-search-terms-in-results-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Test-adc20-ght-search-terms-in-results-chromium\error-context.md
+
+  17) [chromium] › tests\gui\search.spec.ts:154:7 › Search GUI Tests › should maintain search state on page reload 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"smlouva"[39m
+    Received: [31m""[39m
+
+      166 |     const inputValue = await searchInput.inputValue();
+      167 |
+    > 168 |     expect(inputValue).toBe(searchQuery);
+          |                        ^
+      169 |
+      170 |     // Results should be displayed
+      171 |     const results = page.locator('.search-results, .file-list, .subject-row');
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:168:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-bef08-search-state-on-page-reload-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-bef08-search-state-on-page-reload-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Test-bef08-search-state-on-page-reload-chromium\error-context.md
+
+  18) [chromium] › tests\gui\search.spec.ts:175:7 › Search GUI Tests › should search by file name ──
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  locator('.subject-row').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.subject-row').first()[22m
+    [2m    8 × locator resolved to <div data-subject="<img src=x onerror=" class="tree-subject glass-subject subject-row">…</div>[22m
+    [2m      - unexpected value "hidden"[22m
+
+
+       at helpers\ui.helper.ts:36
+
+      34 |   // matches the DEFAULT_SEARCH_QUERY and a sharedSearchUrl was prepared in
+      35 |   // beforeAll, it navigates there (avoids opening extra pages/windows).
+    > 36 |   // Otherwise it calls the existing `search` helper. It waits for
+         |                                    ^
+      37 |   // networkidle and a small timeout to let the UI render.
+      38 |   export async function ensureSearch(page: any, query: string) {
+      39 |     const DEFAULT_SEARCH_QUERY = (global as any).DEFAULT_SEARCH_QUERY || 'pravo';
+        at waitForVisible (E:\Entoo2\tests\tests\helpers\ui.helper.ts:36:36)
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:177:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-search-by-file-name-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-search-by-file-name-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Tests-should-search-by-file-name-chromium\error-context.md
+
+  19) [chromium] › tests\gui\search.spec.ts:200:7 › Search GUI Tests › should search by subject name 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Search GUI Tests', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await setupAuth(page);
+      18 |     await page.waitForLoadState('networkidle');
+      19 |     if (sharedSearchUrl) {
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:16:8
+
+    Error: page.waitForLoadState: Test timeout of 60000ms exceeded.
+
+      23 |       await page.goto(`${base.replace(/\/$/, '')}/search?q=${encodeURIComponent(DEFAULT_SEARCH_QUERY)}`);
+      24 |     }
+    > 25 |     await page.waitForLoadState('networkidle');
+         |                ^
+      26 |   });
+      27 |
+      28 |   
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:25:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-search-by-subject-name-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-search-by-subject-name-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Tests-should-search-by-subject-name-chromium\error-context.md
+
+  20) [chromium] › tests\gui\search.spec.ts:220:7 › Search GUI Tests › should show search performance metrics 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m3000[39m
+    Received:   [31m8426[39m
+
+      228 |
+      229 |     // Search should complete quickly with Elasticsearch
+    > 230 |     expect(duration).toBeLessThan(3000);
+          |                      ^
+      231 |
+      232 |     console.log(`Search completed in ${duration}ms`);
+      233 |   });
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:230:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-62831--search-performance-metrics-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-62831--search-performance-metrics-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Test-62831--search-performance-metrics-chromium\error-context.md
+
+  21) [chromium] › tests\gui\search.spec.ts:235:7 › Search GUI Tests › should handle concurrent searches 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator:  locator('.search-results, .file-list, .subject-row').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.search-results, .file-list, .subject-row').first()[22m
+    [2m    8 × locator resolved to <div data-subject="<img src=x onerror=" class="tree-subject glass-subject subject-row">…</div>[22m
+    [2m      - unexpected value "hidden"[22m
+
+
+      255 |     // Should display results for final search
+      256 |     const results = page.locator('.search-results, .file-list, .subject-row');
+    > 257 |     await expect(results.first()).toBeVisible({ timeout: 5000 });
+          |                                   ^
+      258 |   });
+      259 |
+      260 |   test('should filter search by category', async ({ page }) => {
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:257:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-b3cbd--handle-concurrent-searches-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Test-b3cbd--handle-concurrent-searches-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Test-b3cbd--handle-concurrent-searches-chromium\error-context.md
+
+  22) [chromium] › tests\gui\search.spec.ts:260:7 › Search GUI Tests › should filter search by category 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.selectOption: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('select[name="category"], .category-filter')[22m
+    [2m    - locator resolved to <select required="" name="category" id="categorySelect" class="form-control">…</select>[22m
+    [2m  - attempting select option action[22m
+    [2m    2 × waiting for element to be visible and enabled[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying select option action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible and enabled[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying select option action[22m
+    [2m      - waiting 100ms[22m
+    [2m    85 × waiting for element to be visible and enabled[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying select option action[22m
+    [2m       - waiting 500ms[22m
+    [2m    - waiting for element to be visible and enabled[22m
+
+
+      268 |
+      269 |     if (hasFilter) {
+    > 270 |       await categoryFilter.selectOption('Materialy');
+          |                            ^
+      271 |
+      272 |       // Wait for filtered results
+      273 |       await page.waitForTimeout(1000);
+        at E:\Entoo2\tests\tests\gui\search.spec.ts:270:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-filter-search-by-category-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-search-Search-GUI-Tests-should-filter-search-by-category-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-search-Search-GUI-Tests-should-filter-search-by-category-chromium\error-context.md
+
+  23) [chromium] › tests\gui\subject-profile.spec.ts:16:7 › Subject Profile GUI Tests › should not generate 404 errors when expanding subjects without profiles 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.tab-btn:has-text("Profile")').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.tab-btn:has-text("Profile")').first()[22m
+
+
+      45 |     // Check for Profile tab
+      46 |     const profileTab = page.locator('.tab-btn:has-text("Profile")').first();
+    > 47 |     await expect(profileTab).toBeVisible({ timeout: 5000 });
+         |                              ^
+      48 |
+      49 |     // Click on Profile tab
+      50 |     await profileTab.click();
+        at E:\Entoo2\tests\tests\gui\subject-profile.spec.ts:47:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-ee742-g-subjects-without-profiles-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-ee742-g-subjects-without-profiles-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-subject-profile-Subjec-ee742-g-subjects-without-profiles-chromium\error-context.md
+
+  24) [chromium] › tests\gui\subject-profile.spec.ts:57:7 › Subject Profile GUI Tests › should display "Create Profile" option for subjects without profiles 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.tab-btn:has-text("Profile")').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('.tab-btn:has-text("Profile")').first()[22m
+
+
+      67 |     // Check for Profile tab
+      68 |     const profileTab = page.locator('.tab-btn:has-text("Profile")').first();
+    > 69 |     await expect(profileTab).toBeVisible({ timeout: 5000 });
+         |                              ^
+      70 |
+      71 |     // Click on Profile tab
+      72 |     await profileTab.click();
+        at E:\Entoo2\tests\tests\gui\subject-profile.spec.ts:69:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-f74a7-r-subjects-without-profiles-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-f74a7-r-subjects-without-profiles-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-subject-profile-Subjec-f74a7-r-subjects-without-profiles-chromium\error-context.md
+
+  25) [chromium] › tests\gui\subject-profile.spec.ts:249:7 › Subject Profile GUI Tests › should close modal by clicking outside 
+
+    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: [32m/\/dashboard/[39m
+    Received string:  [31m"http://localhost:8000/login"[39m
+    Timeout: 10000ms
+
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 10000ms[22m
+    [2m    13 × unexpected value "http://localhost:8000/login"[22m
+
+
+       at helpers\auth.helper.ts:128
+
+      126 |
+      127 |   // Verify we're on the dashboard
+    > 128 |   await expect(page).toHaveURL(/\/dashboard/);
+          |                      ^
+      129 | }
+      130 |
+        at setupAuth (E:\Entoo2\tests\tests\helpers\auth.helper.ts:128:22)
+        at E:\Entoo2\tests\tests\gui\subject-profile.spec.ts:12:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-ed431-e-modal-by-clicking-outside-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-subject-profile-Subjec-ed431-e-modal-by-clicking-outside-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-subject-profile-Subjec-ed431-e-modal-by-clicking-outside-chromium\error-context.md
+
+  26) [chromium] › tests\gui\xss-prevention.spec.ts:47:7 › XSS Prevention Tests › should sanitize subject name with event handlers 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.subject-row').filter({ hasText: 'TestSubject' })
+    Expected: visible
+    Error: strict mode violation: locator('.subject-row').filter({ hasText: 'TestSubject' }) resolved to 2 elements:
+        1) <div data-subject="<img src=x onerror=" class="tree-subject glass-subject subject-row">…</div> aka locator('div').filter({ hasText: 'TestSubject\')"> ▶ <img src=x' }).nth(4)
+        2) <div data-subject="<script>alert(" class="tree-subject glass-subject subject-row">…</div> aka locator('div').filter({ hasText: 'TestSubject\')"> ▶ <script>' }).nth(4)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('.subject-row').filter({ hasText: 'TestSubject' })[22m
+
+
+      54 |
+      55 |     const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'TestSubject' });
+    > 56 |     await expect(subjectElement).toBeVisible();
+         |                                  ^
+      57 |
+      58 |     // Verify no onerror handler is present
+      59 |     const innerHTML = await subjectElement.innerHTML();
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:56:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-1628e-ct-name-with-event-handlers-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-1628e-ct-name-with-event-handlers-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-1628e-ct-name-with-event-handlers-chromium\error-context.md
+
+  27) [chromium] › tests\gui\xss-prevention.spec.ts:67:7 › XSS Prevention Tests › should sanitize filename with HTML injection 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.file-item').filter({ hasText: 'test.pdf' })
+    Expected: visible
+    Error: strict mode violation: locator('.file-item').filter({ hasText: 'test.pdf' }) resolved to 2 elements:
+        1) <div class="file-item glass-file-item">…</div> aka getByText('📕 i>test.pdf 449 B • PDF • 11/19/2025 ⬇ Download 🗑️ Delete')
+        2) <div class="file-item glass-file-item">…</div> aka getByText('📕 test.pdf 449 B • PDF • 11/19/2025 ⬇ Download 🗑️ Delete')
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('.file-item').filter({ hasText: 'test.pdf' })[22m
+
+
+      82 |     // Check filename is escaped
+      83 |     const fileItem = page.locator('.file-item').filter({ hasText: 'test.pdf' });
+    > 84 |     await expect(fileItem).toBeVisible();
+         |                            ^
+      85 |
+      86 |     const filenameElement = fileItem.locator('h4').first();
+      87 |     const innerHTML = await filenameElement.innerHTML();
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:84:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-80bb7-ilename-with-HTML-injection-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-80bb7-ilename-with-HTML-injection-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-80bb7-ilename-with-HTML-injection-chromium\error-context.md
+
+  28) [chromium] › tests\gui\xss-prevention.spec.ts:95:7 › XSS Prevention Tests › should sanitize search results with malicious content 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="search"]')[22m
+
+
+      104 |     // Perform search
+      105 |     const searchInput = page.locator('input[type="search"]');
+    > 106 |     await searchInput.fill('searchable');
+          |                       ^
+      107 |     await searchInput.press('Enter');
+      108 |     await page.waitForTimeout(1000);
+      109 |
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:106:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-88fbb-ults-with-malicious-content-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-88fbb-ults-with-malicious-content-chromium\error-context.md
+
+  29) [chromium] › tests\gui\xss-prevention.spec.ts:119:7 › XSS Prevention Tests › should sanitize profile description with XSS payload 
+
+    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: [32m/\/dashboard/[39m
+    Received string:  [31m"http://localhost:8000/login"[39m
+    Timeout: 10000ms
+
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 10000ms[22m
+    [2m    13 × unexpected value "http://localhost:8000/login"[22m
+
+
+       at helpers\auth.helper.ts:128
+
+      126 |
+      127 |   // Verify we're on the dashboard
+    > 128 |   await expect(page).toHaveURL(/\/dashboard/);
+          |                      ^
+      129 | }
+      130 |
+        at setupAuth (E:\Entoo2\tests\tests\helpers\auth.helper.ts:128:22)
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:12:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-b8001-escription-with-XSS-payload-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-b8001-escription-with-XSS-payload-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-b8001-escription-with-XSS-payload-chromium\error-context.md
+
+  30) [chromium] › tests\gui\xss-prevention.spec.ts:168:7 › XSS Prevention Tests › should sanitize user name in file owner display 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.subject-row:has-text("XSS_OwnerTest")')[22m
+
+
+      179 |     // Expand subject
+      180 |     const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    > 181 |     await subjectRow.click();
+          |                      ^
+      182 |     await page.waitForTimeout(1000);
+      183 |
+      184 |     // Check file owner display
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:181:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-8103c--name-in-file-owner-display-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-8103c--name-in-file-owner-display-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-8103c--name-in-file-owner-display-chromium\error-context.md
+
+  31) [chromium] › tests\gui\xss-prevention.spec.ts:196:7 › XSS Prevention Tests › should sanitize highlight snippets in search results 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="search"]')[22m
+
+
+      206 |     // Search for content that might appear in highlights
+      207 |     const searchInput = page.locator('input[type="search"]');
+    > 208 |     await searchInput.fill('test document');
+          |                       ^
+      209 |     await searchInput.press('Enter');
+      210 |     await page.waitForTimeout(1500);
+      211 |
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:208:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-55221--snippets-in-search-results-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-55221--snippets-in-search-results-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-55221--snippets-in-search-results-chromium\error-context.md
+
+  32) [chromium] › tests\gui\xss-prevention.spec.ts:222:7 › XSS Prevention Tests › should sanitize category names in tabs 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.subject-row:has-text("XSS_CategoryTest")')[22m
+
+
+      230 |     // Expand subject
+      231 |     const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    > 232 |     await subjectRow.click();
+          |                      ^
+      233 |     await page.waitForTimeout(1000);
+      234 |
+      235 |     // Check category tabs
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:232:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-4a74c-tize-category-names-in-tabs-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-4a74c-tize-category-names-in-tabs-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-4a74c-tize-category-names-in-tabs-chromium\error-context.md
+
+  33) [chromium] › tests\gui\xss-prevention.spec.ts:264:7 › XSS Prevention Tests › should sanitize filter notification with user name 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.subject-row:has-text("XSS_FilterTest")')[22m
+
+
+      275 |     // Expand subject
+      276 |     const subjectRow = page.locator(`.subject-row:has-text("${subjectName}")`);
+    > 277 |     await subjectRow.click();
+          |                      ^
+      278 |     await page.waitForTimeout(1000);
+      279 |
+      280 |     // Click on file owner link to filter
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:277:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-f71c7-notification-with-user-name-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-f71c7-notification-with-user-name-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-f71c7-notification-with-user-name-chromium\error-context.md
+
+  34) [chromium] › tests\gui\xss-prevention.spec.ts:298:7 › XSS Prevention Tests › should handle multiple XSS vectors in single subject name 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.subject-row').filter({ hasText: 'TestSubject' })
+    Expected: visible
+    Error: strict mode violation: locator('.subject-row').filter({ hasText: 'TestSubject' }) resolved to 2 elements:
+        1) <div data-subject="<img src=x onerror=" class="tree-subject glass-subject subject-row">…</div> aka locator('div').filter({ hasText: 'TestSubject\')"> ▶ <img src=x' }).nth(4)
+        2) <div data-subject="<script>alert(" class="tree-subject glass-subject subject-row">…</div> aka locator('div').filter({ hasText: 'TestSubject\')"> ▶ <script>' }).nth(4)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('.subject-row').filter({ hasText: 'TestSubject' })[22m
+
+
+      305 |
+      306 |     const subjectElement = page.locator(`.subject-row`).filter({ hasText: 'TestSubject' });
+    > 307 |     await expect(subjectElement).toBeVisible();
+          |                                  ^
+      308 |
+      309 |     const innerHTML = await subjectElement.innerHTML();
+      310 |
+        at E:\Entoo2\tests\tests\gui\xss-prevention.spec.ts:307:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-4735d-tors-in-single-subject-name-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\gui-xss-prevention-XSS-Pre-4735d-tors-in-single-subject-name-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\gui-xss-prevention-XSS-Pre-4735d-tors-in-single-subject-name-chromium\error-context.md
+
+  35) [chromium] › tests\queue-file-processing.spec.ts:92:7 › Queue-Based File Processing › should process file asynchronously and update status 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+      131 |       });
+      132 |
+    > 133 |       expect(statusResponse.ok()).toBeTruthy();
+          |                                   ^
+      134 |       const statusData = await statusResponse.json();
+      135 |
+      136 |       console.log(`  Attempt ${attempts}: status = ${statusData.processing_status}`);
+        at E:\Entoo2\tests\tests\queue-file-processing.spec.ts:133:35
+
+  36) [chromium] › tests\queue-file-processing.spec.ts:187:7 › Queue-Based File Processing › should process multiple files concurrently 
+
+    SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+
+      250 |     let completedCount = 0;
+      251 |     for (const statusResponse of statusChecks) {
+    > 252 |       const statusData = await statusResponse.json();
+          |                          ^
+      253 |       if (statusData.processing_status === 'completed') {
+      254 |         completedCount++;
+      255 |       }
+        at E:\Entoo2\tests\tests\queue-file-processing.spec.ts:252:26
+
+  37) [chromium] › tests\queue-file-processing.spec.ts:299:7 › Queue-Based File Processing › overall performance improvement validation 
+
+    SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+
+      342 |     });
+      343 |
+    > 344 |     const statusData = await statusResponse.json();
+          |                        ^
+      345 |     console.log(`✓ Background processing status: ${statusData.processing_status}`);
+      346 |     expect(['processing', 'completed']).toContain(statusData.processing_status);
+      347 |   });
+        at E:\Entoo2\tests\tests\queue-file-processing.spec.ts:344:24
+
+  37 failed
+    [chromium] › tests\gui\auth.spec.ts:158:7 › Authentication GUI Tests › should handle session timeout gracefully 
+    [chromium] › tests\gui\favorites.spec.ts:201:7 › Favorites GUI Tests › should update favorite count in real-time 
+    [chromium] › tests\gui\file-upload.spec.ts:39:7 › File Upload GUI Tests › should display file upload button 
+    [chromium] › tests\gui\file-upload.spec.ts:44:7 › File Upload GUI Tests › should open file upload modal 
+    [chromium] › tests\gui\file-upload.spec.ts:58:7 › File Upload GUI Tests › should successfully upload a PDF file 
+    [chromium] › tests\gui\file-upload.spec.ts:95:7 › File Upload GUI Tests › should successfully upload a text file 
+    [chromium] › tests\gui\file-upload.spec.ts:117:7 › File Upload GUI Tests › should validate required fields 
+    [chromium] › tests\gui\file-upload.spec.ts:136:7 › File Upload GUI Tests › should display uploaded files in subject 
+    [chromium] › tests\gui\file-upload.spec.ts:158:7 › File Upload GUI Tests › should download file 
+    [chromium] › tests\gui\file-upload.spec.ts:197:7 › File Upload GUI Tests › should delete uploaded file 
+    [chromium] › tests\gui\file-upload.spec.ts:241:7 › File Upload GUI Tests › should show upload progress 
+    [chromium] › tests\gui\file-upload.spec.ts:272:7 › File Upload GUI Tests › should handle file size limits 
+    [chromium] › tests\gui\password-reset.spec.ts:48:7 › Password Reset GUI Tests › API: should send password reset email for valid email 
+    [chromium] › tests\gui\search.spec.ts:36:7 › Search GUI Tests › should perform basic search ────
+    [chromium] › tests\gui\search.spec.ts:54:7 › Search GUI Tests › should display search results count 
+    [chromium] › tests\gui\search.spec.ts:64:7 › Search GUI Tests › should highlight search terms in results 
+    [chromium] › tests\gui\search.spec.ts:154:7 › Search GUI Tests › should maintain search state on page reload 
+    [chromium] › tests\gui\search.spec.ts:175:7 › Search GUI Tests › should search by file name ────
+    [chromium] › tests\gui\search.spec.ts:200:7 › Search GUI Tests › should search by subject name ─
+    [chromium] › tests\gui\search.spec.ts:220:7 › Search GUI Tests › should show search performance metrics 
+    [chromium] › tests\gui\search.spec.ts:235:7 › Search GUI Tests › should handle concurrent searches 
+    [chromium] › tests\gui\search.spec.ts:260:7 › Search GUI Tests › should filter search by category 
+    [chromium] › tests\gui\subject-profile.spec.ts:16:7 › Subject Profile GUI Tests › should not generate 404 errors when expanding subjects without profiles 
+    [chromium] › tests\gui\subject-profile.spec.ts:57:7 › Subject Profile GUI Tests › should display "Create Profile" option for subjects without profiles 
+    [chromium] › tests\gui\subject-profile.spec.ts:249:7 › Subject Profile GUI Tests › should close modal by clicking outside 
+    [chromium] › tests\gui\xss-prevention.spec.ts:47:7 › XSS Prevention Tests › should sanitize subject name with event handlers 
+    [chromium] › tests\gui\xss-prevention.spec.ts:67:7 › XSS Prevention Tests › should sanitize filename with HTML injection 
+    [chromium] › tests\gui\xss-prevention.spec.ts:95:7 › XSS Prevention Tests › should sanitize search results with malicious content 
+    [chromium] › tests\gui\xss-prevention.spec.ts:119:7 › XSS Prevention Tests › should sanitize profile description with XSS payload 
+    [chromium] › tests\gui\xss-prevention.spec.ts:168:7 › XSS Prevention Tests › should sanitize user name in file owner display 
+    [chromium] › tests\gui\xss-prevention.spec.ts:196:7 › XSS Prevention Tests › should sanitize highlight snippets in search results 
+    [chromium] › tests\gui\xss-prevention.spec.ts:222:7 › XSS Prevention Tests › should sanitize category names in tabs 
+    [chromium] › tests\gui\xss-prevention.spec.ts:264:7 › XSS Prevention Tests › should sanitize filter notification with user name 
+    [chromium] › tests\gui\xss-prevention.spec.ts:298:7 › XSS Prevention Tests › should handle multiple XSS vectors in single subject name 
+    [chromium] › tests\queue-file-processing.spec.ts:92:7 › Queue-Based File Processing › should process file asynchronously and update status 
+    [chromium] › tests\queue-file-processing.spec.ts:187:7 › Queue-Based File Processing › should process multiple files concurrently 
+    [chromium] › tests\queue-file-processing.spec.ts:299:7 › Queue-Based File Processing › overall performance improvement validation 
+  114 passed (27.8m)
+
+[36m  Serving HTML report at http://localhost:57602. Press Ctrl+C to quit.[39m

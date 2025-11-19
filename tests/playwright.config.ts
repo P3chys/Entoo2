@@ -79,4 +79,7 @@ export default defineConfig({
     timeout: 120 * 1000,
     reuseExistingServer: true,
   },
+
+  // Global teardown - cleanup test data after all tests
+  globalTeardown: './global-teardown.ts',
 });

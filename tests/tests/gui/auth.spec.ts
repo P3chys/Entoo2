@@ -161,8 +161,10 @@ test.describe('Authentication GUI Tests', () => {
     // Clear token to simulate session timeout
     await page.evaluate(() => localStorage.removeItem('token'));
 
-    // Try to make an authenticated request
-    await page.goto('/dashboard');
+    // Try to make an authenticated request (navigation will be aborted due to redirect)
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' }).catch(() => {
+      // Navigation may be aborted by redirect, which is expected
+    });
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/, { timeout: 5000 });

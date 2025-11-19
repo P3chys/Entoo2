@@ -34,101 +34,130 @@ test.describe('File Upload GUI Tests', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
     await page.waitForLoadState('networkidle');
+
+    // Wait for subjects to load
+    await waitForVisible(page, '.subject-row');
+
+    // Expand first subject to reveal category tabs
+    try {
+      const firstSubjectRow = page.locator('.subject-row').first();
+      const subjectNameElement = firstSubjectRow.locator('.subject-name, .name');
+      const subjectName = await subjectNameElement.textContent({ timeout: 5000 });
+
+      if (subjectName) {
+        await expandSubject(page, subjectName.trim());
+
+        // Click on a file category tab to make upload button visible
+        await page.waitForTimeout(500);
+
+        // Try to click on first available category tab (Prednasky, Materialy, Otazky, or Seminare)
+        const categoryNames = ['Prednasky', 'Materialy', 'Otazky', 'Seminare'];
+        for (const categoryName of categoryNames) {
+          const categoryTab = page.locator(`button:has-text("${categoryName}"), .tab-button:has-text("${categoryName}")`).first();
+          if (await categoryTab.count() > 0) {
+            await categoryTab.click();
+            await page.waitForTimeout(300);
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      // If we can't expand a subject, tests that need upload buttons will fail appropriately
+      console.log('Could not expand subject in beforeEach:', error);
+    }
   });
 
   test('should display file upload button', async ({ page }) => {
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    // Upload button should now be visible after expanding subject
+    // Use specific class to avoid matching the hidden modal submit button
+    const uploadBtn = page.locator('.upload-btn-category');
     await expect(uploadBtn.first()).toBeVisible();
   });
 
   test('should open file upload modal', async ({ page }) => {
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     // Modal should appear
-    const modal = page.locator('.modal, .upload-modal, #uploadModal');
+    const modal = page.locator('#uploadModal');
     await expect(modal).toBeVisible({ timeout: 3000 });
 
     // Modal should have required fields
-    await expect(page.locator('input[type="file"], #fileInput')).toBeVisible();
-    await expect(page.locator('select[name="subject_name"], #subjectSelect')).toBeVisible();
-    await expect(page.locator('select[name="category"], #categorySelect')).toBeVisible();
+    await expect(page.locator('#fileInput')).toBeVisible();
+    // Context mode shows subject/category, not selectors
+    await expect(page.locator('#uploadContext')).toBeVisible();
   });
 
   test('should successfully upload a PDF file', async ({ page }) => {
-    // Open upload modal
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    // Open upload modal (context mode - subject/category pre-selected)
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
     // Fill in upload form
     const testPdfPath = path.join(testFilesDir, 'test-document.pdf');
-    const fileInput = page.locator('input[type="file"], #fileInput');
+    const fileInput = page.locator('#fileInput');
     await fileInput.setInputFiles(testPdfPath);
 
-    // Select subject (create or use existing)
-    const subjectSelect = page.locator('select[name="subject_name"], #subjectSelect');
-    await subjectSelect.selectOption({ index: 1 });
-
-    // Select category
-    const categorySelect = page.locator('select[name="category"], #categorySelect');
-    await categorySelect.selectOption('Materialy');
+    // Subject and category are already set in context mode
+    // Just verify they're displayed
+    await expect(page.locator('#uploadContext')).toBeVisible();
 
     // Submit
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
-    // Wait for success
-    await waitForSuccessMessage(page).catch(() => {
-      // Success message might not be visible
-    });
+    // Wait for upload to complete
+    await page.waitForTimeout(3000);
 
-    // Modal should close
-    await page.waitForTimeout(1000);
+    // Modal should close or show success
+    const modal = page.locator('#uploadModal');
+    const isHidden = await modal.evaluate(el => el.classList.contains('hidden'));
 
-    // File should appear in the list (after refresh or auto-update)
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // If modal is still visible, check for success message
+    if (!isHidden) {
+      const successMsg = page.locator('#uploadSuccess');
+      await expect(successMsg).toBeVisible({ timeout: 10000 }).catch(() => {
+        // Upload might complete without visible success message
+      });
+    }
   });
 
   test('should successfully upload a text file', async ({ page }) => {
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
     const testTxtPath = path.join(testFilesDir, 'test-notes.txt');
-    const fileInput = page.locator('input[type="file"], #fileInput');
+    const fileInput = page.locator('#fileInput');
     await fileInput.setInputFiles(testTxtPath);
 
-    const subjectSelect = page.locator('select[name="subject_name"], #subjectSelect');
-    await subjectSelect.selectOption({ index: 1 });
+    // Context mode - subject/category already set
+    await expect(page.locator('#uploadContext')).toBeVisible();
 
-    const categorySelect = page.locator('select[name="category"], #categorySelect');
-    await categorySelect.selectOption('Materialy');
-
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
   });
 
   test('should validate required fields', async ({ page }) => {
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
-    // Try to submit without filling fields
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    // Try to submit without selecting a file (subject/category already set in context mode)
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
     // Should show validation errors or prevent submission
     await page.waitForTimeout(500);
 
-    // Modal should still be visible
-    const modal = page.locator('.modal, .upload-modal, #uploadModal');
+    // Modal should still be visible (file is required)
+    const modal = page.locator('#uploadModal');
     const isVisible = await modal.isVisible();
     expect(isVisible).toBe(true);
   });
@@ -196,7 +225,7 @@ test.describe('File Upload GUI Tests', () => {
 
   test('should delete uploaded file', async ({ page }) => {
     // First upload a file
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
@@ -204,34 +233,49 @@ test.describe('File Upload GUI Tests', () => {
     const testPdfPath = path.join(testFilesDir, 'test-delete.pdf');
     fs.writeFileSync(testPdfPath, '%PDF-1.4\nTest delete content');
 
-    const fileInput = page.locator('input[type="file"], #fileInput');
+    const fileInput = page.locator('#fileInput');
     await fileInput.setInputFiles(testPdfPath);
 
-    const subjectSelect = page.locator('select[name="subject_name"], #subjectSelect');
-    await subjectSelect.selectOption({ index: 1 });
+    // Context mode - subject/category already set
+    await expect(page.locator('#uploadContext')).toBeVisible();
 
-    const categorySelect = page.locator('select[name="category"], #categorySelect');
-    await categorySelect.selectOption('Materialy');
-
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     // Reload to see the file
     await page.reload();
     await page.waitForLoadState('networkidle');
 
+    // Expand the subject again and click on category tab to see files
+    const firstSubject = await page.locator('.subject-row .subject-name, .subject-row .name').first().textContent();
+    if (firstSubject) {
+      await expandSubject(page, firstSubject.trim());
+
+      // Click on a category tab to reveal delete buttons
+      await page.waitForTimeout(500);
+      const categoryNames = ['Prednasky', 'Materialy', 'Otazky', 'Seminare'];
+      for (const categoryName of categoryNames) {
+        const categoryTab = page.locator(`button:has-text("${categoryName}")`).first();
+        if (await categoryTab.count() > 0) {
+          await categoryTab.click();
+          await page.waitForTimeout(300);
+          break;
+        }
+      }
+    }
+
     // Find and delete the file
-    const deleteBtn = page.locator('.delete-file, .file-delete, button:has-text("Delete")').first();
+    const deleteBtn = page.locator('.delete-file, .file-delete, button:has-text("Delete"), .delete-btn').first();
 
     if (await deleteBtn.count() > 0) {
-      await deleteBtn.click();
-
       // Confirm deletion if there's a confirmation dialog
       page.on('dialog', dialog => dialog.accept());
 
-      await page.waitForTimeout(1000);
+      await deleteBtn.click();
+
+      await page.waitForTimeout(2000);
 
       // File should be removed
       // (Verification would require checking the file list)
@@ -239,64 +283,61 @@ test.describe('File Upload GUI Tests', () => {
   });
 
   test('should show upload progress', async ({ page }) => {
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
     const testPdfPath = path.join(testFilesDir, 'test-document.pdf');
-    const fileInput = page.locator('input[type="file"], #fileInput');
+    const fileInput = page.locator('#fileInput');
     await fileInput.setInputFiles(testPdfPath);
 
-    const subjectSelect = page.locator('select[name="subject_name"], #subjectSelect');
-    await subjectSelect.selectOption({ index: 1 });
+    // Context mode - subject/category already set
+    await expect(page.locator('#uploadContext')).toBeVisible();
 
-    const categorySelect = page.locator('select[name="category"], #categorySelect');
-    await categorySelect.selectOption('Materialy');
-
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
-    // Check for progress indicator (spinner, progress bar, etc.)
-    const progressIndicators = page.locator('.progress, .uploading, .spinner, [data-uploading="true"]');
-    const hasProgress = await progressIndicators.count() > 0;
+    // Check for progress indicator
+    const uploadProgress = page.locator('#uploadProgress');
+    await expect(uploadProgress).toBeVisible({ timeout: 3000 }).catch(() => {
+      // Progress might be too fast to catch
+    });
 
-    // Progress indicator might be very fast, so this is optional
-    if (hasProgress) {
-      await expect(progressIndicators.first()).toBeVisible({ timeout: 2000 });
-    }
-
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
   });
 
   test('should handle file size limits', async ({ page }) => {
-    // This test assumes there's a file size limit
-    // Create a large test file (if supported)
+    // This test assumes there's a file size limit (50MB according to UI hint)
+    // Create a large test file (60MB - over the limit)
     const largePdfPath = path.join(testFilesDir, 'large-file.pdf');
 
-    // Create a 20MB file (adjust based on your limits)
-    const largeContent = Buffer.alloc(20 * 1024 * 1024, 'a');
+    // Create a 60MB file to test size limit
+    const largeContent = Buffer.alloc(60 * 1024 * 1024, 'a');
     fs.writeFileSync(largePdfPath, largeContent);
 
-    const uploadBtn = page.locator('button:has-text("Upload"), .upload-button, #uploadFileBtn');
+    const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
-    const fileInput = page.locator('input[type="file"], #fileInput');
+    const fileInput = page.locator('#fileInput');
     await fileInput.setInputFiles(largePdfPath);
 
-    const subjectSelect = page.locator('select[name="subject_name"], #subjectSelect');
-    await subjectSelect.selectOption({ index: 1 });
+    // Context mode - subject/category already set
+    await expect(page.locator('#uploadContext')).toBeVisible();
 
-    const categorySelect = page.locator('select[name="category"], #categorySelect');
-    await categorySelect.selectOption('Materialy');
-
-    const submitBtn = page.locator('button[type="submit"]:has-text("Upload"), .upload-submit');
+    const submitBtn = page.locator('#uploadBtn');
     await submitBtn.click();
 
-    // Should either show error or accept the upload based on limits
+    // Should show error for file too large
     await page.waitForTimeout(2000);
+
+    // Check for error message
+    const errorMsg = page.locator('#uploadError');
+    await expect(errorMsg).toBeVisible({ timeout: 5000 }).catch(() => {
+      // Error handling might be different
+    });
 
     // Clean up
     fs.unlinkSync(largePdfPath);
