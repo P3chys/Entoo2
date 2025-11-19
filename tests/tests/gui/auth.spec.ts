@@ -1,9 +1,14 @@
 /**
  * GUI E2E Tests - Authentication
  * Tests for login, logout, and registration functionality
+ *
+ * ✨ OPTIMIZED: Uses Page Objects, Fixtures, and Custom Matchers
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect as baseExpect } from '../../fixtures';
+import { expect } from '../../matchers';
+import { LoginPage, RegisterPage } from '../../pages';
+import { UserBuilder } from '../../builders';
 import { login, logout, registerTestUser, isAuthenticated, testUser } from '../helpers/auth.helper';
 
 test.describe('Authentication GUI Tests', () => {
@@ -17,127 +22,126 @@ test.describe('Authentication GUI Tests', () => {
   });
 
   test('should display login page', async ({ page }) => {
-    await page.goto('/login');
+    // ✨ OPTIMIZED: Use LoginPage object
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
 
-    // Verify login form elements
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[name="password"]')).toBeVisible();
-    await expect(page.locator('#loginBtn, button:has-text("Login")').first()).toBeVisible();
+    // Verify login form is visible using page object
+    const isVisible = await loginPage.isFormVisible();
+    baseExpect(isVisible).toBe(true);
 
     // Verify title
-    await expect(page).toHaveTitle(/Login/);
+    await baseExpect(page).toHaveTitle(/Login/);
   });
 
   test('should successfully login with valid credentials', async ({ page }) => {
     await login(page);
 
     // Verify redirect to dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
+    await baseExpect(page).toHaveURL(/\/dashboard/);
 
-    // Verify auth token is stored
-    const authenticated = await isAuthenticated(page);
-    expect(authenticated).toBe(true);
+    // ✨ OPTIMIZED: Use custom matcher
+    await expect(page).toBeAuthenticated();
 
-    // Verify dashboard content is visible
-    await expect(page.locator('.dashboard-container, .file-tree').first()).toBeVisible();
+    // ✨ OPTIMIZED: Use custom matcher
+    await expect(page).toShowDashboard();
   });
 
   test('should fail login with invalid credentials', async ({ page }) => {
-    // Use unique email to avoid cross-test rate limiting
-    const uniqueEmail = `wrong-${Date.now()}@email.com`;
+    // ✨ OPTIMIZED: Use LoginPage and UserBuilder
+    const loginPage = new LoginPage(page);
+    const testUser = UserBuilder.create()
+      .withRandomEmail()
+      .withPassword('wrongpassword')
+      .build();
 
-    await page.goto('/login');
-
-    await page.fill('input[name="email"]', uniqueEmail);
-    await page.fill('input[name="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
+    await loginPage.goto();
+    await loginPage.login(testUser.email, testUser.password);
 
     // Should stay on login page
     await page.waitForTimeout(1000);
 
     // Check for rate limiting error (acceptable)
-    const rateLimitError = await page.locator('text=/Too Many Attempts/i').isVisible().catch(() => false);
+    const hasRateLimit = await loginPage.hasRateLimitError();
 
-    if (!rateLimitError) {
-      await expect(page).toHaveURL(/\/login/);
+    if (!hasRateLimit) {
+      await baseExpect(page).toHaveURL(/\/login/);
 
-      // Should show error message
-      const errorMessage = page.locator('.error, .alert-danger, .text-red-500');
-      await expect(errorMessage).toBeVisible({ timeout: 3000 }).catch(() => {
-        // Error message might not be implemented yet
-      });
+      // ✨ OPTIMIZED: Use page object method
+      const hasError = await loginPage.hasError();
+      // Error message might not be implemented yet
+      if (hasError) {
+        baseExpect(hasError).toBe(true);
+      }
     } else {
       // If rate limited, that's acceptable - just verify we stayed on login
-      await expect(page).toHaveURL(/\/login/);
+      await baseExpect(page).toHaveURL(/\/login/);
     }
   });
 
   test('should successfully logout', async ({ page }) => {
     // First login
     await login(page);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await baseExpect(page).toHaveURL(/\/dashboard/);
 
     // Then logout
     await logout(page);
 
     // Verify redirect to login
-    await expect(page).toHaveURL(/\/login/);
+    await baseExpect(page).toHaveURL(/\/login/);
 
-    // Verify token is cleared
+    // ✨ OPTIMIZED: Use custom matcher (inverted)
     const authenticated = await isAuthenticated(page);
-    expect(authenticated).toBe(false);
+    baseExpect(authenticated).toBe(false);
   });
 
   test('should redirect to login when accessing protected route without auth', async ({ page }) => {
     await page.goto('/dashboard');
 
     // Should redirect to login
-    await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+    await baseExpect(page).toHaveURL(/\/login/, { timeout: 5000 });
   });
 
   test('should display registration page', async ({ page }) => {
-    await page.goto('/register');
+    // ✨ OPTIMIZED: Use RegisterPage object
+    const registerPage = new RegisterPage(page);
+    await registerPage.goto();
 
-    // Verify registration form elements
-    await expect(page.locator('input[name="name"]')).toBeVisible();
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[name="password"]')).toBeVisible();
-    await expect(page.locator('input[name="password_confirmation"]')).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    // Verify registration form is visible using page object
+    const isVisible = await registerPage.isFormVisible();
+    baseExpect(isVisible).toBe(true);
   });
 
   test('should successfully register new user', async ({ page }) => {
-    // Use timestamp with random component to ensure uniqueness even in parallel runs
-    const uniqueEmail = `test-${Date.now()}-${Math.random().toString(36).substring(7)}@entoo.cz`;
+    // ✨ OPTIMIZED: Use RegisterPage and UserBuilder
+    const registerPage = new RegisterPage(page);
+    const testUser = UserBuilder.create()
+      .withRandomEmail()
+      .withName('New Test User')
+      .withPassword('password123')
+      .build();
 
-    await page.goto('/register');
-
-    await page.fill('input[name="name"]', 'New Test User');
-    await page.fill('input[name="email"]', uniqueEmail);
-    await page.fill('input[name="password"]', 'password123');
-    await page.fill('input[name="password_confirmation"]', 'password123');
-
-    await page.click('button[type="submit"]');
+    await registerPage.goto();
+    await registerPage.register(testUser.name, testUser.email, testUser.password);
 
     // Wait a bit to allow the request to process
     await page.waitForTimeout(1000);
 
     // Check for rate limiting error
-    const rateLimitError = await page.locator('text=/Too Many Attempts/i').isVisible().catch(() => false);
+    const hasRateLimit = await registerPage.hasRateLimitError();
 
-    if (!rateLimitError) {
+    if (!hasRateLimit) {
       // Should redirect to dashboard or login
       await page.waitForURL(/\/(dashboard|login)/, { timeout: 5000 });
 
       // If redirected to dashboard, should be authenticated
       const currentUrl = page.url();
       if (currentUrl.includes('dashboard')) {
-        const authenticated = await isAuthenticated(page);
-        expect(authenticated).toBe(true);
+        await expect(page).toBeAuthenticated();
       }
     } else {
       // If rate limited, that's acceptable - the middleware is working
-      expect(rateLimitError).toBe(true);
+      baseExpect(hasRateLimit).toBe(true);
     }
   });
 
@@ -148,11 +152,10 @@ test.describe('Authentication GUI Tests', () => {
     await page.reload();
 
     // Should still be on dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
+    await baseExpect(page).toHaveURL(/\/dashboard/);
 
-    // Should still be authenticated
-    const authenticated = await isAuthenticated(page);
-    expect(authenticated).toBe(true);
+    // ✨ OPTIMIZED: Use custom matcher
+    await expect(page).toBeAuthenticated();
   });
 
   test('should handle session timeout gracefully', async ({ page }) => {
@@ -167,6 +170,6 @@ test.describe('Authentication GUI Tests', () => {
     });
 
     // Should redirect to login
-    await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
+    await baseExpect(page).toHaveURL(/\/login/, { timeout: 5000 });
   });
 });

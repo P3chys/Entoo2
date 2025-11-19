@@ -6,12 +6,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // Limit workers to prevent server overload - use 2 workers max for better stability
-  workers: process.env.CI ? 1 : 1,
+  // Parallel execution configuration
+  // CI: 2 workers for stability, Local: 4 workers for speed
+  workers: process.env.CI ? 2 : 4,
   reporter: [
     ['html'],
     ['list'],
-    ['json', { outputFile: 'test-results/results.json' }]
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ...(process.env.CI ? [['github' as const]] : [])
   ],
 
   // Global timeout settings - increased for GUI tests with authentication
@@ -36,12 +39,36 @@ export default defineConfig({
   },
 
   projects: [
+    // Chromium - main browser for testing
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         headless: true,
       },
+    },
+
+    // Authentication tests - run sequentially to avoid rate limiting
+    {
+      name: 'auth-tests',
+      testMatch: /auth\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: true,
+      },
+      // Run auth tests sequentially to avoid rate limiting
+      fullyParallel: false,
+    },
+
+    // File operation tests - can run in parallel
+    {
+      name: 'file-tests',
+      testMatch: /file-.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: true,
+      },
+      fullyParallel: true,
     },
 
     // Uncomment to enable Firefox tests

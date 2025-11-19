@@ -1,82 +1,52 @@
 /**
  * GUI E2E Tests - File Upload
  * Tests for file upload, management, and deletion
+ *
+ * ✨ OPTIMIZED: Uses DashboardPage, UploadModalPage, FileBuilder, and Fixtures
  */
 
-import { test, expect } from '@playwright/test';
-import { setupAuth } from '../helpers/auth.helper';
-import { waitForVisible, waitForSuccessMessage, expandSubject } from '../helpers/ui.helper';
+import { test, expect as baseExpect } from '../../fixtures';
+import { expect } from '../../matchers';
+import { FileBuilder } from '../../builders';
 import * as fs from 'fs';
 import * as path from 'path';
 
 test.describe('File Upload GUI Tests', () => {
-  const testFilesDir = path.join(__dirname, '../fixtures');
+  // ✨ OPTIMIZED: Most setup is now handled by fixtures
+  // dashboardPage fixture provides authenticated dashboard
+  // testPdfFile and testTxtFile fixtures provide test files
 
-  test.beforeAll(async () => {
-    // Create test files directory if it doesn't exist
-    if (!fs.existsSync(testFilesDir)) {
-      fs.mkdirSync(testFilesDir, { recursive: true });
-    }
+  test.beforeEach(async ({ dashboardPage, fileTree }) => {
+    // ✨ OPTIMIZED: Use FileTreeComponent to expand subject
+    await fileTree.waitForLoad();
 
-    // Create a test PDF file
-    const testPdfPath = path.join(testFilesDir, 'test-document.pdf');
-    if (!fs.existsSync(testPdfPath)) {
-      fs.writeFileSync(testPdfPath, '%PDF-1.4\nTest content');
-    }
+    const subjects = await fileTree.getAllSubjectNames();
+    if (subjects.length > 0) {
+      const firstSubject = subjects[0];
+      await fileTree.expandSubject(firstSubject);
 
-    // Create a test text file
-    const testTxtPath = path.join(testFilesDir, 'test-notes.txt');
-    if (!fs.existsSync(testTxtPath)) {
-      fs.writeFileSync(testTxtPath, 'Test notes content');
-    }
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await setupAuth(page);
-    await page.waitForLoadState('networkidle');
-
-    // Wait for subjects to load
-    await waitForVisible(page, '.subject-row');
-
-    // Expand first subject to reveal category tabs
-    try {
-      const firstSubjectRow = page.locator('.subject-row').first();
-      const subjectNameElement = firstSubjectRow.locator('.subject-name, .name');
-      const subjectName = await subjectNameElement.textContent({ timeout: 5000 });
-
-      if (subjectName) {
-        await expandSubject(page, subjectName.trim());
-
-        // Click on a file category tab to make upload button visible
-        await page.waitForTimeout(500);
-
-        // Try to click on first available category tab (Prednasky, Materialy, Otazky, or Seminare)
-        const categoryNames = ['Prednasky', 'Materialy', 'Otazky', 'Seminare'];
-        for (const categoryName of categoryNames) {
-          const categoryTab = page.locator(`button:has-text("${categoryName}"), .tab-button:has-text("${categoryName}")`).first();
-          if (await categoryTab.count() > 0) {
-            await categoryTab.click();
-            await page.waitForTimeout(300);
-            break;
-          }
+      // Try to click on first available category tab
+      const categoryNames = ['Prednasky', 'Materialy', 'Otazky', 'Seminare'];
+      for (const categoryName of categoryNames) {
+        try {
+          await dashboardPage.selectCategory(categoryName);
+          break;
+        } catch {
+          // Try next category
+          continue;
         }
       }
-    } catch (error) {
-      // If we can't expand a subject, tests that need upload buttons will fail appropriately
-      console.log('Could not expand subject in beforeEach:', error);
     }
   });
 
-  test('should display file upload button', async ({ page }) => {
-    // Upload button should now be visible after expanding subject
-    // Use specific class to avoid matching the hidden modal submit button
-    const uploadBtn = page.locator('.upload-btn-category');
-    await expect(uploadBtn.first()).toBeVisible();
+  test('should display file upload button', async ({ dashboardPage }) => {
+    // ✨ OPTIMIZED: Use DashboardPage locator
+    await baseExpect(dashboardPage.uploadBtnCategory.first()).toBeVisible();
   });
 
-  test('should open file upload modal', async ({ page }) => {
-    const uploadBtn = page.locator('.upload-btn-category');
-    await uploadBtn.first().click();
+  test('should open file upload modal', async ({ dashboardPage, uploadModalPage }) => {
+    // ✨ OPTIMIZED: Use DashboardPage and UploadModalPage
+    await dashboardPage.openUploadModal();
 
     // Modal should appear
     const modal = page.locator('#uploadModal');
