@@ -85,6 +85,24 @@ function isFavorite(subjectName) {
 }
 
 /**
+ * Wrapper function to safely get subject name from data attribute and toggle favorite
+ */
+window.toggleFavoriteByElement = async function(element, event) {
+    const subjectRow = element.closest('.tree-subject');
+    if (subjectRow) {
+        const subjectNameJSON = subjectRow.getAttribute('data-subject-name');
+        if (subjectNameJSON) {
+            try {
+                const subjectName = JSON.parse(subjectNameJSON);
+                await window.toggleFavorite(subjectName, event);
+            } catch (e) {
+                console.error('Failed to parse subject name:', e);
+            }
+        }
+    }
+};
+
+/**
  * Toggle favorite status
  */
 window.toggleFavorite = async function(subjectName, event) {
@@ -200,11 +218,16 @@ async function loadFiles() {
                         // Find and expand the subject
                         const subjects = document.querySelectorAll('.tree-subject');
                         subjects.forEach(subjectDiv => {
-                            if (subjectDiv.dataset.subject === subjectName) {
-                                const subjectHeader = subjectDiv.querySelector('.subject-header');
-                                if (subjectHeader) {
-                                    window.toggleSubject(subjectHeader, subjectName);
+                            try {
+                                const storedName = JSON.parse(subjectDiv.dataset.subjectName || '""');
+                                if (storedName === subjectName) {
+                                    const subjectHeader = subjectDiv.querySelector('.subject-header');
+                                    if (subjectHeader) {
+                                        window.toggleSubject(subjectHeader, subjectName);
+                                    }
                                 }
+                            } catch (e) {
+                                // Ignore parse errors
                             }
                         });
                     });
@@ -241,18 +264,19 @@ function buildTreeStructure(subjects) {
         const totalFiles = subject.file_count;
         const isFav = isFavorite(subjectName);
 
-        // Escape for HTML attributes and JavaScript strings
+        // Escape subject name for safe HTML display
         const subjectNameEscaped = escapeHtml(subjectName);
-        const subjectNameJS = subjectName.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        // JSON encode for safe storage in data attribute (avoids HTML entity decode issues)
+        const subjectNameData = escapeHtml(JSON.stringify(subjectName));
 
         html += `
-            <div class="tree-subject glass-subject subject-row" data-subject="${subjectNameEscaped}">
-                <div class="subject-header" onclick="toggleSubject(this, '${subjectNameJS}')">
+            <div class="tree-subject glass-subject subject-row" data-subject-name="${subjectNameData}">
+                <div class="subject-header" onclick="toggleSubjectByElement(this)">
                     <div class="subject-title">
                         <span class="subject-icon">▶</span>
                         <span class="subject-name name">${subjectNameEscaped}</span>
                         <span class="favorite-star star-icon ${isFav ? 'active' : ''}"
-                              onclick="toggleFavorite('${subjectNameJS}', event)"
+                              onclick="toggleFavoriteByElement(this, event)"
                               title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
                             ${isFav ? '★' : '☆'}
                         </span>
@@ -328,10 +352,14 @@ function buildSubjectTabsHTML(categories, subjectName, profile) {
         const files = categories[categoryName] || [];
         const fileCount = files.length;
 
+        // Escape subject name for safe display in data attribute
+        const subjectNameEscaped = escapeHtml(subjectName);
+        const categoryNameEscaped = escapeHtml(categoryName);
+
         tabContentHTML += `
             <div class="tab-content" id="tab-${subjectId}-${categoryName}">
-                <button class="upload-btn-category upload-button" id="uploadFileBtn" onclick="openUploadModal('${subjectName.replace(/'/g, "\\'")}', '${categoryName}')">
-                    📤 Upload to ${categoryName}
+                <button class="upload-btn-category upload-button" id="uploadFileBtn" data-subject="${subjectNameEscaped}" data-category="${categoryNameEscaped}" onclick="openUploadModalByElement(this)">
+                    📤 Upload to ${categoryNameEscaped}
                 </button>
                 <div class="file-list">
                     ${fileCount > 0 ? buildFilesHTML(files) : '<p style="padding: 1rem; color: var(--text-secondary); font-style: italic;">No files in this category yet.</p>'}
@@ -365,7 +393,6 @@ function buildFilesHTML(files) {
         // Escape all user-generated content
         const filenameEscaped = escapeHtml(file.original_filename);
         const ownerNameEscaped = escapeHtml(ownerName);
-        const ownerNameJS = ownerName.replace(/'/g, "\\'").replace(/"/g, '\\"');
         const extensionEscaped = escapeHtml(file.file_extension.toUpperCase());
 
         html += `
@@ -376,7 +403,7 @@ function buildFilesHTML(files) {
                         <h4>${filenameEscaped}</h4>
                         <div class="file-item-meta">
                             ${fileSize} • ${extensionEscaped} • ${date}
-                            ${ownerId ? ` • <a href="#" onclick="filterByOwner(${ownerId}, '${ownerNameJS}', event)" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">👤 ${ownerNameEscaped}</a>` : ''}
+                            ${ownerId ? ` • <a href="#" data-user-id="${ownerId}" data-user-name="${ownerNameEscaped}" onclick="filterByOwnerByElement(this, event)" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">👤 ${ownerNameEscaped}</a>` : ''}
                         </div>
                     </div>
                 </div>
@@ -397,6 +424,17 @@ function buildFilesHTML(files) {
     // Return escaped HTML - already safe via escapeHtml()
     return html;
 }
+
+/**
+ * Wrapper function to safely get user data from element and filter by owner
+ */
+window.filterByOwnerByElement = function(element, event) {
+    const userId = element.getAttribute('data-user-id');
+    const userName = element.getAttribute('data-user-name');
+    if (userId && userName) {
+        window.filterByOwner(parseInt(userId), userName, event);
+    }
+};
 
 /**
  * Filter files by owner
@@ -466,8 +504,13 @@ window.reloadSubjectFiles = async function(subjectName) {
     let targetSubject = null;
 
     subjectElements.forEach(subjectDiv => {
-        if (subjectDiv.dataset.subject === subjectName) {
-            targetSubject = subjectDiv;
+        try {
+            const storedName = JSON.parse(subjectDiv.dataset.subjectName || '""');
+            if (storedName === subjectName) {
+                targetSubject = subjectDiv;
+            }
+        } catch (e) {
+            // Ignore parse errors
         }
     });
 
@@ -563,6 +606,24 @@ window.reloadSubjectFiles = async function(subjectName) {
         categories.innerHTML = '<p class="error" style="padding: 1rem;">Failed to refresh files</p>';
     }
 }
+
+/**
+ * Wrapper function to safely get subject name from data attribute and toggle subject
+ */
+window.toggleSubjectByElement = async function(element) {
+    const subjectRow = element.closest('.tree-subject');
+    if (subjectRow) {
+        const subjectNameJSON = subjectRow.getAttribute('data-subject-name');
+        if (subjectNameJSON) {
+            try {
+                const subjectName = JSON.parse(subjectNameJSON);
+                await window.toggleSubject(element, subjectName);
+            } catch (e) {
+                console.error('Failed to parse subject name:', e);
+            }
+        }
+    }
+};
 
 /**
  * Toggle subject expansion

@@ -8,6 +8,17 @@ let currentUploadSubject = '';
 let currentUploadCategory = '';
 
 /**
+ * Wrapper function to safely get subject and category from element and open upload modal
+ */
+window.openUploadModalByElement = function(element) {
+    const subject = element.getAttribute('data-subject');
+    const category = element.getAttribute('data-category');
+    if (subject && category) {
+        window.openUploadModal(subject, category);
+    }
+};
+
+/**
  * Opens the upload modal for a specific subject and category
  * @param {string} subject - The subject name
  * @param {string} category - The category name
