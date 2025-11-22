@@ -21,7 +21,7 @@ export function renderSubjectProfile(subjectName, profile, containerClass = 'pro
                     No profile information available for <strong>${escapeHtml(subjectName)}</strong>
                 </p>
                 ${token ? `
-                    <button onclick="openProfileEditModal('${escapeHtml(subjectName).replace(/'/g, "\\'")}', null)" class="btn btn-primary btn-small">
+                    <button onclick="openProfileEditModal(${JSON.stringify(subjectName).replace(/"/g, '&quot;')}, null)" class="btn btn-primary btn-small">
                         ✏️ Create Profile
                     </button>
                 ` : '<p style="color: var(--text-secondary); font-size: 0.9rem;">Login to create a profile</p>'}
@@ -30,12 +30,19 @@ export function renderSubjectProfile(subjectName, profile, containerClass = 'pro
     }
 
     // Display existing profile
+    const borderColor = profile.color || 'rgba(255, 255, 255, 0.2)';
+    const titleColor = profile.color ? profile.color : '';
+
+    // Safe serialization for HTML attributes
+    const safeSubjectName = JSON.stringify(subjectName).replace(/'/g, '&apos;');
+    const safeProfile = JSON.stringify(profile).replace(/'/g, '&apos;');
+
     return `
-        <div class="${containerClass} glass-profile">
+        <div class="${containerClass} glass-profile" style="border-left: 4px solid ${borderColor};">
             <div class="profile-header">
-                <h3 class="profile-title">${escapeHtml(subjectName)}</h3>
+                <h3 class="profile-title" style="${titleColor ? `color: ${titleColor};` : ''}">${escapeHtml(subjectName)}</h3>
                 ${token ? `
-                    <button onclick='openProfileEditModal(${JSON.stringify(subjectName)}, ${JSON.stringify(profile)})' class="btn btn-primary btn-small">
+                    <button onclick='openProfileEditModal(${safeSubjectName}, ${safeProfile})' class="btn btn-primary btn-small">
                         ✏️ Edit Profile
                     </button>
                 ` : ''}

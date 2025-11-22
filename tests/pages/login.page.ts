@@ -17,7 +17,7 @@ export class LoginPage {
     this.emailInput = page.locator('input[name="email"]');
     this.passwordInput = page.locator('input[name="password"]');
     this.loginButton = page.locator('#loginBtn, button:has-text("Login")').first();
-    this.errorMessage = page.locator('.error, .alert-danger, .text-red-500');
+    this.errorMessage = page.locator('#errorMessage, .alert-error, .alert-danger');
     this.registerLink = page.locator('a[href*="register"]');
   }
 

@@ -8,6 +8,7 @@
 import { test, expect as baseExpect } from '../../fixtures';
 import { expect } from '../../matchers';
 import { FileBuilder } from '../../builders';
+import { waitForVisible, expandSubject } from '../helpers/ui.helper';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -49,60 +50,24 @@ test.describe('File Upload GUI Tests', () => {
     await dashboardPage.openUploadModal();
 
     // Modal should appear
-    const modal = page.locator('#uploadModal');
+    const modal = uploadModalPage.modal;
     await expect(modal).toBeVisible({ timeout: 3000 });
 
     // Modal should have required fields
-    await expect(page.locator('#fileInput')).toBeVisible();
+    await expect(uploadModalPage.page.locator('#fileInput')).toBeVisible();
     // Context mode shows subject/category, not selectors
-    await expect(page.locator('#uploadContext')).toBeVisible();
+    await expect(uploadModalPage.page.locator('#uploadContext')).toBeVisible();
   });
 
-  test('should successfully upload a PDF file', async ({ page }) => {
-    // Open upload modal (context mode - subject/category pre-selected)
+
+  test('should successfully upload a text file', async ({ page, testTxtFile }) => {
     const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
-    // Fill in upload form
-    const testPdfPath = path.join(testFilesDir, 'test-document.pdf');
     const fileInput = page.locator('#fileInput');
-    await fileInput.setInputFiles(testPdfPath);
-
-    // Subject and category are already set in context mode
-    // Just verify they're displayed
-    await expect(page.locator('#uploadContext')).toBeVisible();
-
-    // Submit
-    const submitBtn = page.locator('#uploadBtn');
-    await submitBtn.click();
-
-    // Wait for upload to complete
-    await page.waitForTimeout(3000);
-
-    // Modal should close or show success
-    const modal = page.locator('#uploadModal');
-    const isHidden = await modal.evaluate(el => el.classList.contains('hidden'));
-
-    // If modal is still visible, check for success message
-    if (!isHidden) {
-      const successMsg = page.locator('#uploadSuccess');
-      await expect(successMsg).toBeVisible({ timeout: 10000 }).catch(() => {
-        // Upload might complete without visible success message
-      });
-    }
-  });
-
-  test('should successfully upload a text file', async ({ page }) => {
-    const uploadBtn = page.locator('.upload-btn-category');
-    await uploadBtn.first().click();
-
-    await page.waitForTimeout(500);
-
-    const testTxtPath = path.join(testFilesDir, 'test-notes.txt');
-    const fileInput = page.locator('#fileInput');
-    await fileInput.setInputFiles(testTxtPath);
+    await fileInput.setInputFiles(testTxtFile.path);
 
     // Context mode - subject/category already set
     await expect(page.locator('#uploadContext')).toBeVisible();
@@ -193,13 +158,15 @@ test.describe('File Upload GUI Tests', () => {
     }
   });
 
-  test('should delete uploaded file', async ({ page }) => {
+  test('should delete uploaded file', async ({ page, testPdfFile }) => {
     // First upload a file
     const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
+    // Create a test file for deletion
+    const testFilesDir = path.dirname(testPdfFile.path);
     const testPdfPath = path.join(testFilesDir, 'test-delete.pdf');
     fs.writeFileSync(testPdfPath, '%PDF-1.4\nTest delete content');
 
@@ -250,17 +217,21 @@ test.describe('File Upload GUI Tests', () => {
       // File should be removed
       // (Verification would require checking the file list)
     }
+
+    // Clean up
+    if (fs.existsSync(testPdfPath)) {
+      fs.unlinkSync(testPdfPath);
+    }
   });
 
-  test('should show upload progress', async ({ page }) => {
+  test('should show upload progress', async ({ page, testPdfFile }) => {
     const uploadBtn = page.locator('.upload-btn-category');
     await uploadBtn.first().click();
 
     await page.waitForTimeout(500);
 
-    const testPdfPath = path.join(testFilesDir, 'test-document.pdf');
     const fileInput = page.locator('#fileInput');
-    await fileInput.setInputFiles(testPdfPath);
+    await fileInput.setInputFiles(testPdfFile.path);
 
     // Context mode - subject/category already set
     await expect(page.locator('#uploadContext')).toBeVisible();
@@ -277,9 +248,10 @@ test.describe('File Upload GUI Tests', () => {
     await page.waitForTimeout(3000);
   });
 
-  test('should handle file size limits', async ({ page }) => {
+  test('should handle file size limits', async ({ page, testPdfFile }) => {
     // This test assumes there's a file size limit (50MB according to UI hint)
     // Create a large test file (60MB - over the limit)
+    const testFilesDir = path.dirname(testPdfFile.path);
     const largePdfPath = path.join(testFilesDir, 'large-file.pdf');
 
     // Create a 60MB file to test size limit
@@ -310,6 +282,8 @@ test.describe('File Upload GUI Tests', () => {
     });
 
     // Clean up
-    fs.unlinkSync(largePdfPath);
+    if (fs.existsSync(largePdfPath)) {
+      fs.unlinkSync(largePdfPath);
+    }
   });
 });

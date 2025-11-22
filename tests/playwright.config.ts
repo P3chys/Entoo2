@@ -7,8 +7,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   // Parallel execution configuration
-  // CI: 2 workers for stability, Local: 4 workers for speed
-  workers: process.env.CI ? 2 : 4,
+  // Using 1 worker to avoid lag
+  workers: 1,
   reporter: [
     ['html'],
     ['list'],
@@ -17,10 +17,10 @@ export default defineConfig({
     ...(process.env.CI ? [['github' as const]] : [])
   ],
 
-  // Global timeout settings - increased for GUI tests with authentication
-  timeout: 60000, // 60 seconds per test (GUI tests need more time)
+  // Global timeout settings
+  timeout: 30000, // 30 seconds per test
   expect: {
-    timeout: 10000, // 10 seconds for assertions (increased for slow server responses)
+    timeout: 10000, // 10 seconds for assertions
   },
 
   use: {
@@ -30,7 +30,7 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     // Headless mode configuration
-    headless: false, // Always run in headless mode by default
+    headless: true, // Always run in headless mode by default
 
     // Browser context options
     viewport: { width: 1280, height: 720 },

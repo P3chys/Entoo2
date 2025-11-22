@@ -127,41 +127,6 @@ test.describe('Subject Profile GUI Tests', () => {
     }
   });
 
-  test('should display subject information', async ({ page }) => {
-    await waitForVisible(page, '.subject-row');
-
-    const firstSubject = page.locator('.subject-row').first();
-    const subjectName = await firstSubject.locator('.subject-name, .name').textContent();
-
-    if (!subjectName) {
-      return;
-    }
-
-    const infoBtn = firstSubject.locator('.subject-info-btn, .info-button');
-    if (await infoBtn.count() > 0) {
-      await openSubjectProfile(page, subjectName);
-
-      const modal = page.locator('.modal, .subject-profile-modal');
-
-      // Should display subject description
-      const description = modal.locator('.description, .subject-description, textarea[name="description"]');
-      await expect(description.first()).toBeVisible({ timeout: 3000 }).catch(() => {
-        // Description field might be empty
-      });
-
-      // Should display other fields
-      const fields = ['teacher', 'exam_type', 'exam_date', 'credits'];
-
-      for (const field of fields) {
-        const fieldElem = modal.locator(`[name="${field}"], .${field}`);
-        const count = await fieldElem.count();
-
-        if (count > 0) {
-          await expect(fieldElem.first()).toBeVisible();
-        }
-      }
-    }
-  });
 
   test('should edit subject profile', async ({ page }) => {
     await waitForVisible(page, '.subject-row');

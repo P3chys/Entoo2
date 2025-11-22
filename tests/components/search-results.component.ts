@@ -67,7 +67,7 @@ export class SearchResultsComponent {
     const titles: string[] = [];
 
     for (const item of items) {
-      const titleElement = item.locator('.result-title, .file-name, h3, strong').first();
+      const titleElement = item.locator('.search-result-filename').first();
       const text = await titleElement.textContent();
       if (text) {
         titles.push(text.trim());
@@ -113,7 +113,7 @@ export class SearchResultsComponent {
    */
   async downloadResult(index: number) {
     const result = this.getResult(index);
-    const downloadLink = result.locator('a[href*="/files/download"], .download-link');
+    const downloadLink = result.locator('.download-btn');
     await downloadLink.click();
   }
 

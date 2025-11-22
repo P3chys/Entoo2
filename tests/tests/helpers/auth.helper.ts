@@ -45,10 +45,14 @@ export async function login(page: Page, user: TestUser = testUser): Promise<void
   await page.fill('input[name="email"]', user.email);
   await page.fill('input[name="password"]', user.password);
 
-  await page.click('button[type="submit"]');
+  // Wait for navigation after clicking submit
+  await Promise.all([
+    page.waitForURL(/\/dashboard/, { timeout: 30000 }),
+    page.click('button[type="submit"]')
+  ]);
 
-  // Wait for successful login and redirect to dashboard
-  await page.waitForURL('/dashboard', { timeout: 5000 });
+  // Wait for page to fully load
+  await page.waitForLoadState('networkidle', { timeout: 30000 });
 
   // Verify token is stored
   const token = await page.evaluate(() => localStorage.getItem('token'));
@@ -61,13 +65,23 @@ export async function login(page: Page, user: TestUser = testUser): Promise<void
 export async function logout(page: Page): Promise<void> {
   // Try to find and click logout button
   try {
-    await page.click('button:has-text("Logout")', { timeout: 2000 });
-  } catch {
-    // If no logout button, clear localStorage directly
-    await page.evaluate(() => localStorage.removeItem('token'));
-  }
+    // Click the logout button and wait for navigation to complete
+    await Promise.all([
+      page.waitForURL(/\/login/, { timeout: 5000 }),
+      page.click('button:has-text("Logout")')
+    ]);
 
-  await page.goto('/login');
+    // Give a moment for localStorage to be cleared
+    await page.waitForTimeout(200);
+  } catch (error) {
+    // If no logout button or click failed, clear localStorage directly and navigate
+    await page.evaluate(() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    });
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+  }
 }
 
 /**

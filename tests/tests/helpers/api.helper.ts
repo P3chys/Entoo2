@@ -165,6 +165,59 @@ export async function waitForElasticsearch(): Promise<void> {
 }
 
 /**
+ * Wait for a subject to be indexed in Elasticsearch and caches to be cleared
+ * This is needed because file processing is async (Redis queue)
+ */
+export async function waitForSubjectToBeIndexed(
+  page: Page,
+  subjectName: string,
+  maxRetries: number = 30
+): Promise<void> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    throw new Error('No auth token available');
+  }
+
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      // Query the subjects API to see if our subject appears
+      // Use X-Bypass-Rate-Limit header to bypass cache (backend recognizes this)
+      const response = await fetch(`http://localhost:8000/api/subjects?with_counts=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN, // This bypasses cache
+          'X-Bypass-Cache': 'true', // Explicit cache bypass
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const subjects = data.subjects || [];
+
+        // Check if our subject is in the list
+        const found = subjects.some((s: any) => s.subject_name === subjectName);
+
+        if (found) {
+          // Subject found! Give it extra time to ensure cache is cleared and dashboard can load fresh data
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return;
+        }
+      }
+    } catch (error) {
+      // Ignore errors and retry
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    retries++;
+  }
+
+  console.warn(`Subject "${subjectName}" not indexed after ${maxRetries} retries (${maxRetries}s)`);
+}
+
+/**
  * Clean up test data
  */
 export async function cleanupTestData(
@@ -205,6 +258,11 @@ export async function createSubject(
   // Subject creation happens implicitly when uploading a file
   // So we'll just create a minimal file for the subject
   await createFile(page, subjectName, category, 'test.pdf');
+
+  // Wait for Elasticsearch indexing and cache refresh
+  // File processing is async (Redis queue), so we need to wait
+  // for the job to complete and caches to be cleared
+  await waitForSubjectToBeIndexed(page, subjectName);
 }
 
 /**
@@ -241,6 +299,28 @@ export async function createFile(
     },
     body: formData,
   });
+
+  // Wait for Elasticsearch indexing and cache refresh
+  await waitForSubjectToBeIndexed(page, subjectName);
+}
+
+/**
+ * Navigate to dashboard and ensure fresh data (bypassing cache)
+ */
+export async function navigateToDashboardFresh(page: Page): Promise<void> {
+  // First, clear the dashboard's internal cache by executing JavaScript in the page context
+  await page.evaluate(() => {
+    // Clear the subjectFiles cache that stores loaded subject data
+    if (typeof window !== 'undefined' && (window as any).subjectFiles) {
+      (window as any).subjectFiles = {};
+    }
+  });
+
+  await page.goto('http://localhost:8000/dashboard');
+  await page.waitForLoadState('networkidle');
+
+  // Reload to force fresh data from API (bypass any browser/API cache)
+  await page.reload({ waitUntil: 'networkidle' });
 }
 
 /**

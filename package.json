@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "test": "npm test --prefix tests",
+    "test:ui": "npm run test:ui --prefix tests",
+    "test:debug": "npm run test:debug --prefix tests"
+  },
   "devDependencies": {
     "@types/node": "^24.10.0"
   }
