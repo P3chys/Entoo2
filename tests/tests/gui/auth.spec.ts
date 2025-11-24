@@ -124,24 +124,35 @@ test.describe('Authentication GUI Tests', () => {
     await registerPage.goto();
     await registerPage.register(testUser.name, testUser.email, testUser.password);
 
-    // Wait a bit to allow the request to process
-    await page.waitForTimeout(1000);
+    // Wait for either navigation or error to appear
+    const raceResult = await Promise.race([
+      page.waitForURL(/\/(dashboard|login)/, { timeout: 8000 }).then(() => 'navigated'),
+      page.locator('text=/Too Many Attempts/i').waitFor({ state: 'visible', timeout: 8000 }).then(() => 'rate_limited'),
+      page.locator('.error:visible, .alert-danger:visible').waitFor({ timeout: 8000 }).then(() => 'error')
+    ]).catch(() => 'timeout');
 
-    // Check for rate limiting error
-    const hasRateLimit = await registerPage.hasRateLimitError();
-
-    if (!hasRateLimit) {
-      // Should redirect to dashboard or login
-      await page.waitForURL(/\/(dashboard|login)/, { timeout: 5000 });
+    if (raceResult === 'navigated') {
+      // Should have navigated to dashboard or login
+      baseExpect(page.url()).toMatch(/\/(dashboard|login)/);
 
       // If redirected to dashboard, should be authenticated
       const currentUrl = page.url();
       if (currentUrl.includes('dashboard')) {
         await expect(page).toBeAuthenticated();
       }
+    } else if (raceResult === 'rate_limited') {
+      // Rate limiting is working - test passes
+      baseExpect(raceResult).toBe('rate_limited');
     } else {
-      // If rate limited, that's acceptable - the middleware is working
-      baseExpect(hasRateLimit).toBe(true);
+      // Other error or timeout - check what happened
+      const hasRateLimit = await registerPage.hasRateLimitError();
+      if (hasRateLimit) {
+        // Rate limited after all - that's ok
+        baseExpect(hasRateLimit).toBe(true);
+      } else {
+        // Unknown state - let the test fail naturally by waiting for URL
+        await page.waitForURL(/\/(dashboard|login)/, { timeout: 2000 });
+      }
     }
   });
 

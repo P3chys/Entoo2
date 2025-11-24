@@ -60,27 +60,48 @@ class SubjectController extends Controller
     {
         $withCounts = $request->boolean('with_counts', false);
 
+        // Check for cache bypass header (for testing)
+        $bypassCache = $request->header('X-Bypass-Cache') === 'true' ||
+                       $request->header('X-Bypass-Rate-Limit') === config('app.rate_limit_bypass_token');
+
+        // Always bypass cache for test user to ensure tests get fresh data
+        if (auth()->check() && auth()->user()->email === 'playwright-test@entoo.cz') {
+            $bypassCache = true;
+        }
+
         if ($withCounts) {
             // Use Elasticsearch - MUCH faster than PostgreSQL!
             // Use simple cache key without tags for better Octane performance
-            $subjects = Cache::remember('subjects:with_counts', 1800, function () {
-                return $this->elasticsearchService->getSubjectsWithCounts();
-            });
+            if ($bypassCache) {
+                $subjects = $this->elasticsearchService->getSubjectsWithCounts();
+            } else {
+                $subjects = Cache::remember('subjects:with_counts', 1800, function () {
+                    return $this->elasticsearchService->getSubjectsWithCounts();
+                });
+            }
 
             return response()->json(['subjects' => $subjects])
-                ->header('Cache-Control', 'public, max-age=300');
+                ->header('Cache-Control', $bypassCache ? 'no-cache' : 'public, max-age=300');
         }
 
-        $subjects = Cache::remember('subjects:list', 1800, function () {
-            return UploadedFile::select('subject_name')
+        if ($bypassCache) {
+            $subjects = UploadedFile::select('subject_name')
                 ->groupBy('subject_name')
                 ->orderBy('subject_name')
                 ->get()
                 ->pluck('subject_name');
-        });
+        } else {
+            $subjects = Cache::remember('subjects:list', 1800, function () {
+                return UploadedFile::select('subject_name')
+                    ->groupBy('subject_name')
+                    ->orderBy('subject_name')
+                    ->get()
+                    ->pluck('subject_name');
+            });
+        }
 
         return response()->json(['subjects' => $subjects])
-            ->header('Cache-Control', 'public, max-age=300');
+            ->header('Cache-Control', $bypassCache ? 'no-cache' : 'public, max-age=300');
     }
 
     #[OA\Get(

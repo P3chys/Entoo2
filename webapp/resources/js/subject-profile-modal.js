@@ -4,11 +4,12 @@
  */
 
 import { renderSubjectProfile } from './subject-profile-renderer.js';
+import { fetchAPI } from './modules/api.js';
 
 /**
  * View subject profile in expandable panel
  */
-window.viewSubjectProfile = async function(subjectName, event) {
+window.viewSubjectProfile = async function (subjectName, event) {
     if (event && event.stopPropagation) {
         event.stopPropagation();
     }
@@ -56,7 +57,7 @@ window.viewSubjectProfile = async function(subjectName, event) {
 /**
  * Display subject profile in the expandable panel
  */
-window.displaySubjectProfileInPanel = function(panel, subjectName, profile) {
+window.displaySubjectProfileInPanel = function (panel, subjectName, profile) {
     // Use shared renderer with panel-specific styling
     const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container profile-panel');
 
@@ -71,7 +72,7 @@ window.displaySubjectProfileInPanel = function(panel, subjectName, profile) {
 /**
  * Open modal to edit/create profile
  */
-window.openProfileEditModal = function(subjectName, profile) {
+window.openProfileEditModal = function (subjectName, profile) {
     const modal = document.getElementById('subjectProfileModal');
     const content = document.getElementById('subjectProfileContent');
     const form = document.getElementById('subjectProfileForm');
@@ -96,7 +97,7 @@ window.openProfileEditModal = function(subjectName, profile) {
 /**
  * Save subject profile
  */
-window.saveSubjectProfile = async function(event) {
+window.saveSubjectProfile = async function (event) {
     event.preventDefault();
 
     const subjectName = document.getElementById('profileSubjectName').value;
@@ -112,8 +113,6 @@ window.saveSubjectProfile = async function(event) {
         notes: document.getElementById('profileNotes').value
     };
 
-    console.log('Saving profile:', formData);
-
     try {
         // First check if profile exists
         const checkResponse = await fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
@@ -121,7 +120,6 @@ window.saveSubjectProfile = async function(event) {
         });
 
         const profileExists = checkResponse.ok;
-        console.log('Profile exists:', profileExists);
 
         // Use PUT if exists, POST if new
         const method = profileExists ? 'PUT' : 'POST';
@@ -129,40 +127,11 @@ window.saveSubjectProfile = async function(event) {
             ? `/api/subject-profiles/${encodeURIComponent(subjectName)}`
             : '/api/subject-profiles';
 
-        console.log(`Using ${method} to ${url}`);
-
-        // Use global fetchAPI if available, otherwise use fetch directly
-        let response;
-        if (typeof window.fetchAPI === 'function') {
-            console.log('Using fetchAPI');
-            response = await window.fetchAPI(url, {
-                method: method,
-                body: JSON.stringify(formData)
-            });
-            console.log('Profile save response:', response);
-        } else {
-            console.log('Using fetch directly');
-            const token = localStorage.getItem('token');
-            const rawResponse = await fetch(url, {
-                method: method,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-
-            console.log('Response status:', rawResponse.status);
-
-            if (!rawResponse.ok) {
-                const errorData = await rawResponse.json();
-                throw new Error(errorData.message || 'Failed to save profile');
-            }
-
-            response = await rawResponse.json();
-            console.log('Profile save response:', response);
-        }
+        // Use fetchAPI from module
+        await fetchAPI(url, {
+            method: method,
+            body: JSON.stringify(formData)
+        });
 
         // Show success message
         alert('Profile saved successfully!');
@@ -170,24 +139,29 @@ window.saveSubjectProfile = async function(event) {
         // Close modal
         window.closeSubjectProfileModal();
 
-        // Refresh the detail panel if it's visible
-        const panelId = 'detail-' + subjectName.replace(/[^a-zA-Z0-9]/g, '_');
-        const detailPanel = document.getElementById(panelId);
-        if (detailPanel && detailPanel.style.display === 'block') {
-            // Reload the profile data in the panel
-            detailPanel.innerHTML = '<div class="loading" style="padding: 1rem;">Loading profile...</div>';
+        // Reload the subject in the dashboard to reflect changes
+        if (typeof window.reloadSubject === 'function') {
+            await window.reloadSubject(subjectName);
+        } else {
+            // Fallback for other views (like detail panel if it exists)
+            const panelId = 'detail-' + subjectName.replace(/[^a-zA-Z0-9]/g, '_');
+            const detailPanel = document.getElementById(panelId);
+            if (detailPanel && detailPanel.style.display === 'block') {
+                // Reload the profile data in the panel
+                detailPanel.innerHTML = '<div class="loading" style="padding: 1rem;">Loading profile...</div>';
 
-            const profileResponse = await fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
+                const profileResponse = await fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            let profile = null;
-            if (profileResponse.ok) {
-                const data = await profileResponse.json();
-                profile = data.profile;
+                let profile = null;
+                if (profileResponse.ok) {
+                    const data = await profileResponse.json();
+                    profile = data.profile;
+                }
+
+                window.displaySubjectProfileInPanel(detailPanel, subjectName, profile);
             }
-
-            window.displaySubjectProfileInPanel(detailPanel, subjectName, profile);
         }
     } catch (error) {
         console.error('Error saving profile:', error);
@@ -198,6 +172,6 @@ window.saveSubjectProfile = async function(event) {
 /**
  * Close subject profile modal
  */
-window.closeSubjectProfileModal = function() {
+window.closeSubjectProfileModal = function () {
     document.getElementById('subjectProfileModal').classList.add('hidden');
 }

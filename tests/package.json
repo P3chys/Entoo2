@@ -5,6 +5,7 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
     "cleanup": "npx ts-node scripts/cleanup-test-data.ts",
     "test:clean": "npm run cleanup && npm test"
