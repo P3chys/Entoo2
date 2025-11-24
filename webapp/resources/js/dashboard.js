@@ -57,7 +57,14 @@ window.deleteFile = async function (fileId) {
 
     try {
         await fetchAPI(`/api/files/${fileId}`, { method: 'DELETE' });
-        window.loadDashboard();
+
+        // Clear all subject caches to force reload of counts
+        Object.keys(state.subjectFiles).forEach(subjectName => {
+            delete state.subjectFiles[subjectName];
+        });
+
+        // Reload dashboard with cache bypass to get fresh counts
+        window.loadDashboard(true);
     } catch (error) {
         alert('Failed to delete file');
     }
@@ -163,6 +170,13 @@ window.toggleSubject = async function (element, subjectName) {
                 }
 
                 state.subjectFiles[subjectName] = files;
+
+                // Update the header count to match actual files loaded
+                const actualCount = files.length;
+                const countSpan = element.querySelector('.subject-count');
+                if (countSpan) {
+                    countSpan.textContent = `${actualCount} file${actualCount !== 1 ? 's' : ''}`;
+                }
 
                 const tree = {};
                 files.forEach(file => {
