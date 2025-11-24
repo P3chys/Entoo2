@@ -86,6 +86,13 @@
                 </svg>
                 Files
             </button>
+            <button class="admin-tab" data-tab="subjects">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                </svg>
+                Subjects
+            </button>
+
         </div>
 
         <!-- Users Tab Content -->
@@ -138,6 +145,83 @@
                     <!-- Pagination will be populated by JavaScript -->
                 </div>
             </div>
+        </div>
+
+        <!-- Subjects Tab Content -->
+        <div class="admin-tab-content" id="subjects-tab">
+            <div class="admin-section">
+                <div class="admin-section-header">
+                    <h2>Subject Management</h2>
+                    <div class="admin-section-actions">
+                        <input type="text" id="subjectSearch" placeholder="Search subjects..." class="search-input">
+                        <button id="createSubjectBtn" class="btn btn-primary">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                            Create Subject
+                        </button>
+                    </div>
+                </div>
+                <div id="subjectsTable" class="admin-table-container">
+                    <!-- Subjects table will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Modal -->
+<div id="subjectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="subjectModalTitle">Create Subject</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="subjectForm">
+                <input type="hidden" id="subjectId" name="subject_id">
+                <div class="form-group">
+                    <label for="subjectName">Subject Name</label>
+                    <input type="text" id="subjectName" name="subject_name" autocomplete="off" required>
+                    <small class="form-text text-muted">Changing this will rename the subject for all existing files!</small>
+                </div>
+                <div class="form-group">
+                    <label for="subjectDescription">Description</label>
+                    <textarea id="subjectDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="subjectCode">Course Code</label>
+                        <input type="text" id="subjectCode" name="course_code">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="subjectCredits">Credits</label>
+                        <input type="number" id="subjectCredits" name="credits" min="0" max="20">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="subjectSemester">Semester</label>
+                        <select id="subjectSemester" name="semester">
+                            <option value="">Select...</option>
+                            <option value="Zimní">Zimní</option>
+                            <option value="Letní">Letní</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="subjectYear">Year</label>
+                        <input type="number" id="subjectYear" name="year" min="2000" max="2100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subjectProfessor">Professor</label>
+                    <input type="text" id="subjectProfessor" name="professor_name">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+            <button type="submit" form="subjectForm" class="btn btn-primary">Save</button>
         </div>
     </div>
 </div>

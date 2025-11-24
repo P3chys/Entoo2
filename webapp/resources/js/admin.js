@@ -32,9 +32,11 @@ class AdminDashboard {
         };
         this.filters = {
             users: { search: '' },
-            files: { search: '', subject: '', category: '' }
+            files: { search: '', subject: '', category: '' },
+            subjects: { search: '' }
         };
         this.editingUserId = null;
+        this.editingSubjectId = null;
 
         this.init();
     }
@@ -98,6 +100,26 @@ class AdminDashboard {
             });
         }
 
+        // Subject management
+        const createSubjectBtn = document.getElementById('createSubjectBtn');
+        if (createSubjectBtn) {
+            createSubjectBtn.addEventListener('click', () => this.openSubjectModal());
+        }
+
+        const subjectForm = document.getElementById('subjectForm');
+        if (subjectForm) {
+            subjectForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveSubject();
+            });
+
+            subjectForm.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('input', () => {
+                    input.classList.remove('input-error');
+                });
+            });
+        }
+
         // Search and filters
         const userSearch = document.getElementById('userSearch');
         if (userSearch) {
@@ -114,6 +136,14 @@ class AdminDashboard {
                 this.filters.files.search = e.target.value;
                 this.currentPage.files = 1;
                 this.loadFiles();
+            }, 500));
+        }
+
+        const subjectSearch = document.getElementById('subjectSearch');
+        if (subjectSearch) {
+            subjectSearch.addEventListener('input', this.debounce((e) => {
+                this.filters.subjects.search = e.target.value;
+                this.loadSubjectsList();
             }, 500));
         }
 
@@ -140,10 +170,19 @@ class AdminDashboard {
             btn.addEventListener('click', () => this.closeModal());
         });
 
-        const modal = document.getElementById('userModal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
+        const userModal = document.getElementById('userModal');
+        if (userModal) {
+            userModal.addEventListener('click', (e) => {
+                if (e.target === userModal) {
+                    this.closeModal();
+                }
+            });
+        }
+
+        const subjectModal = document.getElementById('subjectModal');
+        if (subjectModal) {
+            subjectModal.addEventListener('click', (e) => {
+                if (e.target === subjectModal) {
                     this.closeModal();
                 }
             });
@@ -168,7 +207,9 @@ class AdminDashboard {
             this.loadUsers();
         } else if (tab === 'files') {
             this.loadFiles();
-            this.loadSubjects();
+            this.loadSubjects(); // For filter dropdown
+        } else if (tab === 'subjects') {
+            this.loadSubjectsList();
         }
     }
 
@@ -391,10 +432,10 @@ class AdminDashboard {
                     Previous
                 </button>
                 ${pages.map(page => {
-                    if (page === '...') {
-                        return '<span class="pagination-ellipsis">...</span>';
-                    }
-                    return `
+            if (page === '...') {
+                return '<span class="pagination-ellipsis">...</span>';
+            }
+            return `
                         <button
                             class="pagination-btn ${page === response.current_page ? 'active' : ''}"
                             data-type="${type}"
@@ -403,7 +444,7 @@ class AdminDashboard {
                             ${page}
                         </button>
                     `;
-                }).join('')}
+        }).join('')}
                 <button
                     class="pagination-btn"
                     data-type="${type}"
@@ -441,16 +482,118 @@ class AdminDashboard {
 
     async loadSubjects() {
         try {
-            const subjects = await apiRequest('/api/subjects');
+            const response = await apiRequest('/api/subjects');
+            const subjects = response.subjects;
             const select = document.getElementById('subjectFilter');
 
             if (select) {
                 select.innerHTML = '<option value="">All Subjects</option>' +
-                    subjects.map(s => `<option value="${this.escapeHtml(s.subject_name)}">${this.escapeHtml(s.subject_name)}</option>`).join('');
+                    subjects.map(s => s ? `<option value="${this.escapeHtml(s)}">${this.escapeHtml(s)}</option>` : '').join('');
             }
         } catch (error) {
             console.error('Error loading subjects:', error);
         }
+    }
+
+    async loadSubjectsList() {
+        try {
+            const response = await apiRequest('/api/admin/subjects');
+            let subjects = response.subjects || [];
+
+            if (!Array.isArray(subjects)) {
+                console.error('Subjects is not an array:', subjects);
+                subjects = [];
+            }
+
+            if (this.filters.subjects.search) {
+                const search = this.filters.subjects.search.toLowerCase();
+                subjects = subjects.filter(s => s.subject_name && s.subject_name.toLowerCase().includes(search));
+            }
+
+            this.renderSubjectsTable(subjects);
+        } catch (error) {
+            console.error('Error loading subjects list:', error);
+            this.showNotification('Failed to load subjects', 'error');
+        }
+    }
+
+    renderSubjectsTable(subjects) {
+        const container = document.getElementById('subjectsTable');
+
+        if (!subjects || subjects.length === 0) {
+            container.innerHTML = '<div class="empty-state">No subjects found</div>';
+            return;
+        }
+
+        const table = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Subject Name</th>
+                        <th>Files</th>
+                        <th>Profile Status</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${subjects.map(subject => `
+                        <tr>
+                            <td>${this.escapeHtml(subject.subject_name)}</td>
+                            <td>${subject.file_count}</td>
+                            <td>
+                                <span class="badge ${subject.has_profile ? 'badge-success' : 'badge-warning'}">
+                                    ${subject.has_profile ? 'Active Profile' : 'Files Only'}
+                                </span>
+                            </td>
+                            <td>${subject.updated_at ? this.formatDate(subject.updated_at) : '-'}</td>
+                            <td class="table-actions">
+                                <button class="btn-icon btn-edit-subject" 
+                                    data-subject-id="${subject.profile_id || ''}" 
+                                    data-subject-name="${this.escapeHtml(subject.subject_name)}"
+                                    title="Edit">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                    </svg>
+                                </button>
+                                ${subject.has_profile ? `
+                                <button class="btn-icon btn-danger btn-delete-subject" 
+                                    data-subject-id="${subject.profile_id}" 
+                                    data-subject-name="${this.escapeHtml(subject.subject_name)}"
+                                    title="Delete">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = table;
+
+        // Attach event listeners
+        container.querySelectorAll('.btn-edit-subject').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const subjectId = btn.getAttribute('data-subject-id');
+                const subjectName = btn.getAttribute('data-subject-name');
+                this.editSubject(subjectId, subjectName);
+            });
+        });
+
+        container.querySelectorAll('.btn-delete-subject').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const subjectId = btn.getAttribute('data-subject-id');
+                const subjectName = btn.getAttribute('data-subject-name');
+                this.deleteSubject(subjectId, subjectName);
+            });
+        });
     }
 
     openUserModal(userId = null) {
@@ -634,11 +777,121 @@ class AdminDashboard {
         }
     }
 
+    // Subject methods
+    openSubjectModal(subjectId = null, subjectName = null) {
+        this.editingSubjectId = subjectId;
+        const modal = document.getElementById('subjectModal');
+        const title = document.getElementById('subjectModalTitle');
+        const form = document.getElementById('subjectForm');
+
+        form.reset();
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.classList.remove('input-error');
+        });
+
+        if (subjectId) {
+            title.textContent = 'Edit Subject';
+            this.loadSubjectData(subjectName);
+        } else if (subjectName) {
+            // Creating profile for existing file-only subject
+            title.textContent = 'Create Subject Profile';
+            document.getElementById('subjectName').value = subjectName;
+        } else {
+            title.textContent = 'Create Subject';
+        }
+
+        modal.classList.add('show');
+    }
+
+    async loadSubjectData(subjectName) {
+        try {
+            const response = await apiRequest(`/api/subject-profiles/${subjectName}`);
+            const profile = response.profile;
+
+            if (profile) {
+                document.getElementById('subjectId').value = profile.id;
+                document.getElementById('subjectName').value = profile.subject_name;
+                document.getElementById('subjectDescription').value = profile.description || '';
+                document.getElementById('subjectCode').value = profile.course_code || '';
+                document.getElementById('subjectCredits').value = profile.credits || '';
+                document.getElementById('subjectSemester').value = profile.semester || '';
+                document.getElementById('subjectYear').value = profile.year || '';
+                document.getElementById('subjectProfessor').value = profile.professor_name || '';
+            }
+        } catch (error) {
+            console.error('Error loading subject:', error);
+            this.showNotification('Failed to load subject data', 'error');
+        }
+    }
+
+    async saveSubject() {
+        const form = document.getElementById('subjectForm');
+        const formData = new FormData(form);
+        const subjectId = this.editingSubjectId;
+
+        const data = Object.fromEntries(formData.entries());
+
+        // Clean up empty strings
+        Object.keys(data).forEach(key => {
+            if (data[key] === '') data[key] = null;
+        });
+
+        if (!data.subject_name) {
+            document.getElementById('subjectName').classList.add('input-error');
+            return;
+        }
+
+        try {
+            if (subjectId) {
+                await apiRequest(`/api/admin/subjects/${subjectId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
+                });
+                this.showNotification('Subject updated successfully', 'success');
+            } else {
+                await apiRequest('/api/admin/subjects', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                this.showNotification('Subject created successfully', 'success');
+            }
+
+            this.closeModal();
+            this.loadSubjectsList();
+            this.loadStats();
+        } catch (error) {
+            console.error('Error saving subject:', error);
+            this.showNotification(error.message || 'Failed to save subject', 'error');
+        }
+    }
+
+    editSubject(subjectId, subjectName) {
+        this.openSubjectModal(subjectId, subjectName);
+    }
+
+    async deleteSubject(subjectId, subjectName) {
+        if (!confirm(`Are you sure you want to delete "${subjectName}"? This will delete the profile AND ALL ASSOCIATED FILES. This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            await apiRequest(`/api/admin/subjects/${subjectId}`, {
+                method: 'DELETE'
+            });
+            this.showNotification('Subject deleted successfully', 'success');
+            this.loadSubjectsList();
+            this.loadStats();
+        } catch (error) {
+            console.error('Error deleting subject:', error);
+            this.showNotification('Failed to delete subject', 'error');
+        }
+    }
+
     closeModal() {
-        const modal = document.getElementById('userModal');
-        modal.classList.remove('show');
-        document.getElementById('userForm').reset();
+        document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('show'));
+        document.querySelectorAll('form').forEach(form => form.reset());
         this.editingUserId = null;
+        this.editingSubjectId = null;
     }
 
     showNotification(message, type = 'info') {

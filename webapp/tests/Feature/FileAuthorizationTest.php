@@ -8,8 +8,11 @@ use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
 class FileAuthorizationTest extends TestCase
 {
+    use RefreshDatabase;
     protected array $createdUsers = [];
     protected array $createdFiles = [];
 
@@ -63,7 +66,7 @@ class FileAuthorizationTest extends TestCase
 
         // Another user should be able to download (sharing platform)
         $response = $this->actingAs($otherUser, 'sanctum')
-            ->get("/api/files/{$file->id}/download");
+            ->getJson("/api/files/{$file->id}/download");
 
         $response->assertStatus(200);
     }
@@ -75,7 +78,7 @@ class FileAuthorizationTest extends TestCase
     {
         $file = $this->createTestFile();
 
-        $response = $this->get("/api/files/{$file->id}/download");
+        $response = $this->getJson("/api/files/{$file->id}/download");
 
         $response->assertStatus(401);
     }
@@ -94,7 +97,7 @@ class FileAuthorizationTest extends TestCase
 
         // Owner can view
         $response = $this->actingAs($owner, 'sanctum')
-            ->get("/api/files/{$file->id}");
+            ->getJson("/api/files/{$file->id}");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -105,7 +108,7 @@ class FileAuthorizationTest extends TestCase
 
         // Other user cannot view
         $response = $this->actingAs($otherUser, 'sanctum')
-            ->get("/api/files/{$file->id}");
+            ->getJson("/api/files/{$file->id}");
 
         $response->assertStatus(403);
     }
@@ -125,7 +128,7 @@ class FileAuthorizationTest extends TestCase
 
         // Owner can view status
         $response = $this->actingAs($owner, 'sanctum')
-            ->get("/api/files/{$file->id}/status");
+            ->getJson("/api/files/{$file->id}/status");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -134,7 +137,7 @@ class FileAuthorizationTest extends TestCase
 
         // Other user cannot view status
         $response = $this->actingAs($otherUser, 'sanctum')
-            ->get("/api/files/{$file->id}/status");
+            ->getJson("/api/files/{$file->id}/status");
 
         $response->assertStatus(403);
     }
@@ -156,7 +159,7 @@ class FileAuthorizationTest extends TestCase
 
         // Other user cannot delete
         $response = $this->actingAs($otherUser, 'sanctum')
-            ->delete("/api/files/{$file->id}");
+            ->deleteJson("/api/files/{$file->id}");
 
         $response->assertStatus(403);
 
@@ -167,7 +170,33 @@ class FileAuthorizationTest extends TestCase
 
         // Owner can delete
         $response = $this->actingAs($owner, 'sanctum')
-            ->delete("/api/files/{$file->id}");
+            ->deleteJson("/api/files/{$file->id}");
+
+        $response->assertStatus(200);
+
+        // File should be deleted
+        $this->assertDatabaseMissing('uploaded_files', [
+            'id' => $file->id,
+        ]);
+    }
+
+    /**
+     * Test admin can delete any file
+     */
+    public function test_admin_can_delete_any_file(): void
+    {
+        Storage::fake('local');
+
+        $admin = $this->createTestUser(['is_admin' => true]);
+        $otherUser = $this->createTestUser();
+
+        $file = $this->createTestFile([
+            'user_id' => $otherUser->id,
+        ]);
+
+        // Admin can delete
+        $response = $this->actingAs($admin, 'sanctum')
+            ->deleteJson("/api/files/{$file->id}");
 
         $response->assertStatus(200);
 
@@ -184,7 +213,7 @@ class FileAuthorizationTest extends TestCase
     {
         $file = $this->createTestFile();
 
-        $response = $this->delete("/api/files/{$file->id}");
+        $response = $this->deleteJson("/api/files/{$file->id}");
 
         $response->assertStatus(401);
 
@@ -202,7 +231,7 @@ class FileAuthorizationTest extends TestCase
         $user = $this->createTestUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->get('/api/files/99999');
+            ->getJson('/api/files/99999');
 
         $response->assertStatus(404);
     }
@@ -220,22 +249,22 @@ class FileAuthorizationTest extends TestCase
 
         // User1 can view their own file
         $this->actingAs($user1, 'sanctum')
-            ->get("/api/files/{$file1->id}")
+            ->getJson("/api/files/{$file1->id}")
             ->assertStatus(200);
 
         // User1 cannot view user2's file
         $this->actingAs($user1, 'sanctum')
-            ->get("/api/files/{$file2->id}")
+            ->getJson("/api/files/{$file2->id}")
             ->assertStatus(403);
 
         // User2 can view their own file
         $this->actingAs($user2, 'sanctum')
-            ->get("/api/files/{$file2->id}")
+            ->getJson("/api/files/{$file2->id}")
             ->assertStatus(200);
 
         // User2 cannot view user1's file
         $this->actingAs($user2, 'sanctum')
-            ->get("/api/files/{$file1->id}")
+            ->getJson("/api/files/{$file1->id}")
             ->assertStatus(403);
     }
 
@@ -259,7 +288,7 @@ class FileAuthorizationTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->get("/api/files/{$file->id}/download");
+            ->getJson("/api/files/{$file->id}/download");
 
         $response->assertStatus(200)
             ->assertDownload('document.txt');
@@ -280,7 +309,7 @@ class FileAuthorizationTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->get("/api/files/{$file->id}/download");
+            ->getJson("/api/files/{$file->id}/download");
 
         $response->assertStatus(404)
             ->assertJson([

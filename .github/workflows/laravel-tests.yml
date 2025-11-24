@@ -59,6 +59,34 @@ jobs:
         docker exec php php artisan --version
       shell: pwsh
 
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v4
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Cache NPM packages
+      id: npm-cache
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install Dependencies
+      run: |
+        docker exec php composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        npm ci
+      shell: pwsh
+
+    - name: Run Pint (Linting)
+      run: docker exec php ./vendor/bin/pint --test
+      shell: pwsh
+
     - name: Run PHPUnit tests
       run: docker exec php php artisan test
       shell: pwsh

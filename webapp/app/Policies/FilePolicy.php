@@ -69,6 +69,17 @@ class FilePolicy
             return false;
         }
 
+        \Log::info('FilePolicy::delete called', [
+            'user_id' => $user->id,
+            'file_id' => $file->id,
+            'is_admin' => $user->is_admin
+        ]);
+
+        // Allow admins to delete any file
+        if ($user->is_admin) {
+            return true;
+        }
+
         // Allow test user to delete any file for cleanup (test environments only)
         if ($user->email === 'playwright-test@entoo.cz') {
             return true;

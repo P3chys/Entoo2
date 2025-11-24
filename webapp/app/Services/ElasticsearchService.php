@@ -620,4 +620,41 @@ class ElasticsearchService
             ];
         }
     }
+    /**
+     * Update subject name for all matching documents
+     *
+     * @param string $oldName
+     * @param string $newName
+     * @return int Number of updated documents
+     */
+    public function updateSubjectName(string $oldName, string $newName): int
+    {
+        try {
+            $params = [
+                'index' => $this->indexName,
+                'body' => [
+                    'script' => [
+                        'source' => 'ctx._source.subject_name = params.newName',
+                        'params' => ['newName' => $newName]
+                    ],
+                    'query' => [
+                        'term' => [
+                            'subject_name.keyword' => $oldName
+                        ]
+                    ]
+                ]
+            ];
+
+            $response = $this->client->updateByQuery($params);
+
+            return $response['updated'] ?? 0;
+        } catch (Exception $e) {
+            Log::error("Failed to update subject name in Elasticsearch", [
+                'old_name' => $oldName,
+                'new_name' => $newName,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
+    }
 }

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Adam Pech',
             'email' => 'pechysadam@gmail.com',
             'password' => bcrypt('password'), // Default password, should be changed
+            'is_admin' => true,
         ]);
 
         $this->command->info('Created user: Adam Pech (ID: 28, Email: pechysadam@gmail.com)');

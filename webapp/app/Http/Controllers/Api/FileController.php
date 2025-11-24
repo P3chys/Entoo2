@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\CreateFileDTO;
+use App\DTOs\FileFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Models\UploadedFile;
 use App\Services\DocumentParserService;
@@ -89,31 +91,8 @@ class FileController extends Controller
 
         // Fall back to PostgreSQL for complex queries
         if ($bypassCache) {
-            $query = UploadedFile::with('user:id,name,email');
-
-            // Filter by subject
-            if ($request->has('subject_name')) {
-                $query->where('subject_name', $request->subject_name);
-            }
-
-            // Filter by category
-            if ($request->has('category')) {
-                $query->where('category', $request->category);
-            }
-
-            // Filter by extension
-            if ($request->has('extension')) {
-                $query->where('file_extension', $request->extension);
-            }
-
-            // Filter by user/owner
-            if ($request->has('user_id')) {
-                $query->where('user_id', $request->user_id);
-            }
-
-            // Respect per_page parameter (default 20, max 1000)
-            $perPage = min($request->input('per_page', 20), 1000);
-            $files = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $filterDTO = FileFilterDTO::fromRequest($request);
+            $files = $this->fileService->listFiles($filterDTO);
         } else {
             $cacheKey = 'files:' . md5(json_encode([
                 'subject' => $request->subject_name,
@@ -125,31 +104,8 @@ class FileController extends Controller
             ]));
 
             $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
-                $query = UploadedFile::with('user:id,name,email');
-
-                // Filter by subject
-                if ($request->has('subject_name')) {
-                    $query->where('subject_name', $request->subject_name);
-                }
-
-                // Filter by category
-                if ($request->has('category')) {
-                    $query->where('category', $request->category);
-                }
-
-                // Filter by extension
-                if ($request->has('extension')) {
-                    $query->where('file_extension', $request->extension);
-                }
-
-                // Filter by user/owner
-                if ($request->has('user_id')) {
-                    $query->where('user_id', $request->user_id);
-                }
-
-                // Respect per_page parameter (default 20, max 1000)
-                $perPage = min($request->input('per_page', 20), 1000);
-                return $query->orderBy('created_at', 'desc')->paginate($perPage);
+                $filterDTO = FileFilterDTO::fromRequest($request);
+                return $this->fileService->listFiles($filterDTO);
             });
         }
 
@@ -214,12 +170,8 @@ class FileController extends Controller
             }
 
             // Use FileService to handle upload
-            $file = $this->fileService->uploadFile(
-                $request->user(),
-                $uploadedFile,
-                $validated['subject_name'],
-                $validated['category']
-            );
+            $dto = CreateFileDTO::fromRequest($request);
+            $file = $this->fileService->uploadFile($dto);
 
             return response()->json([
                 'message' => 'File uploaded successfully and is being processed',
@@ -305,9 +257,9 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Note: No authorization check needed here - route is protected by auth:sanctum
-        // Users should be able to check the processing status of files they just uploaded
-        // This is essential for the upload UX
+        if ($request->user()->id !== $file->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         return response()->json([
             'id' => $file->id,
@@ -384,18 +336,27 @@ class FileController extends Controller
     )]
     public function destroy(Request $request, int $id)
     {
+        \Log::error("Destroy method called for file {$id} by user " . ($request->user() ? $request->user()->id : 'guest'));
         $file = UploadedFile::findOrFail($id);
 
         $user = $request->user();
         
         // Direct authorization check (Gates/Policies not loading properly)
-        $canDelete = $user &&  (
-            $user->is_admin ||
-            $user->email === 'playwright-test@entoo.cz' ||
-            $user->id === $file->user_id
-        );
+        // Cast to int to ensure type safety
+        $isOwner = (int)$user->id === (int)$file->user_id;
+        $isAdmin = (bool)$user->is_admin;
+        $isTestUser = $user->email === 'playwright-test@entoo.cz';
+
+        $canDelete = $user && ($isAdmin || $isTestUser || $isOwner);
         
         if (!$canDelete) {
+            \Log::warning('File deletion unauthorized attempt', [
+                'user_id' => $user->id,
+                'file_id' => $file->id,
+                'file_owner_id' => $file->user_id,
+                'is_admin' => $isAdmin,
+                'is_owner' => $isOwner
+            ]);
             abort(403, 'You are not authorized to delete this file.');
         }
 
@@ -407,6 +368,12 @@ class FileController extends Controller
             ]);
 
         } catch (Exception $e) {
+            \Log::error('File deletion failed', [
+                'file_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'message' => 'File deletion failed',
                 'error' => $e->getMessage()
@@ -460,22 +427,8 @@ class FileController extends Controller
         ]));
 
         $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
-            $query = UploadedFile::with('user:id,name,email');
-
-            if ($request->has('subject_name')) {
-                $query->where('subject_name', $request->subject_name);
-            }
-
-            if ($request->has('category')) {
-                $query->where('category', $request->category);
-            }
-
-            // Allow filtering by user_id
-            if ($request->has('user_id')) {
-                $query->where('user_id', $request->user_id);
-            }
-
-            return $query->orderBy('created_at', 'desc')->paginate(20);
+            $filterDTO = FileFilterDTO::fromRequest($request);
+            return $this->fileService->listFiles($filterDTO);
         });
 
         return response()->json($files);

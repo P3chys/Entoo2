@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateFileDTO;
+use App\DTOs\FileFilterDTO;
 use App\Jobs\ProcessUploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\UploadedFile;
 use App\Models\User;
 use Exception;
@@ -23,15 +26,15 @@ class FileService
     /**
      * Handle file upload process
      */
-    public function uploadFile(User $user, HttpUploadedFile $uploadedFile, string $subjectName, string $category): UploadedFile
+    public function uploadFile(CreateFileDTO $dto): UploadedFile
     {
-        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+        $extension = strtolower($dto->file->getClientOriginalExtension());
         $filename = Str::uuid() . '.' . $extension;
-        $subjectSlug = Str::slug($subjectName);
-        $categorySlug = Str::slug($category);
+        $subjectSlug = Str::slug($dto->subjectName);
+        $categorySlug = Str::slug($dto->category);
 
         // Store file
-        $path = $uploadedFile->storeAs(
+        $path = $dto->file->storeAs(
             "uploads/{$subjectSlug}/{$categorySlug}",
             $filename,
             'local'
@@ -39,13 +42,13 @@ class FileService
 
         // Create database record
         $file = UploadedFile::create([
-            'user_id' => $user->id,
+            'user_id' => $dto->user->id,
             'filename' => $filename,
-            'original_filename' => $uploadedFile->getClientOriginalName(),
+            'original_filename' => $dto->file->getClientOriginalName(),
             'filepath' => $path,
-            'subject_name' => $subjectName,
-            'category' => $category,
-            'file_size' => $uploadedFile->getSize(),
+            'subject_name' => $dto->subjectName,
+            'category' => $dto->category,
+            'file_size' => $dto->file->getSize(),
             'file_extension' => $extension,
             'processing_status' => 'pending',
         ]);
@@ -95,7 +98,12 @@ class FileService
             }
         }
 
-        // Try Laravel storage for relative paths (uploaded files)
+        // Try Storage facade first (supports faking)
+        if (Storage::exists($file->filepath)) {
+            return Storage::path($file->filepath);
+        }
+
+        // Fallback to manual check (legacy behavior)
         $storagePath = storage_path('app/' . $file->filepath);
         if (file_exists($storagePath)) {
             return $storagePath;
@@ -119,5 +127,30 @@ class FileService
         Cache::forget('system:stats:comprehensive');
         Cache::forget('subjects:with_counts');
         Cache::forget('subjects:list');
+    }
+    /**
+     * List files with filtering
+     */
+    public function listFiles(FileFilterDTO $filter): LengthAwarePaginator
+    {
+        $query = UploadedFile::with('user:id,name,email');
+
+        if ($filter->subjectName) {
+            $query->where('subject_name', $filter->subjectName);
+        }
+
+        if ($filter->category) {
+            $query->where('category', $filter->category);
+        }
+
+        if ($filter->extension) {
+            $query->where('file_extension', $filter->extension);
+        }
+
+        if ($filter->userId) {
+            $query->where('user_id', $filter->userId);
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($filter->perPage, ['*'], 'page', $filter->page);
     }
 }

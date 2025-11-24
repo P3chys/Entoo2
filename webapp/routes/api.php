@@ -78,4 +78,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // File management
     Route::get('/files', [AdminController::class, 'getFiles']);
     Route::delete('/files/{file}', [AdminController::class, 'deleteFile']);
+
+    // Subject management
+    Route::get('/subjects', [\App\Http\Controllers\Api\AdminSubjectController::class, 'index']);
+    Route::post('/subjects', [\App\Http\Controllers\Api\AdminSubjectController::class, 'store']);
+    Route::put('/subjects/{id}', [\App\Http\Controllers\Api\AdminSubjectController::class, 'update']);
+    Route::delete('/subjects/{id}', [\App\Http\Controllers\Api\AdminSubjectController::class, 'destroy']);
 });
