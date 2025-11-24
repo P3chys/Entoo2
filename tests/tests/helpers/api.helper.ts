@@ -374,3 +374,97 @@ export async function deleteAllTestSubjects(
     console.warn('Error during test cleanup:', error);
   }
 }
+
+/**
+ * Create a test file and return the file data
+ * Used for file deletion tests
+ */
+export async function createTestFile(
+  page: Page,
+  subjectName: string,
+  category: string,
+  fileName: string = 'test.pdf'
+): Promise<any> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    throw new Error('No auth token available');
+  }
+
+  // Create a minimal PDF file buffer
+  const pdfContent = Buffer.from(
+    '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 44 >>\nstream\nBT\n/F1 12 Tf\n100 700 Td\n(Test PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000214 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n306\n%%EOF'
+  );
+
+  const formData = new FormData();
+  const blob = new Blob([pdfContent], { type: 'application/pdf' });
+  formData.append('file', blob, fileName);
+  formData.append('subject_name', subjectName);
+  formData.append('category', category);
+
+  const response = await fetch('http://localhost:8000/api/files', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to create file: ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  // Wait for Elasticsearch indexing and cache refresh
+  await waitForSubjectToBeIndexed(page, subjectName);
+
+  return data;
+}
+
+/**
+ * Delete a test file
+ */
+export async function deleteTestFile(
+  page: Page,
+  fileId: number
+): Promise<void> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    throw new Error('No auth token available');
+  }
+
+  const response = await fetch(`http://localhost:8000/api/files/${fileId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    },
+  });
+
+  if (!response.ok && response.status !== 404) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete file: ${response.statusText} - ${errorText}`);
+  }
+}
+
+/**
+ * Get auth headers for API requests
+ */
+export async function getAuthHeaders(page: Page): Promise<Record<string, string>> {
+  const token = await getAuthToken(page);
+
+  if (!token) {
+    throw new Error('No auth token available');
+  }
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+  };
+}
