@@ -12,7 +12,7 @@ let currentUploadCategory = '';
  * @param {string} subject - The subject name
  * @param {string} category - The category name
  */
-window.openUploadModal = function(subject, category) {
+window.openUploadModal = function (subject, category) {
     currentUploadSubject = subject;
     currentUploadCategory = category;
 
@@ -36,7 +36,7 @@ window.openUploadModal = function(subject, category) {
 /**
  * Opens the upload modal in global mode with subject/category selectors
  */
-window.openUploadModalGlobal = function() {
+window.openUploadModalGlobal = function () {
     currentUploadSubject = '';
     currentUploadCategory = '';
 
@@ -72,7 +72,7 @@ window.openUploadModalGlobal = function() {
 /**
  * Closes the upload modal
  */
-window.closeUploadModal = function() {
+window.closeUploadModal = function () {
     document.getElementById('uploadModal').classList.add('hidden');
     currentUploadSubject = '';
     currentUploadCategory = '';
@@ -102,6 +102,10 @@ async function pollProcessingStatus(fileId) {
                 }
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
 
             if (data.processing_status === 'completed') {
@@ -113,9 +117,9 @@ async function pollProcessingStatus(fileId) {
 
                 setTimeout(() => {
                     closeUploadModal();
-                    // Reload dashboard if the function exists
-                    if (typeof loadDashboard === 'function') {
-                        loadDashboard();
+                    // Reload dashboard if the function exists, bypassing cache
+                    if (typeof window.loadDashboard === 'function') {
+                        window.loadDashboard(true);
                     }
                 }, 1500);
             } else if (data.processing_status === 'failed') {
@@ -154,12 +158,16 @@ async function pollProcessingStatus(fileId) {
                     uploadError.classList.remove('hidden');
                     document.getElementById('uploadBtn').disabled = false;
                 }
+            } else {
+                // Unknown status
+                throw new Error(`Unknown status: ${data.processing_status}`);
             }
         } catch (error) {
-            uploadError.textContent = 'Failed to check processing status';
+            console.error('Polling error:', error);
+            uploadError.textContent = 'Failed to check processing status. The file may still be processing in the background.';
             uploadError.classList.remove('hidden');
             document.getElementById('uploadBtn').disabled = false;
-            document.getElementById('uploadProgress').classList.add('hidden');
+            // Don't hide progress immediately so user can see it failed during processing
         }
     };
 
@@ -171,7 +179,7 @@ async function pollProcessingStatus(fileId) {
  * Handles the file upload form submission
  * @param {Event} event - The form submit event
  */
-window.handleFileUpload = async function(event) {
+window.handleFileUpload = async function (event) {
     event.preventDefault();
 
     // Get subject and category from either context or selectors
@@ -236,7 +244,7 @@ window.handleFileUpload = async function(event) {
  */
 function initFileUploadModal() {
     // Close modal when clicking outside of it
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         const modal = document.getElementById('uploadModal');
         if (event.target === modal) {
             closeUploadModal();

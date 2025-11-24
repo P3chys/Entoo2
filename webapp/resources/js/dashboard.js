@@ -208,7 +208,7 @@ function expandSubjectFromRoute() {
     }, 100);
 }
 
-async function loadFiles() {
+async function loadFiles(bypassCache = false) {
     const loading = document.getElementById('loadingFiles');
     const noFiles = document.getElementById('noFiles');
     const treeView = document.getElementById('treeView');
@@ -230,7 +230,11 @@ async function loadFiles() {
     }
 
     try {
-        const response = await fetchAPI('/api/subjects?with_counts=true');
+        const options = {};
+        if (bypassCache) {
+            options.headers = { 'X-Bypass-Cache': 'true' };
+        }
+        const response = await fetchAPI('/api/subjects?with_counts=true', options);
         const subjects = response.subjects || [];
 
         state.allFiles = subjects;
@@ -287,10 +291,10 @@ async function loadStats() {
     }
 }
 
-window.loadDashboard = async function () {
+window.loadDashboard = async function (bypassCache = false) {
     await loadFavorites();
     await Promise.all([
-        loadFiles(),
+        loadFiles(bypassCache),
         loadStats()
     ]);
 
