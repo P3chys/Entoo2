@@ -64,9 +64,10 @@ export async function waitForText(
     }
 
     // Quick check: if results area is visible, we're done
-    const resultsLocator = page.locator('.search-results, .file-list, .subject-row');
+    // Search results are shown in #searchResultsGrid when search is active
+    const searchResultsGrid = page.locator('#searchResultsGrid');
     try {
-      if (await resultsLocator.first().isVisible()) {
+      if (await searchResultsGrid.isVisible()) {
         return;
       }
     } catch (e) {

@@ -8,6 +8,17 @@ let currentUploadSubject = '';
 let currentUploadCategory = '';
 
 /**
+ * Wrapper function to safely get subject and category from element and open upload modal
+ */
+window.openUploadModalByElement = function(element) {
+    const subject = element.getAttribute('data-subject');
+    const category = element.getAttribute('data-category');
+    if (subject && category) {
+        window.openUploadModal(subject, category);
+    }
+};
+
+/**
  * Opens the upload modal for a specific subject and category
  * @param {string} subject - The subject name
  * @param {string} category - The category name
@@ -108,16 +119,21 @@ async function pollProcessingStatus(fileId) {
                 // Processing completed successfully
                 progressFill.style.width = '100%';
                 progressText.textContent = 'Processing complete!';
-                uploadSuccess.textContent = 'File uploaded and processed successfully!';
+                uploadSuccess.textContent = 'File uploaded and processed successfully! Updating file list...';
                 uploadSuccess.classList.remove('hidden');
 
-                setTimeout(() => {
+                // Reload only the specific subject that was uploaded to (instead of entire dashboard)
+                setTimeout(async () => {
                     closeUploadModal();
-                    // Reload dashboard if the function exists
-                    if (typeof loadDashboard === 'function') {
+
+                    // If we know which subject this file belongs to, reload just that subject
+                    if (currentUploadSubject && typeof window.reloadSubjectFiles === 'function') {
+                        await window.reloadSubjectFiles(currentUploadSubject);
+                    } else if (typeof loadDashboard === 'function') {
+                        // Fallback: reload entire dashboard if specific subject reload not available
                         loadDashboard();
                     }
-                }, 1500);
+                }, 1000);
             } else if (data.processing_status === 'failed') {
                 // Processing failed
                 progressFill.style.width = '100%';

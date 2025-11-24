@@ -29,16 +29,18 @@ test.describe('Authentication (Optimized)', () => {
     const loginPage = new LoginPage(page);
 
     await loginPage.goto();
-    await loginPage.login('user1@entoo.cz', 'password');
+    await loginPage.login('test@entoo.cz', 'password');
 
-    // Use custom matcher
-    await customExpect(page).toBeAuthenticated();
+    // Wait for redirect to dashboard after login
+    await page.waitForURL(/dashboard/, { timeout: 10000 });
+
+    // Verify dashboard loaded
     await expect(page).toHaveURL(/dashboard/);
   });
 
   test('register with builder', async ({ page }) => {
-    const registerPage = new LoginPage(page).registerLink;
-    await registerPage.click();
+    await page.goto('http://localhost:8000/register');
+    await page.waitForLoadState('networkidle');
 
     // Use data builder for test user
     const testUser = UserBuilder.create()
@@ -52,10 +54,14 @@ test.describe('Authentication (Optimized)', () => {
     await page.fill('input[name="password"]', testUser.password);
     await page.fill('input[name="password_confirmation"]', testUser.passwordConfirmation!);
 
-    await page.click('button[type="submit"]');
+    // Wait for the submit click and navigation
+    await Promise.all([
+      page.waitForURL(/dashboard/, { timeout: 15000 }),
+      page.click('button[type="submit"]')
+    ]);
 
-    // Should redirect to dashboard or login
-    await page.waitForURL(/\/(dashboard|login)/, { timeout: 5000 });
+    // Verify dashboard loaded
+    await expect(page).toHaveURL(/dashboard/);
   });
 });
 

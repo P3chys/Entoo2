@@ -233,7 +233,7 @@ export async function createFile(
   formData.append('subject_name', subjectName);
   formData.append('category', category);
 
-  await fetch('http://localhost:8000/api/files', {
+  const response = await fetch('http://localhost:8000/api/files', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -241,6 +241,48 @@ export async function createFile(
     },
     body: formData,
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to create file: ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const fileId = data.file?.id;
+
+  // Wait for file to be indexed (queue processing + Elasticsearch)
+  // Poll for completion with timeout
+  if (fileId) {
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max
+    while (attempts < maxAttempts) {
+      const statusResponse = await fetch(`http://localhost:8000/api/files/${fileId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+        },
+      });
+
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        if (statusData.file?.processing_status === 'completed') {
+          // File is indexed, wait an additional second for cache to clear
+          await page.waitForTimeout(1000);
+          return;
+        } else if (statusData.file?.processing_status === 'failed') {
+          throw new Error(`File processing failed: ${statusData.file.processing_error}`);
+        }
+      }
+
+      await page.waitForTimeout(1000);
+      attempts++;
+    }
+
+    throw new Error('File processing timeout');
+  } else {
+    // Fallback: wait fixed time if we couldn't get file ID
+    await page.waitForTimeout(5000);
+  }
 }
 
 /**

@@ -245,8 +245,14 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Authorize the view action
-        $this->authorize('view', $file);
+        // Explicit authorization check to avoid Octane timing issues with Gate::authorize()
+        // Only the file owner can view file details
+        $user = $request->user();
+        if (!$user || $user->id !== $file->user_id) {
+            return response()->json([
+                'message' => 'Unauthorized. Only the file owner can view this file details.'
+            ], 403);
+        }
 
         return response()->json(['file' => $file]);
     }
@@ -282,8 +288,14 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Authorize the view action
-        $this->authorize('view', $file);
+        // Explicit authorization check to avoid Octane timing issues with Gate::authorize()
+        // Only the file owner can view file processing status
+        $user = $request->user();
+        if (!$user || $user->id !== $file->user_id) {
+            return response()->json([
+                'message' => 'Unauthorized. Only the file owner can view this file status.'
+            ], 403);
+        }
 
         return response()->json([
             'id' => $file->id,
@@ -372,8 +384,14 @@ class FileController extends Controller
     {
         $file = UploadedFile::findOrFail($id);
 
-        // Authorize the delete action
-        $this->authorize('delete', $file);
+        // Explicit authorization check to avoid Octane timing issues with Gate::authorize()
+        // Only the file owner can delete their files
+        $user = $request->user();
+        if (!$user || $user->id !== $file->user_id) {
+            return response()->json([
+                'message' => 'Unauthorized. Only the file owner can delete this file.'
+            ], 403);
+        }
 
         try {
             // Delete from storage

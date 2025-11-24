@@ -8,7 +8,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   // Parallel execution configuration
   // CI: 2 workers for stability, Local: 4 workers for speed
-  workers: process.env.CI ? 2 : 4,
+  workers: process.env.CI ? 1 : 1,
   reporter: [
     ['html'],
     ['list'],

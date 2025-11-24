@@ -8,8 +8,17 @@
 import { test, expect as baseExpect } from '../../fixtures';
 import { expect } from '../../matchers';
 import { FileBuilder } from '../../builders';
+import { waitForVisible, expandSubject } from '../helpers/ui.helper';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Define test files directory
+const testFilesDir = path.join(__dirname, '../fixtures');
+
+// Ensure fixtures directory exists
+if (!fs.existsSync(testFilesDir)) {
+  fs.mkdirSync(testFilesDir, { recursive: true });
+}
 
 test.describe('File Upload GUI Tests', () => {
   // ✨ OPTIMIZED: Most setup is now handled by fixtures
@@ -44,7 +53,7 @@ test.describe('File Upload GUI Tests', () => {
     await baseExpect(dashboardPage.uploadBtnCategory.first()).toBeVisible();
   });
 
-  test('should open file upload modal', async ({ dashboardPage, uploadModalPage }) => {
+  test('should open file upload modal', async ({ dashboardPage, uploadModalPage, authenticatedPage: page }) => {
     // ✨ OPTIMIZED: Use DashboardPage and UploadModalPage
     await dashboardPage.openUploadModal();
 

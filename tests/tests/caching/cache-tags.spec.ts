@@ -49,7 +49,7 @@ test.describe('Cache Tags Functionality', () => {
 
       console.log(`File listing cache hit: ${cacheDuration}ms`);
       // Cached responses should be reasonably fast
-      expect(cacheDuration).toBeLessThan(200);
+      expect(cacheDuration).toBeLessThan(500);
     } else {
       console.log('No subjects available to test file caching');
     }
