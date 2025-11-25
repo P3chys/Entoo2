@@ -336,6 +336,7 @@ class FileController extends Controller
     )]
     public function destroy(Request $request, int $id)
     {
+        error_log("Destroy method called for file {$id}");
         \Log::error("Destroy method called for file {$id} by user " . ($request->user() ? $request->user()->id : 'guest'));
         $file = UploadedFile::findOrFail($id);
 

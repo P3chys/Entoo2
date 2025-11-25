@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'conditional.throttle' => \App\Http\Middleware\ConditionalThrottle::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
+        
+        // Add global logging middleware
+        $middleware->append(\App\Http\Middleware\LogRequest::class);
 
         // Note: CacheSanctumToken middleware temporarily disabled due to Octane compatibility issues
         // causing 403 errors on authenticated routes. Need to implement proper Sanctum + Octane caching.

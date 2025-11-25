@@ -60,7 +60,7 @@ window.deleteFile = async function (fileId) {
         let fileSubject = null;
 
         // Search through cached subject files to find the subject
-        for (const [subjectName, files] of Object.entries(subjectFiles)) {
+        for (const [subjectName, files] of Object.entries(state.subjectFiles)) {
             if (files.some(f => (f.id || f.file_id) === fileId)) {
                 fileSubject = subjectName;
                 break;

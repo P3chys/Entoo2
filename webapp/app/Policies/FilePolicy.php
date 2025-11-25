@@ -65,6 +65,7 @@ class FilePolicy
      */
     public function delete(?User $user, UploadedFile $file): bool
     {
+        error_log('FilePolicy::delete called for user ' . ($user ? $user->id : 'null') . ' and file ' . $file->id);
         if (!$user) {
             return false;
         }
@@ -77,6 +78,7 @@ class FilePolicy
 
         // Allow admins to delete any file
         if ($user->is_admin) {
+            error_log('FilePolicy::delete - Admin access granted');
             return true;
         }
 
