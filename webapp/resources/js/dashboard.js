@@ -68,7 +68,7 @@ window.deleteFile = async function (fileId) {
         }
 
         // Delete the file
-        await fetchAPI(`/api/files/${fileId}`, { method: 'DELETE' });
+        const response = await fetchAPI(`/api/files/${fileId}`, { method: 'DELETE' });
 
         // Clear all subject caches to force reload of counts
         Object.keys(state.subjectFiles).forEach(subjectName => {
@@ -77,8 +77,13 @@ window.deleteFile = async function (fileId) {
 
         // Reload dashboard with cache bypass to get fresh counts
         window.loadDashboard(true);
+
+        // Show success message
+        alert('File deleted successfully');
     } catch (error) {
-        alert('Failed to delete file');
+        console.error('Delete file error:', error);
+        const errorMessage = error.message || 'Failed to delete file';
+        alert(`Failed to delete file: ${errorMessage}`);
     }
 };
 
