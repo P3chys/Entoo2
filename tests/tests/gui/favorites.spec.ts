@@ -12,37 +12,12 @@ import {
   isSubjectFavorite,
   getFavoriteStar,
 } from '../helpers/ui.helper';
-import { createSubject } from '../helpers/api.helper';
 
 test.describe('Favorites GUI Tests', () => {
-  // Use describe.serial to run tests sequentially and share state
-  test.describe.configure({ mode: 'serial' });
-
-  // Create test subjects once for all tests in this suite
-  test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    try {
-      await setupAuth(page);
-
-      // Create test subjects that will be shared across all tests
-      await createSubject(page, 'FavTest1', 'Materialy');
-      await createSubject(page, 'FavTest2', 'Prednasky');
-      await createSubject(page, 'FavTest3', 'Otazky');
-
-      console.log('✅ Test subjects created for Favorites tests');
-    } catch (error) {
-      console.log('ℹ️  Test subjects might already exist:', error);
-    } finally {
-      await context.close();
-    }
-  });
-
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
 
-    // Navigate to dashboard with fresh data
+    // Navigate to dashboard
     await page.goto('http://localhost:8000/dashboard');
     await page.waitForLoadState('networkidle');
 
