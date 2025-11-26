@@ -93,6 +93,12 @@
     --spacing-xl: 1.5rem;
     --spacing-2xl: 2rem;
     --spacing-3xl: 3rem;
+
+    /* Glassmorphism Blur Levels (Desktop) */
+    --blur-subtle: 8px;   /* Modal backdrops, categories, subtle effects */
+    --blur-light: 12px;   /* Navbar, inputs, light glass */
+    --blur-medium: 16px;  /* Cards, containers, main content */
+    --blur-heavy: 24px;   /* Modals, overlays, prominent glass */
 }
 
 /* Dark Mode Variables */
@@ -118,6 +124,70 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* ==========================================
+   MOBILE OPTIMIZATION - Reduced Blur
+   ========================================== */
+
+@media (max-width: 768px) {
+    :root {
+        /* 50% reduced blur for better mobile performance */
+        --blur-subtle: 4px;
+        --blur-light: 6px;
+        --blur-medium: 8px;
+        --blur-heavy: 12px;
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY - User Preferences
+   ========================================== */
+
+/* Disable blur for users who prefer reduced transparency */
+@media (prefers-reduced-transparency: reduce) {
+    * {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .glass-card,
+    .glass-navbar,
+    .glass-modal-content,
+    .glass-search,
+    .glass-input,
+    .glass-stat-card,
+    .glass-subject,
+    .glass-file-item,
+    .glass-search-result,
+    .glass-auth-card {
+        background: var(--bg-primary) !important;
+        border: 1px solid var(--border-primary) !important;
+    }
+}
+
+/* Disable animations and reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    body {
+        animation: none !important;
+    }
+
+    /* Also reduce blur for better performance */
+    :root {
+        --blur-subtle: 2px;
+        --blur-light: 3px;
+        --blur-medium: 4px;
+        --blur-heavy: 6px;
+    }
 }
 
 body {
