@@ -12,7 +12,11 @@
 }
 
 :root {
-    /* Primary Colors (Blue) */
+    /* ==========================================
+       FALLBACK COLORS - sRGB for older browsers
+       ========================================== */
+
+    /* Primary Colors (Blue) - Fallback */
     --primary-50: #eff6ff;
     --primary-100: #dbeafe;
     --primary-200: #bfdbfe;
@@ -24,7 +28,7 @@
     --primary-800: #1e40af;
     --primary-900: #1e3a8a;
 
-    /* Neutral/Gray Colors */
+    /* Neutral/Gray Colors - Fallback */
     --gray-50: #f9fafb;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
@@ -36,7 +40,7 @@
     --gray-800: #1f2937;
     --gray-900: #111827;
 
-    /* Semantic Colors */
+    /* Semantic Colors - Fallback */
     --success-50: #f0fdf4;
     --success-600: #16a34a;
     --success-700: #15803d;
@@ -93,6 +97,87 @@
     --spacing-xl: 1.5rem;
     --spacing-2xl: 2rem;
     --spacing-3xl: 3rem;
+
+    /* Glassmorphism Blur Levels (Standardized) */
+    --blur-subtle: 8px;   /* Modal backdrops, categories, subtle effects */
+    --blur-light: 12px;   /* Navbar, inputs, light glass */
+    --blur-medium: 16px;  /* Cards, containers, main content */
+    --blur-heavy: 24px;   /* Modals, overlays, prominent glass */
+}
+
+/* ==========================================
+   MODERN COLORS - OKLCH override for modern browsers
+   ========================================== */
+
+@supports (color: oklch(0% 0 0)) {
+    :root {
+        /* ==========================================
+           OKLCH Color System - Perceptually Uniform
+           ========================================== */
+
+        /* PRIMARY COLORS - Blue Scale (h=264) */
+        --primary-50:  oklch(97% 0.013 264);
+        --primary-100: oklch(93% 0.024 264);
+        --primary-200: oklch(87% 0.042 264);
+        --primary-300: oklch(79% 0.071 264);
+        --primary-400: oklch(69% 0.110 264);
+        --primary-500: oklch(59% 0.152 264);  /* Base primary */
+        --primary-600: oklch(51% 0.175 264);  /* Most used */
+        --primary-700: oklch(44% 0.182 264);
+        --primary-800: oklch(37% 0.160 264);
+        --primary-900: oklch(31% 0.135 264);
+
+        /* GRAY SCALE - True Neutral (c≈0) */
+        --gray-50:  oklch(98% 0.002 247);
+        --gray-100: oklch(96% 0.003 247);
+        --gray-200: oklch(92% 0.005 247);
+        --gray-300: oklch(85% 0.008 247);
+        --gray-400: oklch(68% 0.012 247);
+        --gray-500: oklch(52% 0.013 248);
+        --gray-600: oklch(40% 0.015 249);
+        --gray-700: oklch(32% 0.014 250);
+        --gray-800: oklch(22% 0.013 250);
+        --gray-900: oklch(14% 0.015 251);
+
+        /* SUCCESS - Green Scale (h=145-165) */
+        --success-50:  oklch(97% 0.020 155);
+        --success-600: oklch(58% 0.150 145);
+        --success-700: oklch(48% 0.135 145);
+
+        /* DANGER - Red Scale (h=27) */
+        --danger-50:  oklch(97% 0.013 12);
+        --danger-600: oklch(58% 0.205 27);
+        --danger-700: oklch(48% 0.190 27);
+
+        /* WARNING - Orange Scale (h=55-95) */
+        --warning-50:  oklch(98% 0.020 95);
+        --warning-600: oklch(64% 0.143 65);
+        --warning-700: oklch(53% 0.128 55);
+
+        /* SEMANTIC COLORS - Updated with OKLCH */
+        --bg-primary: oklch(100% 0 0);  /* Pure white */
+    }
+
+    /* OKLCH Gradient - Light Mode */
+    body {
+        background: linear-gradient(135deg,
+            oklch(93% 0.033 274) 0%,   /* Light indigo */
+            oklch(93% 0.038 294) 25%,  /* Light lavender */
+            oklch(94% 0.033 340) 50%,  /* Light pink - SMOOTH! */
+            oklch(93% 0.024 264) 75%,  /* Light blue */
+            oklch(95% 0.020 233) 100%  /* Light cyan */
+        );
+    }
+
+    /* OKLCH Gradient - Dark Mode */
+    [data-theme="dark"] body {
+        background: linear-gradient(135deg,
+            oklch(22% 0.020 249) 0%,   /* Slate */
+            oklch(28% 0.042 254) 33%,  /* Navy blue */
+            oklch(28% 0.097 283) 66%,  /* Deep indigo */
+            oklch(22% 0.020 249) 100%  /* Back to slate */
+        );
+    }
 }
 
 /* Dark Mode Variables */
