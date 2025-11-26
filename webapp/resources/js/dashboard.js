@@ -3,7 +3,7 @@
  * Handles file tree, favorites, search, and main dashboard functionality
  */
 
-import { state } from './modules/state.js';
+import { state, buildFileIndex, clearFileIndex } from './modules/state.js';
 import { fetchAPI } from './modules/api.js';
 import { loadFavorites, toggleFavorite, updateFavoriteCount } from './modules/favorites.js';
 import { buildTreeStructure, updateStarIcon, buildSubjectTabsHTML } from './modules/ui.js';
@@ -56,22 +56,15 @@ window.deleteFile = async function (fileId) {
     }
 
     try {
-        // Find which subject this file belongs to before deleting
-        let fileSubject = null;
-
-        // Search through cached subject files to find the subject
-        for (const [subjectName, files] of Object.entries(state.subjectFiles)) {
-            if (files.some(f => (f.id || f.file_id) === fileId)) {
-                fileSubject = subjectName;
-                break;
-            }
-        }
+        // O(1) lookup: Find which subject this file belongs to
+        const fileSubject = state.fileIdIndex.get(fileId);
 
         // Delete the file
         const response = await fetchAPI(`/api/files/${fileId}`, { method: 'DELETE' });
 
-        // Clear all subject caches to force reload of counts
+        // Clear all subject caches and file index to force reload of counts
         Object.keys(state.subjectFiles).forEach(subjectName => {
+            clearFileIndex(subjectName);
             delete state.subjectFiles[subjectName];
         });
 
@@ -186,6 +179,9 @@ window.toggleSubject = async function (element, subjectName) {
 
                 state.subjectFiles[subjectName] = files;
 
+                // Build O(1) file ID index for fast lookups
+                buildFileIndex(subjectName, files);
+
                 // Update the header count to match actual files loaded
                 const actualCount = files.length;
                 const countSpan = element.querySelector('.subject-count');
@@ -210,6 +206,7 @@ window.toggleSubject = async function (element, subjectName) {
 };
 
 window.reloadSubject = async function (subjectName) {
+    clearFileIndex(subjectName);
     delete state.subjectFiles[subjectName];
 
     const subjectDiv = document.querySelector(`.tree-subject[data-subject="${CSS.escape(subjectName)}"]`);
