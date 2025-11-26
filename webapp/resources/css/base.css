@@ -205,6 +205,70 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
 }
 
+/* ==========================================
+   MOBILE OPTIMIZATION - Reduced Blur
+   ========================================== */
+
+@media (max-width: 768px) {
+    :root {
+        /* 50% reduced blur for better mobile performance */
+        --blur-subtle: 4px;
+        --blur-light: 6px;
+        --blur-medium: 8px;
+        --blur-heavy: 12px;
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY - User Preferences
+   ========================================== */
+
+/* Disable blur for users who prefer reduced transparency */
+@media (prefers-reduced-transparency: reduce) {
+    * {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .glass-card,
+    .glass-navbar,
+    .glass-modal-content,
+    .glass-search,
+    .glass-input,
+    .glass-stat-card,
+    .glass-subject,
+    .glass-file-item,
+    .glass-search-result,
+    .glass-auth-card {
+        background: var(--bg-primary) !important;
+        border: 1px solid var(--border-primary) !important;
+    }
+}
+
+/* Disable animations and reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    body {
+        animation: none !important;
+    }
+
+    /* Also reduce blur for better performance */
+    :root {
+        --blur-subtle: 2px;
+        --blur-light: 3px;
+        --blur-medium: 4px;
+        --blur-heavy: 6px;
+    }
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;

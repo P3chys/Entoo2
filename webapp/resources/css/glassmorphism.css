@@ -197,36 +197,5 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Accessibility: Reduce transparency for users who prefer it */
-@media (prefers-reduced-transparency: reduce) {
-    .glass-card,
-    .glass-navbar,
-    .glass-modal-content,
-    .glass-search,
-    .glass-input,
-    .glass-stat-card,
-    .glass-subject,
-    .glass-file-item,
-    .glass-search-result,
-    .glass-category,
-    .glass-auth-card {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        background: var(--bg-primary) !important;
-        border: 2px solid var(--border-primary) !important;
-    }
-}
-
-/* Performance: Reduced blur on mobile */
-@media (max-width: 768px) {
-    .glass-card,
-    .glass-navbar,
-    .glass-search,
-    .glass-stat-card,
-    .glass-subject,
-    .glass-file-item,
-    .glass-search-result {
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-}
+/* Note: Mobile blur optimization and accessibility features are now handled
+   globally in base.css via CSS variables that adapt automatically */
