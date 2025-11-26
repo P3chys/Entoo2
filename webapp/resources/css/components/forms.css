@@ -76,3 +76,26 @@
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-secondary);
 }
+
+/* Upload context box */
+.upload-context-box {
+    background: var(--bg-secondary);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-primary);
+    font-weight: 500;
+}
+
+/* Color picker input */
+.color-picker-input {
+    height: 48px;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+}
+
+/* Flex form row */
+.form-row {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}

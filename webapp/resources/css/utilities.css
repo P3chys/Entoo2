@@ -26,6 +26,23 @@
     display: none !important;
 }
 
+/* Flex utilities */
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.flex-hidden {
+    display: none;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
 /* ========================================
    SCROLLBAR
    ======================================== */

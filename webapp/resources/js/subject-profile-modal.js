@@ -19,7 +19,6 @@ window.viewSubjectProfile = async function (subjectName, event) {
     const detailPanel = document.getElementById(panelId);
 
     if (!detailPanel) {
-        console.error('Detail panel not found for subject:', subjectName);
         return;
     }
 
@@ -164,7 +163,6 @@ window.saveSubjectProfile = async function (event) {
             }
         }
     } catch (error) {
-        console.error('Error saving profile:', error);
         alert('Failed to save profile: ' + error.message);
     }
 }

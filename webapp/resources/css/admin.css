@@ -47,7 +47,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
     border-radius: 12px;
     color: white;
 }
@@ -95,8 +95,8 @@
 }
 
 .admin-tab.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+    color: var(--primary-600);
+    border-bottom-color: var(--primary-600);
 }
 
 .admin-tab svg {
@@ -158,7 +158,7 @@
 
 .search-input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primary-600);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -175,7 +175,7 @@
 
 .filter-select:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primary-600);
 }
 
 /* Table */
@@ -257,7 +257,7 @@
 }
 
 .badge-admin {
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
     color: white;
 }
 
@@ -297,13 +297,13 @@
 
 .pagination-btn:hover:not(:disabled) {
     background: var(--glass-hover);
-    border-color: var(--primary-color);
+    border-color: var(--primary-600);
 }
 
 .pagination-btn.active {
-    background: var(--primary-color);
+    background: var(--primary-600);
     color: white;
-    border-color: var(--primary-color);
+    border-color: var(--primary-600);
 }
 
 .pagination-btn:disabled {
@@ -512,7 +512,7 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
     color: white;
 }
 

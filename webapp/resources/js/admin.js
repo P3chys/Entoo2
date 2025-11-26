@@ -58,7 +58,6 @@ class AdminDashboard {
                 return;
             }
         } catch (error) {
-            console.error('Error checking admin access:', error);
             window.location.href = '/login';
         }
     }
@@ -224,7 +223,6 @@ class AdminDashboard {
             const storageMB = (stats.total_storage / (1024 * 1024)).toFixed(2);
             document.getElementById('totalStorage').textContent = `${storageMB} MB`;
         } catch (error) {
-            console.error('Error loading stats:', error);
             this.showNotification('Failed to load statistics', 'error');
         }
     }
@@ -239,7 +237,6 @@ class AdminDashboard {
             const response = await apiRequest(`/api/admin/users?${params}`);
             this.renderUsersTable(response);
         } catch (error) {
-            console.error('Error loading users:', error);
             this.showNotification('Failed to load users', 'error');
         }
     }
@@ -332,7 +329,6 @@ class AdminDashboard {
             const response = await apiRequest(`/api/admin/files?${params}`);
             this.renderFilesTable(response);
         } catch (error) {
-            console.error('Error loading files:', error);
             this.showNotification('Failed to load files', 'error');
         }
     }
@@ -491,7 +487,6 @@ class AdminDashboard {
                     subjects.map(s => s ? `<option value="${this.escapeHtml(s)}">${this.escapeHtml(s)}</option>` : '').join('');
             }
         } catch (error) {
-            console.error('Error loading subjects:', error);
         }
     }
 
@@ -501,7 +496,6 @@ class AdminDashboard {
             let subjects = response.subjects || [];
 
             if (!Array.isArray(subjects)) {
-                console.error('Subjects is not an array:', subjects);
                 subjects = [];
             }
 
@@ -512,7 +506,6 @@ class AdminDashboard {
 
             this.renderSubjectsTable(subjects);
         } catch (error) {
-            console.error('Error loading subjects list:', error);
             this.showNotification('Failed to load subjects', 'error');
         }
     }
@@ -642,7 +635,6 @@ class AdminDashboard {
                 document.getElementById('userPassword').value = '';
             }
         } catch (error) {
-            console.error('Error loading user:', error);
             this.showNotification('Failed to load user data', 'error');
         }
     }
@@ -715,7 +707,6 @@ class AdminDashboard {
             this.loadUsers();
             this.loadStats();
         } catch (error) {
-            console.error('Error saving user:', error);
 
             // Highlight fields with errors
             if (error.errors) {
@@ -754,7 +745,6 @@ class AdminDashboard {
             this.loadUsers();
             this.loadStats();
         } catch (error) {
-            console.error('Error deleting user:', error);
             this.showNotification(error.message || 'Failed to delete user', 'error');
         }
     }
@@ -772,7 +762,6 @@ class AdminDashboard {
             this.loadFiles();
             this.loadStats();
         } catch (error) {
-            console.error('Error deleting file:', error);
             this.showNotification('Failed to delete file', 'error');
         }
     }
@@ -819,7 +808,6 @@ class AdminDashboard {
                 document.getElementById('subjectProfessor').value = profile.professor_name || '';
             }
         } catch (error) {
-            console.error('Error loading subject:', error);
             this.showNotification('Failed to load subject data', 'error');
         }
     }
@@ -860,7 +848,6 @@ class AdminDashboard {
             this.loadSubjectsList();
             this.loadStats();
         } catch (error) {
-            console.error('Error saving subject:', error);
             this.showNotification(error.message || 'Failed to save subject', 'error');
         }
     }
@@ -882,7 +869,6 @@ class AdminDashboard {
             this.loadSubjectsList();
             this.loadStats();
         } catch (error) {
-            console.error('Error deleting subject:', error);
             this.showNotification('Failed to delete subject', 'error');
         }
     }

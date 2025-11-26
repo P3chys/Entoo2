@@ -11,30 +11,28 @@
 <body>
     <nav class="navbar glass-navbar">
         <div class="container">
-            <div class="navbar-brand">
-                <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: var(--spacing-md);">
-                    <div style="width: 36px; height: 36px; background: var(--primary-600); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: white;">
-                        📚
-                    </div>
-                    <h1 style="margin: 0;">Entoo</h1>
-                </a>
-            </div>
+            <a href="/" class="navbar-brand">
+                <div class="brand-logo-icon">
+                    📚
+                </div>
+                <h1>Entoo</h1>
+            </a>
             <div class="navbar-menu" id="navbarMenu">
                 <!-- Theme Toggle (always visible) -->
                 <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
                     <span class="theme-toggle-icon" id="themeIcon">🌙</span>
                 </button>
                 <!-- Guest links (shown when not logged in) -->
-                <div id="guestLinks" style="display: flex; gap: var(--spacing-md); align-items: center;">
+                <div id="guestLinks" class="flex-center">
                     <a href="/login" class="nav-link">Login</a>
                     <a href="/register" class="nav-link btn-primary">Get Started</a>
                 </div>
                 <!-- Authenticated links (shown when logged in) -->
-                <div id="authLinks" style="display: none; gap: var(--spacing-md); align-items: center;">
+                <div id="authLinks" class="flex-hidden">
                     <a href="/dashboard" class="nav-link">
                         Dashboard
                     </a>
-                    <div class="divider-vertical" style="height: 24px;"></div>
+                    <div class="divider-vertical"></div>
                     <a href="#" onclick="showProfileModal(event)" class="nav-link user-profile-link" id="userInfo">
                         <div class="avatar avatar-sm" id="userAvatar"></div>
                         <span id="userName"></span>

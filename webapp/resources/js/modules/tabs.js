@@ -11,13 +11,11 @@ export function switchTab(event, subjectId, tabName) {
     // Get all tab buttons and contents for this subject
     const clickedButton = event.target.closest('.tab-btn');
     if (!clickedButton) {
-        console.error('Tab button not found');
         return;
     }
 
     const tabContainer = clickedButton.closest('.tab-container');
     if (!tabContainer) {
-        console.error('Tab container not found');
         return;
     }
 
@@ -36,7 +34,5 @@ export function switchTab(event, subjectId, tabName) {
 
     if (targetContent) {
         targetContent.classList.add('active');
-    } else {
-        console.error('Tab content not found for:', `tab-${subjectId}-${tabName}`);
     }
 }

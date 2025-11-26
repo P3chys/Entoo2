@@ -10,7 +10,6 @@ export async function loadFavorites() {
         state.favorites = response.favorites || [];
         updateFavoriteCount();
     } catch (error) {
-        console.error('Failed to load favorites:', error);
         state.favorites = [];
     }
 }
@@ -63,7 +62,6 @@ export async function toggleFavorite(subjectName, event, onUpdateCallback) {
         }
 
     } catch (error) {
-        console.error('Failed to update favorite:', error);
         alert('Failed to update favorite');
     }
 }

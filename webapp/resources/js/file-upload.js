@@ -175,7 +175,6 @@ async function pollProcessingStatus(fileId) {
                 throw new Error(`Unknown status: ${data.processing_status}`);
             }
         } catch (error) {
-            console.error('Polling error:', error);
             uploadError.textContent = 'Failed to check processing status. The file may still be processing in the background.';
             uploadError.classList.remove('hidden');
             document.getElementById('uploadBtn').disabled = false;

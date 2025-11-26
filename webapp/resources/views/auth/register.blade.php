@@ -5,8 +5,8 @@
 @section('content')
 <div class="auth-container">
     <div class="auth-card glass-auth-card">
-        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
-            <div style="width: 64px; height: 64px; background: var(--primary-600); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto var(--spacing-lg); color: white;">
+        <div class="auth-header">
+            <div class="auth-icon">
                 ✨
             </div>
             <h2>Create Account</h2>

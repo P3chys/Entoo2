@@ -41,7 +41,6 @@ export async function performSearchFromRoute() {
 
         displaySearchResults(filteredResults, query);
     } catch (error) {
-        console.error('Search error:', error);
         alert('Search failed: ' + error.message);
     }
 }

@@ -81,7 +81,6 @@ window.deleteFile = async function (fileId) {
         // Show success message
         alert('File deleted successfully');
     } catch (error) {
-        console.error('Delete file error:', error);
         const errorMessage = error.message || 'Failed to delete file';
         alert(`Failed to delete file: ${errorMessage}`);
     }
@@ -139,7 +138,6 @@ async function filterByOwnerFromRoute() {
     } catch (error) {
         if (loading) loading.classList.add('hidden');
         if (treeView) treeView.style.display = 'block';
-        console.error('Failed to filter by owner:', error);
     }
 }
 
@@ -318,7 +316,6 @@ async function loadStats() {
             favoriteCount.textContent = state.favorites.length || 0;
         }
     } catch (error) {
-        console.error('Failed to load stats:', error);
     }
 }
 

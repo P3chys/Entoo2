@@ -5,8 +5,8 @@
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
-        <div style="text-align: center; margin-bottom: var(--spacing-xl);">
-            <div style="width: 64px; height: 64px; background: var(--primary-gradient); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto var(--spacing-lg); box-shadow: var(--shadow-lg);">
+        <div class="auth-header">
+            <div class="auth-icon">
                 🔐
             </div>
             <h2>Reset Password</h2>

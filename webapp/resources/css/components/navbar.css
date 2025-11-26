@@ -21,12 +21,32 @@
     margin: 0 auto;
 }
 
+.navbar-brand {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
 .navbar-brand h1 {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.02em;
     margin: 0;
+}
+
+.brand-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-600);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
 }
 
 .navbar-menu {
@@ -145,5 +165,6 @@
 /* Divider */
 .divider-vertical {
     width: 1px;
+    height: 24px;
     background: var(--border-primary);
 }
