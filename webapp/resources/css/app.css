@@ -15,6 +15,7 @@
 @import './components/badges.css';
 @import './components/progress.css';
 @import './components/subject-profile.css';
+@import './components/file-cards.css';
 
 /* Layouts */
 @import './layouts/dashboard.css';

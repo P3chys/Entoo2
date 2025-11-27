@@ -1,0 +1,359 @@
+/* ========================================
+   ENHANCED FILE CARDS
+   Modern file cards with color-coded badges
+   ======================================== */
+
+/* File Type Badges - Color-coded by document type */
+.file-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+/* PDF - Professional Blue */
+.file-type-badge.pdf {
+    background: oklch(0.95 0.02 250);
+    color: oklch(0.35 0.15 250);
+    border: 1px solid oklch(0.75 0.08 250);
+}
+
+/* Word Documents - Professional Green */
+.file-type-badge.doc,
+.file-type-badge.docx {
+    background: oklch(0.95 0.02 150);
+    color: oklch(0.30 0.15 150);
+    border: 1px solid oklch(0.75 0.08 150);
+}
+
+/* PowerPoint - Vibrant Orange */
+.file-type-badge.ppt,
+.file-type-badge.pptx {
+    background: oklch(0.95 0.05 50);
+    color: oklch(0.40 0.18 50);
+    border: 1px solid oklch(0.75 0.10 50);
+}
+
+/* Text Files - Neutral Gray */
+.file-type-badge.txt {
+    background: oklch(0.95 0.01 270);
+    color: oklch(0.40 0.05 270);
+    border: 1px solid oklch(0.80 0.02 270);
+}
+
+/* Excel - Professional Teal */
+.file-type-badge.xls,
+.file-type-badge.xlsx {
+    background: oklch(0.95 0.03 180);
+    color: oklch(0.35 0.15 180);
+    border: 1px solid oklch(0.75 0.08 180);
+}
+
+/* Image Files - Purple */
+.file-type-badge.jpg,
+.file-type-badge.jpeg,
+.file-type-badge.png,
+.file-type-badge.gif,
+.file-type-badge.svg {
+    background: oklch(0.95 0.04 310);
+    color: oklch(0.40 0.16 310);
+    border: 1px solid oklch(0.75 0.08 310);
+}
+
+/* Archive Files - Dark Blue */
+.file-type-badge.zip,
+.file-type-badge.rar,
+.file-type-badge.\37 z {
+    background: oklch(0.95 0.03 230);
+    color: oklch(0.35 0.14 230);
+    border: 1px solid oklch(0.75 0.08 230);
+}
+
+/* Default/Other - Soft Gray */
+.file-type-badge.default {
+    background: oklch(0.96 0.01 270);
+    color: oklch(0.45 0.04 270);
+    border: 1px solid oklch(0.82 0.02 270);
+}
+
+/* Enhanced File Item */
+.file-item.enhanced {
+    background: var(--bg-primary);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-primary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hover Effect with Subtle Lift */
+.file-item.enhanced:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    border-color: var(--primary-300);
+    transform: translateY(-2px);
+}
+
+/* Hover Gradient Overlay */
+.file-item.enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        oklch(0.98 0.02 250 / 0) 0%,
+        oklch(0.98 0.02 250 / 0.03) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.file-item.enhanced:hover::before {
+    opacity: 1;
+}
+
+/* Enhanced File Info Layout */
+.file-item.enhanced .file-item-info {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: center;
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+/* Enhanced File Icon */
+.file-item.enhanced .file-item-icon {
+    font-size: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    transition: all var(--transition-base);
+}
+
+.file-item.enhanced:hover .file-item-icon {
+    background: var(--primary-50);
+    transform: scale(1.05);
+}
+
+/* Enhanced File Details */
+.file-item.enhanced .file-item-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-item.enhanced .file-item-details h4 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* File Meta with Better Spacing */
+.file-item.enhanced .file-item-meta {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    line-height: 1.5;
+}
+
+.file-item.enhanced .file-item-meta .meta-separator {
+    color: var(--border-secondary);
+}
+
+/* Owner Link Enhancement */
+.file-item.enhanced .owner-filter-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--primary-50);
+    color: var(--primary-700);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all var(--transition-base);
+}
+
+.file-item.enhanced .owner-filter-link:hover {
+    background: var(--primary-100);
+    color: var(--primary-800);
+    transform: translateY(-1px);
+}
+
+/* Enhanced Action Buttons */
+.file-item.enhanced .file-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.file-item.enhanced .btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+}
+
+.file-item.enhanced .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.file-item.enhanced .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Focus States - WCAG AAA Compliance */
+.file-item.enhanced .btn-small:focus-visible {
+    outline: 3px solid var(--primary-500);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px var(--bg-primary), 0 0 0 6px var(--primary-200);
+}
+
+.file-item.enhanced .owner-filter-link:focus-visible {
+    outline: 3px solid var(--primary-500);
+    outline-offset: 2px;
+}
+
+/* Responsive Design - Mobile Optimization */
+@media (max-width: 768px) {
+    .file-item.enhanced {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+    }
+
+    .file-item.enhanced .file-item-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .file-item.enhanced .file-item-icon {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.75rem;
+    }
+
+    .file-item.enhanced .file-item-details h4 {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .file-item.enhanced .file-item-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .file-item.enhanced .btn-small {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .file-type-badge {
+        font-size: 0.6875rem;
+    }
+}
+
+/* Tablet Optimization */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .file-item.enhanced {
+        gap: var(--spacing-md);
+    }
+
+    .file-item.enhanced .file-item-meta {
+        font-size: 0.75rem;
+    }
+}
+
+/* Loading State */
+.file-item.enhanced.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.file-item.enhanced.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem 0 0 -0.75rem;
+    border: 2px solid var(--border-primary);
+    border-top-color: var(--primary-600);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Accessibility - High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .file-type-badge {
+        border-width: 2px;
+    }
+
+    .file-item.enhanced {
+        border-width: 2px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .file-item.enhanced,
+    .file-item.enhanced::before,
+    .file-item.enhanced .file-item-icon,
+    .file-item.enhanced .btn-small,
+    .file-item.enhanced .owner-filter-link {
+        transition: none;
+    }
+
+    .file-item.enhanced:hover {
+        transform: none;
+    }
+
+    .file-item.enhanced .loading::after {
+        animation: none;
+    }
+}
