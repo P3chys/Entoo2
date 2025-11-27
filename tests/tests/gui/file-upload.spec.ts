@@ -39,6 +39,8 @@ test.describe('File Upload GUI Tests', () => {
       for (const categoryName of categoryNames) {
         try {
           await dashboardPage.selectCategory(categoryName);
+          // Wait for category content to load
+          await dashboardPage.page.waitForTimeout(500);
           break;
         } catch {
           // Try next category
