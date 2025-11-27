@@ -11,6 +11,25 @@
     box-sizing: border-box;
 }
 
+/* ==========================================
+   ACCESSIBILITY - Enhanced Focus States
+   WCAG AAA Compliant (3px minimum)
+   ========================================== */
+
+*:focus-visible {
+    outline: 3px solid var(--primary-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* High contrast mode - stronger focus indicator */
+@media (prefers-contrast: high) {
+    *:focus-visible {
+        outline-width: 4px;
+        outline-color: currentColor;
+    }
+}
+
 :root {
     /* ==========================================
        FALLBACK COLORS - sRGB for older browsers
@@ -157,27 +176,6 @@
         /* SEMANTIC COLORS - Updated with OKLCH */
         --bg-primary: oklch(100% 0 0);  /* Pure white */
     }
-
-    /* OKLCH Gradient - Light Mode */
-    body {
-        background: linear-gradient(135deg,
-            oklch(93% 0.033 274) 0%,   /* Light indigo */
-            oklch(93% 0.038 294) 25%,  /* Light lavender */
-            oklch(94% 0.033 340) 50%,  /* Light pink - SMOOTH! */
-            oklch(93% 0.024 264) 75%,  /* Light blue */
-            oklch(95% 0.020 233) 100%  /* Light cyan */
-        );
-    }
-
-    /* OKLCH Gradient - Dark Mode */
-    [data-theme="dark"] body {
-        background: linear-gradient(135deg,
-            oklch(22% 0.020 249) 0%,   /* Slate */
-            oklch(28% 0.042 254) 33%,  /* Navy blue */
-            oklch(28% 0.097 283) 66%,  /* Deep indigo */
-            oklch(22% 0.020 249) 100%  /* Back to slate */
-        );
-    }
 }
 
 /* Dark Mode Variables */
@@ -273,7 +271,12 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
-    /* Elegant subtle gradient - professional but shows glassmorphism */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Fallback gradient for older browsers */
     background: linear-gradient(135deg,
         #e0e7ff 0%,    /* Very light indigo */
         #e5e5ff 25%,   /* Light lavender */
@@ -284,14 +287,9 @@ body {
     background-size: 200% 200%;
     background-attachment: fixed;
     animation: gradientShift 30s ease infinite;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark mode - elegant deep gradient */
+/* Dark mode fallback gradient for older browsers */
 [data-theme="dark"] body {
     background: linear-gradient(135deg,
         #1e293b 0%,    /* Slate */
@@ -300,6 +298,33 @@ body {
         #1e293b 100%   /* Back to slate */
     );
     background-size: 200% 200%;
+}
+
+/* ==========================================
+   OKLCH GRADIENT OVERRIDE - Modern Browsers
+   ========================================== */
+
+@supports (color: oklch(0% 0 0)) {
+    /* OKLCH Gradient - Light Mode */
+    body {
+        background: linear-gradient(135deg,
+            oklch(93% 0.033 274) 0%,   /* Light indigo */
+            oklch(93% 0.038 294) 25%,  /* Light lavender */
+            oklch(94% 0.033 340) 50%,  /* Light pink - SMOOTH! */
+            oklch(93% 0.024 264) 75%,  /* Light blue */
+            oklch(95% 0.020 233) 100%  /* Light cyan */
+        );
+    }
+
+    /* OKLCH Gradient - Dark Mode */
+    [data-theme="dark"] body {
+        background: linear-gradient(135deg,
+            oklch(22% 0.020 249) 0%,   /* Slate */
+            oklch(28% 0.042 254) 33%,  /* Navy blue */
+            oklch(28% 0.097 283) 66%,  /* Deep indigo */
+            oklch(22% 0.020 249) 100%  /* Back to slate */
+        );
+    }
 }
 
 /* Animated gradient shift */

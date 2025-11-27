@@ -176,7 +176,7 @@
 }
 
 .favorite-star.active {
-    color: #fbbf24;
+    color: var(--warning-600);
 }
 
 .favorite-star:not(.active) {

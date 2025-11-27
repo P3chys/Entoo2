@@ -255,7 +255,7 @@
 
 .btn-icon.btn-danger:hover {
     background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    color: var(--danger-600);
 }
 
 /* Note: Badge styles imported from components/badges.css */
@@ -342,15 +342,15 @@
 }
 
 .notification-success {
-    background: #10b981;
+    background: var(--success-600);
 }
 
 .notification-error {
-    background: #ef4444;
+    background: var(--danger-600);
 }
 
 .notification-info {
-    background: #3b82f6;
+    background: var(--primary-500);
 }
 
 /* Responsive */
