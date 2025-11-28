@@ -187,9 +187,18 @@ jobs:
           extensions: pdo, pgsql, redis, zip, gd
           coverage: xdebug
 
+      - name: Create cache directories
+        working-directory: ./webapp
+        run: |
+          mkdir -p bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          chmod -R 777 bootstrap/cache storage/framework
+
       - name: Install dependencies
         working-directory: ./webapp
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-scripts
 
       - name: Copy .env and generate key
         working-directory: ./webapp
@@ -199,6 +208,7 @@ jobs:
           sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
           sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
           php artisan key:generate
+          composer dump-autoload
 
       - name: Run database migrations
         working-directory: ./webapp
