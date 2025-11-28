@@ -80,7 +80,7 @@ jobs:
   # ============================================
   frontend-quality:
     name: Frontend Quality
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
@@ -105,12 +105,11 @@ jobs:
 
       - name: Check for console.log statements
         run: |
-          $consoleFound = Select-String -Path "resources/js/**/*.js" -Pattern "console\.(log|debug|info)" -Recurse
-          if ($consoleFound) {
-            Write-Warning "Found console statements in production code:"
-            $consoleFound | Format-Table
-          }
-        shell: pwsh
+          consoleFound=$(grep -r "console\.\(log\|debug\|info\)" resources/js/ || true)
+          if [ -n "$consoleFound" ]; then
+            echo "::warning::Found console statements in production code:"
+            echo "$consoleFound"
+          fi
         continue-on-error: true
 
       - name: Upload build artifacts
@@ -252,12 +251,12 @@ jobs:
           retention-days: 7
 
   # ============================================
-  # Security Scan
+  # Security Scan - Code Patterns
   # ============================================
-  security-scan:
-    name: Security Scanning
-    runs-on: self-hosted
-    timeout-minutes: 10
+  security-scan-code:
+    name: Security Scan (Code Patterns)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       security-events: write
 
@@ -268,32 +267,46 @@ jobs:
       - name: Scan for secrets
         run: |
           # Check for common secret patterns
-          Write-Host "Scanning for potential secrets..."
+          echo "Scanning for potential secrets..."
 
-          $patterns = @(
-            "password\s*=\s*['\"][^'\"]+['\"]",
-            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]",
-            "secret\s*=\s*['\"][^'\"]+['\"]",
+          patterns=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
             "token\s*=\s*['\"][^'\"]+['\"]"
           )
 
-          foreach ($pattern in $patterns) {
-            $found = Select-String -Pattern $pattern -Path "**/*.php","**/*.js","**/*.env.example" -Exclude "vendor/**","node_modules/**" 2>$null
-            if ($found) {
-              Write-Warning "Potential secret found: $pattern"
-            }
-          }
-        shell: pwsh
-        continue-on-error: true
-
-      - name: Check Composer dependencies for vulnerabilities
-        run: docker exec php composer audit
-        shell: pwsh
+          for pattern in "${patterns[@]}"; do
+            found=$(grep -rE "$pattern" --include="*.php" --include="*.js" --include="*.env.example" --exclude-dir="vendor" --exclude-dir="node_modules" . || true)
+            if [ -n "$found" ]; then
+              echo "::warning::Potential secret found matching pattern: $pattern"
+            fi
+          done
         continue-on-error: true
 
       - name: Check NPM dependencies for vulnerabilities
         working-directory: ./webapp
-        run: npm audit --audit-level=high
+        run: |
+          npm audit --audit-level=high || true
+        continue-on-error: true
+
+  # ============================================
+  # Security Scan - Composer Dependencies
+  # ============================================
+  security-scan-php:
+    name: Security Scan (PHP Dependencies)
+    runs-on: self-hosted
+    timeout-minutes: 5
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Composer dependencies for vulnerabilities
+        run: docker exec php composer audit
+        shell: pwsh
         continue-on-error: true
 
   # ============================================
@@ -301,32 +314,32 @@ jobs:
   # ============================================
   build-status:
     name: Build Status
-    runs-on: self-hosted
-    needs: [code-quality, frontend-quality, backend-tests, e2e-tests, security-scan]
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-quality, backend-tests, e2e-tests, security-scan-code, security-scan-php]
     if: always()
 
     steps:
       - name: Check build status
         run: |
-          Write-Host "=== BUILD SUMMARY ==="
-          Write-Host "Code Quality: ${{ needs.code-quality.result }}"
-          Write-Host "Frontend Quality: ${{ needs.frontend-quality.result }}"
-          Write-Host "Backend Tests: ${{ needs.backend-tests.result }}"
-          Write-Host "E2E Tests: ${{ needs.e2e-tests.result }}"
-          Write-Host "Security Scan: ${{ needs.security-scan.result }}"
+          echo "=== BUILD SUMMARY ==="
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Frontend Quality: ${{ needs.frontend-quality.result }}"
+          echo "Backend Tests: ${{ needs.backend-tests.result }}"
+          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+          echo "Security Scan (Code): ${{ needs.security-scan-code.result }}"
+          echo "Security Scan (PHP): ${{ needs.security-scan-php.result }}"
 
-          if ("${{ needs.backend-tests.result }}" -ne "success" -or "${{ needs.e2e-tests.result }}" -ne "success") {
-            Write-Error "Build failed! Check test results."
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "::error::Build failed! Check test results."
             exit 1
-          }
+          fi
 
-          Write-Host "✅ All required checks passed!"
-        shell: pwsh
+          echo "✅ All required checks passed!"
 
       - name: Post build summary
         if: always()
         run: |
-          $summary = @"
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           ## Build Results
 
           | Check | Status |
@@ -335,8 +348,6 @@ jobs:
           | Frontend Quality | ${{ needs.frontend-quality.result }} |
           | Backend Tests | ${{ needs.backend-tests.result }} |
           | E2E Tests | ${{ needs.e2e-tests.result }} |
-          | Security Scan | ${{ needs.security-scan.result }} |
-          "@
-
-          Write-Host $summary
-        shell: pwsh
+          | Security Scan (Code) | ${{ needs.security-scan-code.result }} |
+          | Security Scan (PHP) | ${{ needs.security-scan-php.result }} |
+          EOF

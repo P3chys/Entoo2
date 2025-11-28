@@ -126,7 +126,7 @@ jobs:
   # ============================================
   js-quality:
     name: JavaScript Code Quality
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
@@ -149,29 +149,26 @@ jobs:
       - name: Run ESLint
         id: eslint
         run: |
-          npx eslint resources/js/**/*.js --format json --output-file eslint-report.json || $true
-          $report = Get-Content eslint-report.json | ConvertFrom-Json
-
-          $totalIssues = ($report | Measure-Object -Property errorCount -Sum).Sum + ($report | Measure-Object -Property warningCount -Sum).Sum
-          Write-Host "Found $totalIssues ESLint issues"
-
-          Write-Output "issues=$totalIssues" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          npx eslint resources/js/**/*.js --format json --output-file eslint-report.json || true
+          if [ -f eslint-report.json ]; then
+            totalIssues=$(jq '[.[].errorCount] | add' eslint-report.json)
+            totalWarnings=$(jq '[.[].warningCount] | add' eslint-report.json)
+            total=$((totalIssues + totalWarnings))
+            echo "Found $total ESLint issues"
+            echo "issues=$total" >> $GITHUB_OUTPUT
+          else
+            echo "issues=0" >> $GITHUB_OUTPUT
+          fi
         continue-on-error: true
 
       - name: Check for console statements
         id: console_check
         run: |
-          $consoleStatements = Select-String -Path "resources/js/**/*.js" -Pattern "console\.(log|debug|info|warn|error)" -Recurse
-
-          if ($consoleStatements) {
-            $count = ($consoleStatements | Measure-Object).Count
-            Write-Warning "Found $count console statements"
-            Write-Output "count=$count" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Output "count=0" >> $env:GITHUB_OUTPUT
-          }
-        shell: pwsh
+          count=$(grep -r "console\.\(log\|debug\|info\|warn\|error\)" resources/js/ 2>/dev/null | wc -l || echo "0")
+          if [ "$count" -gt 0 ]; then
+            echo "::warning::Found $count console statements"
+          fi
+          echo "count=$count" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Check bundle size
@@ -180,27 +177,25 @@ jobs:
           npm run build
 
           # Check build output size
-          $buildSize = (Get-ChildItem -Path "public/build" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
-          Write-Host "Total build size: $buildSize MB"
+          buildSizeBytes=$(du -sb public/build 2>/dev/null | cut -f1 || echo "0")
+          buildSizeMB=$(echo "scale=2; $buildSizeBytes / 1048576" | bc)
+          echo "Total build size: $buildSizeMB MB"
 
-          if ($buildSize -gt 5) {
-            Write-Warning "Build size exceeds 5MB threshold"
-          }
+          if [ $(echo "$buildSizeMB > 5" | bc) -eq 1 ]; then
+            echo "::warning::Build size exceeds 5MB threshold"
+          fi
 
-          Write-Output "size_mb=$buildSize" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          echo "size_mb=$buildSizeMB" >> $GITHUB_OUTPUT
 
       - name: Analyze JavaScript complexity
         id: js_complexity
         run: |
-          # Check for large files
-          $largeFiles = Get-ChildItem -Path "resources/js" -Filter "*.js" -Recurse | Where-Object { $_.Length -gt 10KB }
-
-          if ($largeFiles) {
-            Write-Warning "Found JavaScript files >10KB:"
-            $largeFiles | ForEach-Object { Write-Host $_.FullName }
-          }
-        shell: pwsh
+          # Check for large files (>10KB)
+          largeFiles=$(find resources/js -name "*.js" -size +10k 2>/dev/null || true)
+          if [ -n "$largeFiles" ]; then
+            echo "::warning::Found JavaScript files >10KB:"
+            echo "$largeFiles"
+          fi
         continue-on-error: true
 
       - name: Generate JavaScript quality report

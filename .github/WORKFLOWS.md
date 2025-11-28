@@ -47,12 +47,17 @@ Our GitHub Actions setup provides a complete CI/CD pipeline with:
 
 **Jobs:**
 
-1. **code-quality** - Runs Laravel Pint, PHPStan, and checks for anti-patterns
-2. **frontend-quality** - Builds frontend assets, checks for console statements
-3. **backend-tests** - Runs PHPUnit tests with coverage (min 80%)
-4. **e2e-tests** - Runs Playwright E2E tests (performance, caching, PDF parsing)
-5. **security-scan** - Scans for secrets and runs dependency audits
-6. **build-status** - Aggregates all results and reports status
+1. **code-quality** (self-hosted) - Runs Laravel Pint, PHPStan, and checks for anti-patterns
+2. **frontend-quality** (ubuntu-latest) - Builds frontend assets, checks for console statements
+3. **backend-tests** (self-hosted) - Runs PHPUnit tests with coverage (min 80%)
+4. **e2e-tests** (self-hosted) - Runs Playwright E2E tests (performance, caching, PDF parsing)
+5. **security-scan-code** (ubuntu-latest) - Scans for secrets and NPM vulnerabilities
+6. **security-scan-php** (self-hosted) - Runs Composer dependency audit
+7. **build-status** (ubuntu-latest) - Aggregates all results and reports status
+
+**Runner Requirements:**
+- **Self-hosted runners** needed for: code-quality, backend-tests, e2e-tests, security-scan-php (require Docker containers)
+- **GitHub-hosted runners** used for: frontend-quality, security-scan-code, build-status (no Docker needed)
 
 **Key Features:**
 - Parallel job execution for faster feedback
@@ -83,15 +88,17 @@ gh workflow run ci-cd.yml -f environment=staging
 
 **Languages Analyzed:**
 - JavaScript
-- PHP
+
+**Note:** PHP is not supported by CodeQL. PHP security analysis is performed by PHPStan in the code-quality workflow.
 
 **Key Features:**
 - Advanced security queries
 - SARIF upload to GitHub Security tab
 - Automated vulnerability detection
 - Weekly scheduled scans
+- Uses CodeQL Action v4
 
-**Results:** View in Repository → Security → Code scanning alerts
+**Results:** View in Repository → Security → Code scanning alerts (requires enabling code scanning in repository settings)
 
 ---
 
@@ -106,29 +113,33 @@ gh workflow run ci-cd.yml -f environment=staging
 
 **Jobs:**
 
-1. **php-quality**
+1. **php-quality** (self-hosted)
    - Laravel Pint (code style)
    - PHPStan (static analysis)
    - PHP_CodeSniffer (PSR-12)
    - Code smell detection
    - Complexity analysis
 
-2. **js-quality**
+2. **js-quality** (ubuntu-latest)
    - ESLint
    - Console statement detection
    - Bundle size analysis
    - File size checks
 
-3. **docs-quality**
+3. **docs-quality** (ubuntu-latest)
    - README verification
    - Markdown link checking
    - Spell checking
    - API documentation freshness
 
-4. **quality-score**
+4. **quality-score** (ubuntu-latest)
    - Calculates overall score (0-100)
    - Fails if score < 70
    - Warns if score < 90
+
+**Runner Requirements:**
+- **Self-hosted runner** needed for: php-quality (requires Docker)
+- **GitHub-hosted runners** used for: js-quality, docs-quality, quality-score
 
 **Thresholds:**
 - Bundle size: < 5MB
@@ -281,6 +292,8 @@ gh workflow run release.yml -f version=v1.2.3
 - Push to `main`
 - Manual trigger
 
+**Runner:** self-hosted (requires Docker containers for API tests)
+
 **Metrics Monitored:**
 
 1. **API Benchmarks**
@@ -304,6 +317,8 @@ gh workflow run release.yml -f version=v1.2.3
    - Index size
 
 **Alerts:** Triggered when thresholds exceeded
+
+**Note:** Requires Docker containers to be running on self-hosted runner
 
 ---
 
