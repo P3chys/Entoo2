@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\UploadedFile;
-use App\Services\ElasticsearchService;
 use App\Services\DocumentParserService;
+use App\Services\ElasticsearchService;
+use Illuminate\Console\Command;
 
 class ReindexElasticsearch extends Command
 {
@@ -16,13 +16,14 @@ class ReindexElasticsearch extends Command
     protected $description = 'Re-index all files from database into Elasticsearch';
 
     private ElasticsearchService $elasticsearchService;
+
     private DocumentParserService $parserService;
 
     private $stats = [
         'total' => 0,
         'indexed' => 0,
         'failed' => 0,
-        'errors' => []
+        'errors' => [],
     ];
 
     private $parseableExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'];
@@ -39,10 +40,10 @@ class ReindexElasticsearch extends Command
         $skipContent = $this->option('skip-content');
         $batchSize = (int) $this->option('batch-size');
 
-        $this->info("========================================");
-        $this->info("Elasticsearch Re-indexing");
-        $this->info("========================================");
-        $this->info("Skip content parsing: " . ($skipContent ? 'YES' : 'NO'));
+        $this->info('========================================');
+        $this->info('Elasticsearch Re-indexing');
+        $this->info('========================================');
+        $this->info('Skip content parsing: '.($skipContent ? 'YES' : 'NO'));
         $this->info("Batch size: {$batchSize}");
         $this->info("========================================\n");
 
@@ -51,14 +52,16 @@ class ReindexElasticsearch extends Command
         $this->stats['total'] = $total;
 
         if ($total === 0) {
-            $this->warn("No files found in database.");
+            $this->warn('No files found in database.');
+
             return 0;
         }
 
         $this->info("Found {$total} files to index\n");
 
-        if (!$this->confirm('Do you want to proceed with re-indexing?', true)) {
-            $this->info("Re-indexing cancelled.");
+        if (! $this->confirm('Do you want to proceed with re-indexing?', true)) {
+            $this->info('Re-indexing cancelled.');
+
             return 0;
         }
 
@@ -88,7 +91,7 @@ class ReindexElasticsearch extends Command
             $content = '';
 
             // Parse content if not skipping (only for parseable file types)
-            if (!$skipContent && file_exists($file->filepath) && in_array($file->file_extension, $this->parseableExtensions)) {
+            if (! $skipContent && file_exists($file->filepath) && in_array($file->file_extension, $this->parseableExtensions)) {
                 try {
                     $content = $this->parserService->extractText($file->filepath, $file->file_extension);
                 } catch (\Throwable $e) {
@@ -110,7 +113,7 @@ class ReindexElasticsearch extends Command
                 'file_size' => $file->file_size,
                 'content' => $content,
                 'created_at' => $file->created_at->toIso8601String(),
-                'updated_at' => $file->updated_at->toIso8601String()
+                'updated_at' => $file->updated_at->toIso8601String(),
             ]);
 
             $this->stats['indexed']++;
@@ -119,23 +122,23 @@ class ReindexElasticsearch extends Command
             $this->stats['errors'][] = [
                 'file_id' => $file->id,
                 'filename' => $file->original_filename,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     private function displaySummary(): void
     {
-        $this->info("========================================");
-        $this->info("Re-indexing Summary");
-        $this->info("========================================");
+        $this->info('========================================');
+        $this->info('Re-indexing Summary');
+        $this->info('========================================');
         $this->info("Total Files: {$this->stats['total']}");
         $this->info("Successfully Indexed: {$this->stats['indexed']}");
         $this->info("Failed: {$this->stats['failed']}");
         $this->info("========================================\n");
 
         if ($this->stats['failed'] > 0) {
-            $this->warn("Some files failed to index. Showing first 10 errors:");
+            $this->warn('Some files failed to index. Showing first 10 errors:');
             foreach (array_slice($this->stats['errors'], 0, 10) as $error) {
                 $this->error("- File #{$error['file_id']} ({$error['filename']}): {$error['error']}");
             }

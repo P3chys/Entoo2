@@ -116,7 +116,7 @@ class AdminSubjectController extends Controller
 
         return response()->json([
             'message' => 'Subject created successfully',
-            'subject' => $profile
+            'subject' => $profile,
         ], 201);
     }
 
@@ -150,7 +150,7 @@ class AdminSubjectController extends Controller
         $oldName = $profile->subject_name;
 
         $validated = $request->validate([
-            'subject_name' => 'sometimes|required|string|max:255|unique:subject_profiles,subject_name,' . $id,
+            'subject_name' => 'sometimes|required|string|max:255|unique:subject_profiles,subject_name,'.$id,
             'description' => 'nullable|string',
             'professor_name' => 'nullable|string|max:255',
             'course_code' => 'nullable|string|max:50',
@@ -182,11 +182,12 @@ class AdminSubjectController extends Controller
 
             return response()->json([
                 'message' => 'Subject updated successfully',
-                'subject' => $profile
+                'subject' => $profile,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Failed to update subject: " . $e->getMessage());
+            Log::error('Failed to update subject: '.$e->getMessage());
+
             return response()->json(['message' => 'Failed to update subject'], 500);
         }
     }
@@ -236,7 +237,8 @@ class AdminSubjectController extends Controller
             return response()->json(['message' => 'Subject and associated files deleted successfully']);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Failed to delete subject: " . $e->getMessage());
+            Log::error('Failed to delete subject: '.$e->getMessage());
+
             return response()->json(['message' => 'Failed to delete subject'], 500);
         }
     }

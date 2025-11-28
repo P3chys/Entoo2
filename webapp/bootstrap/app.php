@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'conditional.throttle' => \App\Http\Middleware\ConditionalThrottle::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
-        
+
         // Add global logging middleware
         $middleware->append(\App\Http\Middleware\LogRequest::class);
 

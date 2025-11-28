@@ -34,6 +34,7 @@ class ConditionalThrottle
 
         // Apply standard throttle middleware
         $throttle = app(ThrottleRequests::class);
+
         return $throttle->handle($request, $next, $maxAttempts, $decayMinutes);
     }
 

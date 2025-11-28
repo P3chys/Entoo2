@@ -4,16 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\UploadedFile;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
 class FileAuthorizationTest extends TestCase
 {
     use RefreshDatabase;
+
     protected array $createdUsers = [];
+
     protected array $createdFiles = [];
 
     protected function tearDown(): void
@@ -34,6 +35,7 @@ class FileAuthorizationTest extends TestCase
     {
         $user = User::factory()->create($attributes);
         $this->createdUsers[] = $user;
+
         return $user;
     }
 
@@ -41,6 +43,7 @@ class FileAuthorizationTest extends TestCase
     {
         $file = UploadedFile::factory()->create($attributes);
         $this->createdFiles[] = $file;
+
         return $file;
     }
 
@@ -103,7 +106,7 @@ class FileAuthorizationTest extends TestCase
             ->assertJson([
                 'file' => [
                     'id' => $file->id,
-                ]
+                ],
             ]);
 
         // Other user cannot view
@@ -313,7 +316,7 @@ class FileAuthorizationTest extends TestCase
 
         $response->assertStatus(404)
             ->assertJson([
-                'message' => 'File not found on disk'
+                'message' => 'File not found on disk',
             ]);
     }
 }

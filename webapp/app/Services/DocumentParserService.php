@@ -4,8 +4,8 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
-use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpPresentation\IOFactory as PresentationIOFactory;
+use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use Smalot\PdfParser\Parser as PdfParser;
 
 class DocumentParserService
@@ -13,14 +13,11 @@ class DocumentParserService
     /**
      * Extract text content from a file based on its extension
      *
-     * @param string $filepath
-     * @param string $extension
-     * @return string
      * @throws Exception
      */
     public function extractText(string $filepath, string $extension): string
     {
-        if (!file_exists($filepath)) {
+        if (! file_exists($filepath)) {
             throw new Exception("File not found: {$filepath}");
         }
 
@@ -34,7 +31,8 @@ class DocumentParserService
         if ($fileSize > $maxFileSize) {
             $sizeMB = round($fileSize / 1024 / 1024, 2);
             Log::warning("File too large to parse: {$filepath} ({$sizeMB}MB)");
-            return ""; // Return empty string for large files
+
+            return ''; // Return empty string for large files
         }
 
         // Set memory limit and max execution time
@@ -55,13 +53,13 @@ class DocumentParserService
 
             // Restore original settings
             ini_set('memory_limit', $originalMemoryLimit);
-            set_time_limit((int)$originalMaxExecutionTime);
+            set_time_limit((int) $originalMaxExecutionTime);
 
             return $text;
         } catch (Exception $e) {
             // Restore original settings
             ini_set('memory_limit', $originalMemoryLimit);
-            set_time_limit((int)$originalMaxExecutionTime);
+            set_time_limit((int) $originalMaxExecutionTime);
 
             throw $e;
         }
@@ -73,9 +71,6 @@ class DocumentParserService
      * This implementation uses the external pdftotext tool which is much faster
      * and more robust than PHP-based PDF parsing libraries. It handles complex
      * PDFs efficiently and doesn't suffer from memory leaks or timeouts.
-     *
-     * @param string $filepath
-     * @return string
      */
     private function extractTextFromPdf(string $filepath): string
     {
@@ -83,8 +78,9 @@ class DocumentParserService
             // Check if pdftotext is available
             $pdftotextPath = trim(shell_exec('which pdftotext') ?? '');
             if (empty($pdftotextPath)) {
-                Log::warning("pdftotext not found, PDF text extraction disabled");
-                return "";
+                Log::warning('pdftotext not found, PDF text extraction disabled');
+
+                return '';
             }
 
             // Escape filepath for shell command
@@ -102,7 +98,8 @@ class DocumentParserService
 
             if ($output === null) {
                 Log::warning("pdftotext command failed for: {$filepath}");
-                return "";
+
+                return '';
             }
 
             // Limit output to first 100,000 characters to prevent memory issues
@@ -118,16 +115,14 @@ class DocumentParserService
             return $text;
         } catch (Exception $e) {
             Log::warning("Failed to parse PDF: {$filepath}", ['error' => $e->getMessage()]);
+
             // Return empty string instead of throwing exception
-            return "";
+            return '';
         }
     }
 
     /**
      * Extract text from Word document
-     *
-     * @param string $filepath
-     * @return string
      */
     private function extractTextFromWord(string $filepath): string
     {
@@ -137,7 +132,7 @@ class DocumentParserService
 
             foreach ($phpWord->getSections() as $section) {
                 foreach ($section->getElements() as $element) {
-                    $text .= $this->extractWordElement($element) . "\n";
+                    $text .= $this->extractWordElement($element)."\n";
                 }
             }
 
@@ -151,15 +146,14 @@ class DocumentParserService
     /**
      * Extract text from Word element recursively
      *
-     * @param mixed $element
-     * @return string
+     * @param  mixed  $element
      */
     private function extractWordElement($element): string
     {
         $text = '';
 
         if (method_exists($element, 'getText')) {
-            $text .= $element->getText() . ' ';
+            $text .= $element->getText().' ';
         }
 
         if (method_exists($element, 'getElements')) {
@@ -173,9 +167,6 @@ class DocumentParserService
 
     /**
      * Extract text from PowerPoint presentation
-     *
-     * @param string $filepath
-     * @return string
      */
     private function extractTextFromPowerPoint(string $filepath): string
     {
@@ -186,14 +177,14 @@ class DocumentParserService
             foreach ($presentation->getAllSlides() as $slide) {
                 foreach ($slide->getShapeCollection() as $shape) {
                     if (method_exists($shape, 'getText')) {
-                        $text .= $shape->getText() . "\n";
+                        $text .= $shape->getText()."\n";
                     }
 
                     if (method_exists($shape, 'getParagraphs')) {
                         foreach ($shape->getParagraphs() as $paragraph) {
                             foreach ($paragraph->getRichTextElements() as $element) {
                                 if (method_exists($element, 'getText')) {
-                                    $text .= $element->getText() . ' ';
+                                    $text .= $element->getText().' ';
                                 }
                             }
                             $text .= "\n";
@@ -211,17 +202,15 @@ class DocumentParserService
 
     /**
      * Extract text from plain text file
-     *
-     * @param string $filepath
-     * @return string
      */
     private function extractTextFromPlainText(string $filepath): string
     {
         try {
             $content = file_get_contents($filepath);
             if ($content === false) {
-                throw new Exception("Failed to read file");
+                throw new Exception('Failed to read file');
             }
+
             return $this->cleanText($content);
         } catch (Exception $e) {
             Log::error("Failed to read text file: {$filepath}", ['error' => $e->getMessage()]);
@@ -231,9 +220,6 @@ class DocumentParserService
 
     /**
      * Clean and normalize extracted text
-     *
-     * @param string $text
-     * @return string
      */
     private function cleanText(string $text): string
     {
@@ -251,10 +237,6 @@ class DocumentParserService
 
     /**
      * Get metadata from document
-     *
-     * @param string $filepath
-     * @param string $extension
-     * @return array
      */
     public function getMetadata(string $filepath, string $extension): array
     {
@@ -268,7 +250,7 @@ class DocumentParserService
             $extension = strtolower($extension);
 
             if ($extension === 'pdf') {
-                $parser = new PdfParser();
+                $parser = new PdfParser;
                 $pdf = $parser->parseFile($filepath);
                 $details = $pdf->getDetails();
 
@@ -302,20 +284,16 @@ class DocumentParserService
 
     /**
      * Check if file type is supported
-     *
-     * @param string $extension
-     * @return bool
      */
     public function isSupported(string $extension): bool
     {
         $supported = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'];
+
         return in_array(strtolower($extension), $supported);
     }
 
     /**
      * Get list of supported file extensions
-     *
-     * @return array
      */
     public function getSupportedExtensions(): array
     {

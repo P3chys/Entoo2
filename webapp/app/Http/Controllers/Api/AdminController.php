@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\UploadedFile;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -20,7 +20,7 @@ class AdminController extends Controller
         \Cache::forget('admin:stats');
         // Clear all cached user pages (wildcards not supported, so we clear what we know)
         for ($i = 1; $i <= 10; $i++) {
-            \Cache::forget("admin:users:page:{$i}:search:" . md5(''));
+            \Cache::forget("admin:users:page:{$i}:search:".md5(''));
         }
     }
 
@@ -58,7 +58,7 @@ class AdminController extends Controller
         $search = $request->input('search', '');
         $page = $request->input('page', 1);
 
-        $cacheKey = "admin:users:page:{$page}:search:" . md5($search);
+        $cacheKey = "admin:users:page:{$page}:search:".md5($search);
 
         $users = \Cache::remember($cacheKey, 300, function () use ($search, $perPage) {
             $query = User::query();
@@ -66,7 +66,7 @@ class AdminController extends Controller
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'ILIKE', "%{$search}%")
-                      ->orWhere('email', 'ILIKE', "%{$search}%");
+                        ->orWhere('email', 'ILIKE', "%{$search}%");
                 });
             }
 
@@ -289,7 +289,7 @@ class AdminController extends Controller
         $userId = $request->input('user_id', '');
         $page = $request->input('page', 1);
 
-        $cacheKey = "admin:files:page:{$page}:" . md5($search . $subject . $category . $userId);
+        $cacheKey = "admin:files:page:{$page}:".md5($search.$subject.$category.$userId);
 
         $files = \Cache::remember($cacheKey, 300, function () use ($search, $subject, $category, $userId, $perPage) {
             $query = UploadedFile::with('user:id,name,email');
@@ -297,7 +297,7 @@ class AdminController extends Controller
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('original_filename', 'ILIKE', "%{$search}%")
-                      ->orWhere('subject_name', 'ILIKE', "%{$search}%");
+                        ->orWhere('subject_name', 'ILIKE', "%{$search}%");
                 });
             }
 

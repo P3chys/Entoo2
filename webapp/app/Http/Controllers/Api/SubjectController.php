@@ -139,7 +139,7 @@ class SubjectController extends Controller
     )]
     public function show(Request $request, string $subjectName)
     {
-        $cacheKey = 'subject:' . md5($subjectName) . ':categories';
+        $cacheKey = 'subject:'.md5($subjectName).':categories';
 
         $categories = Cache::tags(['subjects', 'files'])->remember($cacheKey, 300, function () use ($subjectName) {
             // Define all valid categories
@@ -158,14 +158,14 @@ class SubjectController extends Controller
                     'category' => $category,
                     'file_count' => $categoryCounts->has($category)
                         ? $categoryCounts->get($category)->file_count
-                        : 0
+                        : 0,
                 ];
             });
         });
 
         return response()->json([
             'subject_name' => $subjectName,
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 

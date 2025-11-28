@@ -59,12 +59,13 @@ class CleanupTestData extends Command
 
         if ($testFiles->isEmpty()) {
             $this->info('✅ No test data found');
+
             return 0;
         }
 
         // Group by subject
         $subjects = $testFiles->pluck('subject_name')->unique();
-        $this->info("📚 Test subjects:");
+        $this->info('📚 Test subjects:');
         foreach ($subjects as $subject) {
             $count = $testFiles->where('subject_name', $subject)->count();
             $this->line("   - \"{$subject}\" ({$count} files)");
@@ -72,12 +73,14 @@ class CleanupTestData extends Command
 
         if ($dryRun) {
             $this->info('✅ Dry run complete - no changes made');
+
             return 0;
         }
 
         // Confirm deletion
-        if (!$deleteAll && !$this->confirm('Delete all test data?', true)) {
+        if (! $deleteAll && ! $this->confirm('Delete all test data?', true)) {
             $this->warn('Cancelled');
+
             return 1;
         }
 
@@ -115,6 +118,7 @@ class CleanupTestData extends Command
         } catch (\Exception $e) {
             DB::rollBack();
             $this->error("❌ Error deleting files: {$e->getMessage()}");
+
             return 1;
         }
 

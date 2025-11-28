@@ -16,7 +16,9 @@ class AdminSubjectTest extends TestCase
     use RefreshDatabase;
 
     private $admin;
+
     private $user;
+
     private $elasticsearchMock;
 
     protected function setUp(): void
@@ -38,13 +40,13 @@ class AdminSubjectTest extends TestCase
         SubjectProfile::create([
             'subject_name' => 'Math',
             'created_by' => $this->admin->id,
-            'updated_by' => $this->admin->id
+            'updated_by' => $this->admin->id,
         ]);
 
         // Create file with different subject
         UploadedFile::factory()->create([
             'subject_name' => 'Physics',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         $response = $this->actingAs($this->admin)->getJson('/api/admin/subjects');
@@ -66,7 +68,7 @@ class AdminSubjectTest extends TestCase
         $data = [
             'subject_name' => 'Chemistry',
             'description' => 'Basic Chemistry',
-            'credits' => 5
+            'credits' => 5,
         ];
 
         $response = $this->actingAs($this->admin)->postJson('/api/admin/subjects', $data);
@@ -82,7 +84,7 @@ class AdminSubjectTest extends TestCase
         $profile = SubjectProfile::create([
             'subject_name' => 'Biology',
             'created_by' => $this->admin->id,
-            'updated_by' => $this->admin->id
+            'updated_by' => $this->admin->id,
         ]);
 
         $data = ['description' => 'Advanced Biology'];
@@ -100,12 +102,12 @@ class AdminSubjectTest extends TestCase
         $profile = SubjectProfile::create([
             'subject_name' => 'Old Name',
             'created_by' => $this->admin->id,
-            'updated_by' => $this->admin->id
+            'updated_by' => $this->admin->id,
         ]);
 
         UploadedFile::factory()->create([
             'subject_name' => 'Old Name',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // Expect Elasticsearch update
@@ -115,7 +117,7 @@ class AdminSubjectTest extends TestCase
             ->andReturn(1);
 
         $response = $this->actingAs($this->admin)->putJson("/api/admin/subjects/{$profile->id}", [
-            'subject_name' => 'New Name'
+            'subject_name' => 'New Name',
         ]);
 
         $response->assertStatus(200);
@@ -132,13 +134,13 @@ class AdminSubjectTest extends TestCase
         $profile = SubjectProfile::create([
             'subject_name' => 'History',
             'created_by' => $this->admin->id,
-            'updated_by' => $this->admin->id
+            'updated_by' => $this->admin->id,
         ]);
 
         $file = UploadedFile::factory()->create([
             'subject_name' => 'History',
             'user_id' => $this->user->id,
-            'filepath' => 'files/history.pdf'
+            'filepath' => 'files/history.pdf',
         ]);
 
         Storage::put('files/history.pdf', 'content');

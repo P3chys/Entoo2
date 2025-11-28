@@ -17,7 +17,9 @@ use OpenApi\Attributes as OA;
 class FileController extends Controller
 {
     private DocumentParserService $parserService;
+
     private ElasticsearchService $elasticsearchService;
+
     private FileService $fileService;
 
     public function __construct(
@@ -67,17 +69,18 @@ class FileController extends Controller
         // Use Elasticsearch when filtering by subject only (most common use case)
         // This is MUCH faster than PostgreSQL + ORM
         if ($request->has('subject_name') &&
-            !$request->has('category') &&
-            !$request->has('extension') &&
-            !$request->has('user_id')) {
+            ! $request->has('category') &&
+            ! $request->has('extension') &&
+            ! $request->has('user_id')) {
 
             if ($bypassCache) {
                 $size = min($request->input('per_page', 1000), 1000);
                 $files = $this->elasticsearchService->getFilesBySubject($request->subject_name, $size);
             } else {
-                $cacheKey = 'files:es:subject:' . md5($request->subject_name);
+                $cacheKey = 'files:es:subject:'.md5($request->subject_name);
                 $files = Cache::tags(['files', 'subjects'])->remember($cacheKey, 300, function () use ($request) {
                     $size = min($request->input('per_page', 1000), 1000);
+
                     return $this->elasticsearchService->getFilesBySubject($request->subject_name, $size);
                 });
             }
@@ -85,7 +88,7 @@ class FileController extends Controller
             // Return in a format compatible with the frontend
             return response()->json([
                 'data' => $files,
-                'total' => count($files)
+                'total' => count($files),
             ]);
         }
 
@@ -94,17 +97,18 @@ class FileController extends Controller
             $filterDTO = FileFilterDTO::fromRequest($request);
             $files = $this->fileService->listFiles($filterDTO);
         } else {
-            $cacheKey = 'files:' . md5(json_encode([
+            $cacheKey = 'files:'.md5(json_encode([
                 'subject' => $request->subject_name,
                 'category' => $request->category,
                 'extension' => $request->extension,
                 'user_id' => $request->user_id,
                 'per_page' => $request->input('per_page', 20),
-                'page' => $request->input('page', 1)
+                'page' => $request->input('page', 1),
             ]));
 
             $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
                 $filterDTO = FileFilterDTO::fromRequest($request);
+
                 return $this->fileService->listFiles($filterDTO);
             });
         }
@@ -162,10 +166,10 @@ class FileController extends Controller
             $extension = strtolower($uploadedFile->getClientOriginalExtension());
 
             // Check if file type is supported
-            if (!$this->parserService->isSupported($extension)) {
+            if (! $this->parserService->isSupported($extension)) {
                 return response()->json([
                     'message' => 'Unsupported file type',
-                    'supported_types' => $this->parserService->getSupportedExtensions()
+                    'supported_types' => $this->parserService->getSupportedExtensions(),
                 ], 422);
             }
 
@@ -176,13 +180,13 @@ class FileController extends Controller
             return response()->json([
                 'message' => 'File uploaded successfully and is being processed',
                 'file' => $file,
-                'status' => 'processing'
+                'status' => 'processing',
             ], 201);
 
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'File upload failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -217,9 +221,9 @@ class FileController extends Controller
         // Explicit authorization check to avoid Octane timing issues with Gate::authorize()
         // Only the file owner can view file details
         $user = $request->user();
-        if (!$user || $user->id !== $file->user_id) {
+        if (! $user || $user->id !== $file->user_id) {
             return response()->json([
-                'message' => 'Unauthorized. Only the file owner can view this file details.'
+                'message' => 'Unauthorized. Only the file owner can view this file details.',
             ], 403);
         }
 
@@ -305,7 +309,7 @@ class FileController extends Controller
         }
 
         return response()->json([
-            'message' => 'File not found on disk'
+            'message' => 'File not found on disk',
         ], 404);
     }
 
@@ -337,26 +341,26 @@ class FileController extends Controller
     public function destroy(Request $request, int $id)
     {
         error_log("Destroy method called for file {$id}");
-        \Log::error("Destroy method called for file {$id} by user " . ($request->user() ? $request->user()->id : 'guest'));
+        \Log::error("Destroy method called for file {$id} by user ".($request->user() ? $request->user()->id : 'guest'));
         $file = UploadedFile::findOrFail($id);
 
         $user = $request->user();
-        
+
         // Direct authorization check (Gates/Policies not loading properly)
         // Cast to int to ensure type safety
-        $isOwner = (int)$user->id === (int)$file->user_id;
-        $isAdmin = (bool)$user->is_admin;
+        $isOwner = (int) $user->id === (int) $file->user_id;
+        $isAdmin = (bool) $user->is_admin;
         $isTestUser = $user->email === 'playwright-test@entoo.cz';
 
         $canDelete = $user && ($isAdmin || $isTestUser || $isOwner);
-        
-        if (!$canDelete) {
+
+        if (! $canDelete) {
             \Log::warning('File deletion unauthorized attempt', [
                 'user_id' => $user->id,
                 'file_id' => $file->id,
                 'file_owner_id' => $file->user_id,
                 'is_admin' => $isAdmin,
-                'is_owner' => $isOwner
+                'is_owner' => $isOwner,
             ]);
             abort(403, 'You are not authorized to delete this file.');
         }
@@ -365,19 +369,19 @@ class FileController extends Controller
             $this->fileService->deleteFile($file);
 
             return response()->json([
-                'message' => 'File deleted successfully'
+                'message' => 'File deleted successfully',
             ]);
 
         } catch (Exception $e) {
             \Log::error('File deletion failed', [
                 'file_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'message' => 'File deletion failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -420,15 +424,16 @@ class FileController extends Controller
         ]);
 
         // Build cache key from query parameters
-        $cacheKey = 'files:browse:' . md5(json_encode([
+        $cacheKey = 'files:browse:'.md5(json_encode([
             'subject' => $request->subject_name,
             'category' => $request->category,
             'user_id' => $request->user_id,
-            'page' => $request->input('page', 1)
+            'page' => $request->input('page', 1),
         ]));
 
         $files = Cache::tags(['files'])->remember($cacheKey, 300, function () use ($request) {
             $filterDTO = FileFilterDTO::fromRequest($request);
+
             return $this->fileService->listFiles($filterDTO);
         });
 

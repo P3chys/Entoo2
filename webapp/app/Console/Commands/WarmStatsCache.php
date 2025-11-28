@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Services\ElasticsearchService;
 use App\Models\User;
+use App\Services\ElasticsearchService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -49,21 +49,23 @@ class WarmStatsCache extends Command
                 $esStats = $this->elasticsearchService->getComprehensiveStats();
                 $esStats['total_users'] = User::count();
                 $esStats['cached_at'] = now()->toIso8601String();
+
                 return $esStats;
             });
 
             $elapsed = round((microtime(true) - $startTime) * 1000, 2);
 
             $this->info("✓ Stats cache warmed successfully in {$elapsed}ms");
-            $this->line("  - Total files: " . number_format($stats['total_files']));
-            $this->line("  - Total subjects: " . number_format($stats['total_subjects']));
-            $this->line("  - Total users: " . number_format($stats['total_users']));
-            $this->line("  - Storage: " . $this->formatBytes($stats['total_storage_bytes']));
-            $this->line("  - Cache expires: " . now()->addSeconds(1800)->diffForHumans());
+            $this->line('  - Total files: '.number_format($stats['total_files']));
+            $this->line('  - Total subjects: '.number_format($stats['total_subjects']));
+            $this->line('  - Total users: '.number_format($stats['total_users']));
+            $this->line('  - Storage: '.$this->formatBytes($stats['total_storage_bytes']));
+            $this->line('  - Cache expires: '.now()->addSeconds(1800)->diffForHumans());
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Failed to warm stats cache: ' . $e->getMessage());
+            $this->error('Failed to warm stats cache: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }
@@ -75,6 +77,7 @@ class WarmStatsCache extends Command
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
-        return round($bytes, 2) . ' ' . $units[$pow];
+
+        return round($bytes, 2).' '.$units[$pow];
     }
 }

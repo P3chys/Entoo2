@@ -5,11 +5,9 @@ namespace App\Services;
 use App\DTOs\CreateFileDTO;
 use App\DTOs\FileFilterDTO;
 use App\Jobs\ProcessUploadedFile;
-use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\UploadedFile;
-use App\Models\User;
 use Exception;
-use Illuminate\Http\UploadedFile as HttpUploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,7 +27,7 @@ class FileService
     public function uploadFile(CreateFileDTO $dto): UploadedFile
     {
         $extension = strtolower($dto->file->getClientOriginalExtension());
-        $filename = Str::uuid() . '.' . $extension;
+        $filename = Str::uuid().'.'.$extension;
         $subjectSlug = Str::slug($dto->subjectName);
         $categorySlug = Str::slug($dto->category);
 
@@ -73,9 +71,9 @@ class FileService
         try {
             $this->elasticsearchService->deleteDocument($file->id);
         } catch (Exception $e) {
-            \Log::warning("Failed to delete file from Elasticsearch", [
+            \Log::warning('Failed to delete file from Elasticsearch', [
                 'file_id' => $file->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -104,7 +102,7 @@ class FileService
         }
 
         // Fallback to manual check (legacy behavior)
-        $storagePath = storage_path('app/' . $file->filepath);
+        $storagePath = storage_path('app/'.$file->filepath);
         if (file_exists($storagePath)) {
             return $storagePath;
         }
@@ -128,6 +126,7 @@ class FileService
         Cache::forget('subjects:with_counts');
         Cache::forget('subjects:list');
     }
+
     /**
      * List files with filtering
      */

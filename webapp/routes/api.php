@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Route;
 
 \Log::info('API Route file loaded');
 if (request()->is('api/files/*') && request()->method() === 'DELETE') {
-    error_log('DELETE request to api/files detected in routes/api.php URL: ' . request()->fullUrl());
+    error_log('DELETE request to api/files detected in routes/api.php URL: '.request()->fullUrl());
     \Log::info('DELETE request to api/files detected in routes/api.php', [
         'url' => request()->fullUrl(),
         'user_id' => request()->user()?->id ?? 'null',
-        'ip' => request()->ip()
+        'ip' => request()->ip(),
     ]);
 }
 

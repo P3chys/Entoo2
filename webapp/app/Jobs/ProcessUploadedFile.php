@@ -54,12 +54,11 @@ class ProcessUploadedFile implements ShouldQueue
     public function handle(
         DocumentParserService $parserService,
         ElasticsearchService $elasticsearchService
-    ): void
-    {
+    ): void {
         try {
             // Update status to processing
             $this->uploadedFile->update([
-                'processing_status' => 'processing'
+                'processing_status' => 'processing',
             ]);
 
             // Get file path
@@ -74,10 +73,10 @@ class ProcessUploadedFile implements ShouldQueue
                 );
             } catch (Exception $e) {
                 // If parsing fails, log but continue with empty content
-                Log::warning("Failed to parse file content", [
+                Log::warning('Failed to parse file content', [
                     'file_id' => $this->uploadedFile->id,
                     'file' => $this->uploadedFile->filename,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -98,9 +97,9 @@ class ProcessUploadedFile implements ShouldQueue
                     'updated_at' => $this->uploadedFile->updated_at->toIso8601String(),
                 ]);
             } catch (Exception $e) {
-                Log::error("Failed to index file in Elasticsearch", [
+                Log::error('Failed to index file in Elasticsearch', [
                     'file_id' => $this->uploadedFile->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
                 throw $e; // Re-throw to trigger job retry
             }
@@ -109,28 +108,28 @@ class ProcessUploadedFile implements ShouldQueue
             $this->uploadedFile->update([
                 'processing_status' => 'completed',
                 'processing_error' => null,
-                'processed_at' => now()
+                'processed_at' => now(),
             ]);
 
             // Clear all relevant caches
             $this->clearFileRelatedCaches();
 
-            Log::info("File processed successfully", [
+            Log::info('File processed successfully', [
                 'file_id' => $this->uploadedFile->id,
-                'filename' => $this->uploadedFile->filename
+                'filename' => $this->uploadedFile->filename,
             ]);
 
         } catch (Exception $e) {
             // Update status to failed
             $this->uploadedFile->update([
                 'processing_status' => 'failed',
-                'processing_error' => $e->getMessage()
+                'processing_error' => $e->getMessage(),
             ]);
 
-            Log::error("File processing failed", [
+            Log::error('File processing failed', [
                 'file_id' => $this->uploadedFile->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // Re-throw to trigger job retry
@@ -146,12 +145,12 @@ class ProcessUploadedFile implements ShouldQueue
         // Update status to failed after all retries exhausted
         $this->uploadedFile->update([
             'processing_status' => 'failed',
-            'processing_error' => 'Processing failed after ' . $this->tries . ' attempts: ' . $exception->getMessage()
+            'processing_error' => 'Processing failed after '.$this->tries.' attempts: '.$exception->getMessage(),
         ]);
 
-        Log::error("File processing permanently failed", [
+        Log::error('File processing permanently failed', [
             'file_id' => $this->uploadedFile->id,
-            'error' => $exception->getMessage()
+            'error' => $exception->getMessage(),
         ]);
     }
 
