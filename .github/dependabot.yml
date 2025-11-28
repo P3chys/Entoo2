@@ -1,0 +1,148 @@
+version: 2
+updates:
+  # Composer dependencies (PHP/Laravel)
+  - package-ecosystem: "composer"
+    directory: "/webapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Pechys"
+    assignees:
+      - "Pechys"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "php"
+      - "composer"
+    ignore:
+      # Ignore major version updates for Laravel (manual upgrade required)
+      - dependency-name: "laravel/framework"
+        update-types: ["version-update:semver-major"]
+      # Ignore major PHP version changes
+      - dependency-name: "php"
+        update-types: ["version-update:semver-major"]
+    groups:
+      laravel:
+        patterns:
+          - "laravel/*"
+          - "spatie/*"
+      development:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # NPM dependencies (Frontend - webapp)
+  - package-ecosystem: "npm"
+    directory: "/webapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Pechys"
+    assignees:
+      - "Pechys"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "npm"
+    ignore:
+      # Ignore major version updates for core tools
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+    groups:
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "laravel-vite-plugin"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      development:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # NPM dependencies (Tests - Playwright)
+  - package-ecosystem: "npm"
+    directory: "/tests"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Pechys"
+    assignees:
+      - "Pechys"
+    commit-message:
+      prefix: "test"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "testing"
+      - "playwright"
+    groups:
+      playwright:
+        patterns:
+          - "@playwright/*"
+          - "playwright"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Pechys"
+    assignees:
+      - "Pechys"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Pechys"
+    assignees:
+      - "Pechys"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*"

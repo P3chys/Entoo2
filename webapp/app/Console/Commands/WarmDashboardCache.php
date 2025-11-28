@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Services\ElasticsearchService;
 use App\Models\User;
-use App\Models\UploadedFile;
+use App\Services\ElasticsearchService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -50,14 +49,15 @@ class WarmDashboardCache extends Command
                 $esStats = $this->elasticsearchService->getComprehensiveStats();
                 $esStats['total_users'] = User::count();
                 $esStats['cached_at'] = now()->toIso8601String();
+
                 return $esStats;
             });
 
             $elapsed = round((microtime(true) - $start) * 1000, 2);
             $this->line("    ✓ Stats cached in {$elapsed}ms");
-            $this->line("      - Files: " . number_format($stats['total_files']));
-            $this->line("      - Subjects: " . number_format($stats['total_subjects']));
-            $this->line("      - Users: " . number_format($stats['total_users']));
+            $this->line('      - Files: '.number_format($stats['total_files']));
+            $this->line('      - Subjects: '.number_format($stats['total_subjects']));
+            $this->line('      - Users: '.number_format($stats['total_users']));
 
             // 2. Warm subjects with counts cache
             $this->info('  [2/2] Warming subjects cache...');
@@ -70,16 +70,17 @@ class WarmDashboardCache extends Command
 
             $elapsed = round((microtime(true) - $start) * 1000, 2);
             $this->line("    ✓ Subjects cached in {$elapsed}ms");
-            $this->line("      - Total subjects: " . count($subjects));
+            $this->line('      - Total subjects: '.count($subjects));
 
             $totalElapsed = round((microtime(true) - $overallStart) * 1000, 2);
             $this->newLine();
             $this->info("✓ Dashboard caches warmed successfully in {$totalElapsed}ms total");
-            $this->line("  Cache expires: " . now()->addSeconds(1800)->diffForHumans());
+            $this->line('  Cache expires: '.now()->addSeconds(1800)->diffForHumans());
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Failed to warm dashboard caches: ' . $e->getMessage());
+            $this->error('Failed to warm dashboard caches: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }

@@ -23,7 +23,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
-        
+
         // Define Gate for file deletion
         \Illuminate\Support\Facades\Gate::define('delete-file', function ($user, $file) {
             \Log::info('Gate delete-file called', [
@@ -33,22 +33,25 @@ class AuthServiceProvider extends ServiceProvider
                 'file_id' => $file?->id,
                 'file_user_id' => $file?->user_id,
             ]);
-            
+
             // Admins can delete any file
             if ($user->is_admin) {
                 \Log::info('Admin access granted via Gate');
+
                 return true;
             }
-            
+
             // Test user can delete any file (for E2E tests)
             if ($user->email === 'playwright-test@entoo.cz') {
                 \Log::info('Test user access granted via Gate');
+
                 return true;
             }
-            
+
             // Owners can delete their own files
             $isOwner = $user->id === $file->user_id;
             \Log::info('Owner check', ['is_owner' => $isOwner]);
+
             return $isOwner;
         });
     }

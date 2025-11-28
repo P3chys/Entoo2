@@ -15,13 +15,13 @@ class LogRequest
      */
     public function handle(Request $request, Closure $next): Response
     {
-        error_log("LogRequest Middleware: " . $request->method() . " " . $request->fullUrl());
-        error_log("Headers: " . json_encode($request->headers->all()));
-        
+        error_log('LogRequest Middleware: '.$request->method().' '.$request->fullUrl());
+        error_log('Headers: '.json_encode($request->headers->all()));
+
         $response = $next($request);
-        
-        error_log("LogRequest Response Status: " . $response->getStatusCode());
-        
+
+        error_log('LogRequest Response Status: '.$response->getStatusCode());
+
         return $response;
     }
 }

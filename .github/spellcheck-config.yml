@@ -1,0 +1,36 @@
+matrix:
+  - name: Markdown
+    aspell:
+      lang: en
+      d: en_US
+    dictionary:
+      encoding: utf-8
+      wordlists:
+        - .github/wordlist.txt
+    pipeline:
+      - pyspelling.filters.markdown:
+          markdown_extensions:
+            - markdown.extensions.extra:
+    sources:
+      - '**/*.md'
+    default_encoding: utf-8
+
+  - name: PHP
+    aspell:
+      lang: en
+      d: en_US
+    dictionary:
+      encoding: utf-8
+      wordlists:
+        - .github/wordlist.txt
+    pipeline:
+      - pyspelling.filters.context:
+          context_visible_first: true
+          delimiters:
+            - open: '(?s)^(?P<open>""")'
+              close: '(?P=open)'
+            - open: '(?s)^(?P<open>'''''')'
+              close: '(?P=open)'
+    sources:
+      - 'webapp/app/**/*.php'
+    default_encoding: utf-8

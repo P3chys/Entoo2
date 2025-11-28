@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\UploadedFile;
 use App\Models\FavoriteSubject;
+use App\Models\UploadedFile;
+use App\Models\User;
 use App\Services\ElasticsearchService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +44,7 @@ class AdminController extends Controller
     public function users()
     {
         $users = User::orderBy('created_at', 'desc')->paginate(50);
+
         return view('admin.users', compact('users'));
     }
 
@@ -52,6 +53,7 @@ class AdminController extends Controller
         $files = UploadedFile::with('user')
             ->orderBy('created_at', 'desc')
             ->paginate(50);
+
         return view('admin.files', compact('files'));
     }
 
@@ -59,6 +61,7 @@ class AdminController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return ['status' => 'healthy', 'message' => 'Connected'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Connection failed'];
@@ -69,6 +72,7 @@ class AdminController extends Controller
     {
         try {
             Redis::ping();
+
             return ['status' => 'healthy', 'message' => 'Connected'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Connection failed'];
@@ -81,11 +85,13 @@ class AdminController extends Controller
             $es = app(ElasticsearchService::class);
             if ($es->ping()) {
                 $indexExists = $es->indexExists();
+
                 return [
                     'status' => $indexExists ? 'healthy' : 'warning',
-                    'message' => $indexExists ? 'Connected & indexed' : 'Connected, no index'
+                    'message' => $indexExists ? 'Connected & indexed' : 'Connected, no index',
                 ];
             }
+
             return ['status' => 'error', 'message' => 'Ping failed'];
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Connection failed'];
@@ -99,6 +105,7 @@ class AdminController extends Controller
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
-        return round($bytes, $precision) . ' ' . $units[$pow];
+
+        return round($bytes, $precision).' '.$units[$pow];
     }
 }

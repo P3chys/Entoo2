@@ -113,7 +113,7 @@ class FavoriteController extends Controller
         if ($existing) {
             return response()->json([
                 'message' => 'Subject already in favorites',
-                'favorite' => $existing
+                'favorite' => $existing,
             ], 200);
         }
 
@@ -127,7 +127,7 @@ class FavoriteController extends Controller
 
         return response()->json([
             'message' => 'Subject added to favorites',
-            'favorite' => $favorite
+            'favorite' => $favorite,
         ], 201);
     }
 
@@ -167,7 +167,7 @@ class FavoriteController extends Controller
         Cache::forget("favorites:user:{$userId}");
 
         return response()->json([
-            'message' => 'Subject removed from favorites'
+            'message' => 'Subject removed from favorites',
         ]);
     }
 }

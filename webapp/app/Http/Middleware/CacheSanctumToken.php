@@ -15,8 +15,6 @@ class CacheSanctumToken
      * Instead of querying PostgreSQL on every request, cache the token->user mapping
      * in Redis for 30 minutes. This dramatically improves API response times.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
@@ -24,19 +22,19 @@ class CacheSanctumToken
         // Only process if there's a Bearer token
         $bearerToken = $request->bearerToken();
 
-        if (!$bearerToken) {
+        if (! $bearerToken) {
             return $next($request);
         }
 
         // Create a cache key for this token
-        $cacheKey = 'sanctum:token:' . hash('sha256', $bearerToken);
+        $cacheKey = 'sanctum:token:'.hash('sha256', $bearerToken);
 
         // Try to get the token data from cache
         $cachedData = Cache::remember($cacheKey, 1800, function () use ($bearerToken) {
             // Token not in cache, look it up in database
             $token = PersonalAccessToken::findToken($bearerToken);
 
-            if (!$token || ($token->expires_at && $token->expires_at->isPast())) {
+            if (! $token || ($token->expires_at && $token->expires_at->isPast())) {
                 return null;
             }
 
@@ -53,14 +51,16 @@ class CacheSanctumToken
         });
 
         // If token not found or expired, clear cache and continue (will fail auth)
-        if (!$cachedData) {
+        if (! $cachedData) {
             Cache::forget($cacheKey);
+
             return $next($request);
         }
 
         // Check if token is expired
         if ($cachedData['expires_at'] && now()->greaterThan(\Carbon\Carbon::parse($cachedData['expires_at']))) {
             Cache::forget($cacheKey);
+
             return $next($request);
         }
 

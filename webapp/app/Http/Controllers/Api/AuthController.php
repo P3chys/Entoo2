@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -127,7 +126,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
@@ -170,7 +169,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 
@@ -203,7 +202,7 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return response()->json([
-            'user' => $request->user()
+            'user' => $request->user(),
         ]);
     }
 
@@ -324,10 +323,10 @@ class AuthController extends Controller
         $user = $request->user();
 
         // Verify current password
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return response()->json([
                 'message' => 'Current password is incorrect',
-                'errors' => ['current_password' => ['The current password is incorrect']]
+                'errors' => ['current_password' => ['The current password is incorrect']],
             ], 422);
         }
 
@@ -339,7 +338,7 @@ class AuthController extends Controller
         $user->tokens()->delete();
 
         return response()->json([
-            'message' => 'Password changed successfully. Please log in again.'
+            'message' => 'Password changed successfully. Please log in again.',
         ]);
     }
 
@@ -378,10 +377,10 @@ class AuthController extends Controller
 
         // Check if user exists - return 422 if not
         $user = User::where('email', $request->email)->first();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'message' => 'Unable to send password reset link. Please try again.',
-                'errors' => ['email' => ['We could not find a user with that email address.']]
+                'errors' => ['email' => ['We could not find a user with that email address.']],
             ], 422);
         }
 
@@ -392,13 +391,13 @@ class AuthController extends Controller
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json([
-                'message' => 'Password reset instructions have been sent to your email address.'
+                'message' => 'Password reset instructions have been sent to your email address.',
             ]);
         }
 
         return response()->json([
             'message' => 'Unable to send password reset link. Please try again.',
-            'errors' => ['email' => [trans($status)]]
+            'errors' => ['email' => [trans($status)]],
         ], 422);
     }
 
@@ -442,10 +441,10 @@ class AuthController extends Controller
 
         // Check if user exists - return 422 if not
         $user = User::where('email', $validated['email'])->first();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'message' => 'Password reset failed. The token may be invalid or expired.',
-                'errors' => ['email' => ['We could not find a user with that email address.']]
+                'errors' => ['email' => ['We could not find a user with that email address.']],
             ], 422);
         }
 
@@ -454,7 +453,7 @@ class AuthController extends Controller
             $validated,
             function (User $user, string $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
 
                 $user->save();
@@ -468,13 +467,13 @@ class AuthController extends Controller
 
         if ($status === Password::PASSWORD_RESET) {
             return response()->json([
-                'message' => 'Password has been reset successfully. Please log in with your new password.'
+                'message' => 'Password has been reset successfully. Please log in with your new password.',
             ]);
         }
 
         return response()->json([
             'message' => 'Password reset failed. The token may be invalid or expired.',
-            'errors' => ['email' => [trans($status)]]
+            'errors' => ['email' => [trans($status)]],
         ], 422);
     }
 
@@ -489,6 +488,6 @@ class AuthController extends Controller
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

@@ -23,9 +23,9 @@ class UploadedFileFactory extends Factory
 
         return [
             'user_id' => User::factory(),
-            'filename' => fake()->uuid() . '.' . $extension,
-            'original_filename' => fake()->words(3, true) . '.' . $extension,
-            'filepath' => 'uploads/' . fake()->slug(2) . '/' . fake()->slug() . '/' . fake()->uuid() . '.' . $extension,
+            'filename' => fake()->uuid().'.'.$extension,
+            'original_filename' => fake()->words(3, true).'.'.$extension,
+            'filepath' => 'uploads/'.fake()->slug(2).'/'.fake()->slug().'/'.fake()->uuid().'.'.$extension,
             'subject_name' => fake()->words(2, true),
             'category' => fake()->randomElement($categories),
             'file_size' => fake()->numberBetween(1024, 10485760), // 1KB to 10MB

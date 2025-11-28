@@ -30,8 +30,9 @@ class InitElasticsearch extends Command
 
         // Check connection
         $this->info('Checking Elasticsearch connection...');
-        if (!$elasticsearchService->ping()) {
+        if (! $elasticsearchService->ping()) {
             $this->error('Failed to connect to Elasticsearch!');
+
             return 1;
         }
         $this->info('✓ Elasticsearch is reachable');
@@ -46,11 +47,13 @@ class InitElasticsearch extends Command
                 $this->info('✓ Elasticsearch index already exists');
             }
         } catch (\Exception $e) {
-            $this->error('Failed to create index: ' . $e->getMessage());
+            $this->error('Failed to create index: '.$e->getMessage());
+
             return 1;
         }
 
         $this->info('✓ Elasticsearch initialization complete!');
+
         return 0;
     }
 }

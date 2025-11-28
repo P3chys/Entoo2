@@ -1,0 +1,55 @@
+name: CodeQL Security Analysis
+
+# NOTE: This workflow is currently disabled to avoid conflicts with GitHub's default CodeQL setup.
+# To re-enable: Go to Repository Settings → Code security and analysis → Disable "CodeQL analysis"
+# Then uncomment the triggers below.
+
+# DISABLED - Conflicts with default CodeQL
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+#   schedule:
+#     # Run at 2 AM UTC every Monday
+#     - cron: '0 2 * * 1'
+#   workflow_dispatch:
+
+# Workflow will not trigger automatically - only via workflow_dispatch if manually enabled
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript' ]
+        # Note: PHP is not supported by CodeQL
+        # For PHP analysis, use PHPStan in code-quality.yml workflow
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"

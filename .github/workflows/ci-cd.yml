@@ -1,0 +1,394 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+  COMPOSER_CACHE_DIR: ~/.composer/cache
+  NPM_CACHE_DIR: ~/.npm
+
+jobs:
+  # ============================================
+  # Code Quality & Linting
+  # ============================================
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./webapp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: webapp/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Create cache directory
+        run: mkdir -p webapp/bootstrap/cache
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run Laravel Pint (Code Style)
+        run: ./vendor/bin/pint --test
+
+      - name: Run PHPStan (Static Analysis)
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G || true
+        continue-on-error: true
+
+      - name: Check for Laravel best practices
+        run: |
+          echo "Checking for common Laravel anti-patterns..."
+
+          # Check for DB::raw usage (potential SQL injection)
+          if grep -r "DB::raw" app/ 2>/dev/null; then
+            echo "::warning::Found DB::raw usage - ensure proper sanitization"
+          fi
+
+          # Check for env() in config files (should use config())
+          if grep -r "env(" app/ 2>/dev/null; then
+            echo "::warning::Found env() calls outside config files"
+          fi
+
+  # ============================================
+  # Frontend Quality
+  # ============================================
+  frontend-quality:
+    name: Frontend Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./webapp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Check for console.log statements
+        run: |
+          consoleFound=$(grep -r "console\.\(log\|debug\|info\)" resources/js/ || true)
+          if [ -n "$consoleFound" ]; then
+            echo "::warning::Found console statements in production code:"
+            echo "$consoleFound"
+          fi
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: webapp/public/build/
+          retention-days: 7
+
+  # ============================================
+  # Backend Tests
+  # ============================================
+  backend-tests:
+    name: Backend Tests (PHPUnit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [code-quality]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: entoo_test
+          POSTGRES_USER: entoo
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: xdebug
+
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copy .env and generate key
+        working-directory: ./webapp
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run database migrations
+        working-directory: ./webapp
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
+
+      - name: Run PHPUnit tests with coverage
+        working-directory: ./webapp
+        run: php artisan test --parallel --coverage --min=80
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: webapp/coverage/
+          retention-days: 30
+
+  # ============================================
+  # E2E Tests
+  # ============================================
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend-tests, frontend-quality]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './tests/package-lock.json'
+
+      - name: Install Playwright dependencies
+        working-directory: ./tests
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Run performance tests
+        working-directory: ./tests
+        run: npx playwright test tests/performance/ --reporter=list
+        continue-on-error: false
+
+      - name: Run caching tests
+        working-directory: ./tests
+        run: npx playwright test tests/caching/ --reporter=list
+        continue-on-error: false
+
+      - name: Run PDF parsing tests
+        working-directory: ./tests
+        run: npx playwright test tests/pdf-parsing.spec.ts --reporter=list
+        continue-on-error: false
+
+      - name: Skip GUI tests (Auth required)
+        working-directory: ./tests
+        run: |
+          echo "⚠️ GUI tests skipped in CI - require authentication setup"
+          echo "GUI tests can be run locally: npm test tests/gui/"
+          echo "Total GUI tests: 71 (auth, favorites, file-upload, search, subject-profile, dashboard)"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: tests/test-results/
+          retention-days: 7
+
+  # ============================================
+  # Security Scan - Code Patterns
+  # ============================================
+  security-scan-code:
+    name: Security Scan (Code Patterns)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for secrets
+        run: |
+          # Check for common secret patterns
+          echo "Scanning for potential secrets..."
+
+          patterns=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]+['\"]"
+          )
+
+          for pattern in "${patterns[@]}"; do
+            found=$(grep -rE "$pattern" --include="*.php" --include="*.js" --include="*.env.example" --exclude-dir="vendor" --exclude-dir="node_modules" . || true)
+            if [ -n "$found" ]; then
+              echo "::warning::Potential secret found matching pattern: $pattern"
+            fi
+          done
+        continue-on-error: true
+
+      - name: Check NPM dependencies for vulnerabilities
+        working-directory: ./webapp
+        run: |
+          npm audit --audit-level=high || true
+        continue-on-error: true
+
+  # ============================================
+  # Security Scan - Composer Dependencies
+  # ============================================
+  security-scan-php:
+    name: Security Scan (PHP Dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer
+
+      - name: Create cache directory
+        working-directory: ./webapp
+        run: mkdir -p bootstrap/cache
+
+      - name: Install Composer dependencies
+        working-directory: ./webapp
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Check Composer dependencies for vulnerabilities
+        working-directory: ./webapp
+        run: composer audit
+        continue-on-error: true
+
+  # ============================================
+  # Build Status
+  # ============================================
+  build-status:
+    name: Build Status
+    runs-on: ubuntu-latest
+    needs: [code-quality, frontend-quality, backend-tests, e2e-tests, security-scan-code, security-scan-php]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "=== BUILD SUMMARY ==="
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Frontend Quality: ${{ needs.frontend-quality.result }}"
+          echo "Backend Tests: ${{ needs.backend-tests.result }}"
+          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+          echo "Security Scan (Code): ${{ needs.security-scan-code.result }}"
+          echo "Security Scan (PHP): ${{ needs.security-scan-php.result }}"
+
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "::error::Build failed! Check test results."
+            exit 1
+          fi
+
+          echo "✅ All required checks passed!"
+
+      - name: Post build summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## Build Results
+
+          | Check | Status |
+          |-------|--------|
+          | Code Quality | ${{ needs.code-quality.result }} |
+          | Frontend Quality | ${{ needs.frontend-quality.result }} |
+          | Backend Tests | ${{ needs.backend-tests.result }} |
+          | E2E Tests | ${{ needs.e2e-tests.result }} |
+          | Security Scan (Code) | ${{ needs.security-scan-code.result }} |
+          | Security Scan (PHP) | ${{ needs.security-scan-php.result }} |
+          EOF
