@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\UploadedFile;
 use App\Models\User;
 use App\Services\ElasticsearchService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
@@ -51,7 +49,7 @@ class HealthController extends Controller
         $health = [
             'status' => 'ok',
             'timestamp' => now()->toIso8601String(),
-            'services' => []
+            'services' => [],
         ];
 
         // Check database
@@ -67,7 +65,7 @@ class HealthController extends Controller
         try {
             $ping = $this->elasticsearchService->ping();
             $health['services']['elasticsearch'] = $ping ? 'connected' : 'unreachable';
-            if (!$ping) {
+            if (! $ping) {
                 $health['status'] = 'degraded';
             }
         } catch (\Exception $e) {

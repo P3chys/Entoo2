@@ -2,20 +2,21 @@
 
 namespace App\Services;
 
-use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\ClientBuilder;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 class ElasticsearchService
 {
     private Client $client;
+
     private string $indexName;
 
     public function __construct()
     {
         $hosts = [
-            config('services.elasticsearch.host', 'http://elasticsearch:9200')
+            config('services.elasticsearch.host', 'http://elasticsearch:9200'),
         ];
 
         $this->client = ClientBuilder::create()
@@ -27,8 +28,6 @@ class ElasticsearchService
 
     /**
      * Create or update the index with proper mappings
-     *
-     * @return bool
      */
     public function createIndex(): bool
     {
@@ -36,6 +35,7 @@ class ElasticsearchService
             // Check if index already exists
             if ($this->client->indices()->exists(['index' => $this->indexName])->asBool()) {
                 Log::info("Elasticsearch index '{$this->indexName}' already exists");
+
                 return true;
             }
 
@@ -50,10 +50,10 @@ class ElasticsearchService
                                 'custom_analyzer' => [
                                     'type' => 'custom',
                                     'tokenizer' => 'standard',
-                                    'filter' => ['lowercase', 'asciifolding']
-                                ]
-                            ]
-                        ]
+                                    'filter' => ['lowercase', 'asciifolding'],
+                                ],
+                            ],
+                        ],
                     ],
                     'mappings' => [
                         'properties' => [
@@ -63,33 +63,33 @@ class ElasticsearchService
                                 'type' => 'text',
                                 'analyzer' => 'custom_analyzer',
                                 'fields' => [
-                                    'keyword' => ['type' => 'keyword']
-                                ]
+                                    'keyword' => ['type' => 'keyword'],
+                                ],
                             ],
                             'original_filename' => [
                                 'type' => 'text',
-                                'analyzer' => 'custom_analyzer'
+                                'analyzer' => 'custom_analyzer',
                             ],
                             'filepath' => ['type' => 'keyword'],
                             'subject_name' => [
                                 'type' => 'text',
                                 'analyzer' => 'custom_analyzer',
                                 'fields' => [
-                                    'keyword' => ['type' => 'keyword']
-                                ]
+                                    'keyword' => ['type' => 'keyword'],
+                                ],
                             ],
                             'category' => ['type' => 'keyword'],
                             'file_extension' => ['type' => 'keyword'],
                             'file_size' => ['type' => 'long'],
                             'content' => [
                                 'type' => 'text',
-                                'analyzer' => 'custom_analyzer'
+                                'analyzer' => 'custom_analyzer',
                             ],
                             'created_at' => ['type' => 'date'],
                             'updated_at' => ['type' => 'date'],
-                        ]
-                    ]
-                ]
+                        ],
+                    ],
+                ],
             ];
 
             $response = $this->client->indices()->create($params);
@@ -97,16 +97,13 @@ class ElasticsearchService
 
             return $response['acknowledged'] ?? false;
         } catch (Exception $e) {
-            Log::error("Failed to create Elasticsearch index", ['error' => $e->getMessage()]);
+            Log::error('Failed to create Elasticsearch index', ['error' => $e->getMessage()]);
             throw new Exception("Failed to create Elasticsearch index: {$e->getMessage()}");
         }
     }
 
     /**
      * Index a document
-     *
-     * @param array $document
-     * @return bool
      */
     public function indexDocument(array $document): bool
     {
@@ -115,29 +112,24 @@ class ElasticsearchService
                 'index' => $this->indexName,
                 'id' => $document['file_id'],
                 'body' => $document,
-                'refresh' => 'true' // Force immediate refresh to make document visible
+                'refresh' => 'true', // Force immediate refresh to make document visible
             ];
 
             $response = $this->client->index($params);
 
             return $response['result'] === 'created' || $response['result'] === 'updated';
         } catch (Exception $e) {
-            Log::error("Failed to index document", [
+            Log::error('Failed to index document', [
                 'file_id' => $document['file_id'] ?? null,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Search documents with fuzzy matching
-     *
-     * @param string $query
-     * @param int $userId
-     * @param array $filters
-     * @param int $size
-     * @return array
      */
     public function search(string $query, ?int $userId = null, array $filters = [], int $size = 20): array
     {
@@ -149,7 +141,7 @@ class ElasticsearchService
                 $must[] = ['term' => ['user_id' => $userId]];
             }
 
-            if (!empty($query)) {
+            if (! empty($query)) {
                 $must[] = [
                     'multi_match' => [
                         'query' => $query,
@@ -157,24 +149,24 @@ class ElasticsearchService
                             'filename^3',
                             'original_filename^2',
                             'subject_name^2',
-                            'content'
+                            'content',
                         ],
                         'fuzziness' => 'AUTO',
-                        'operator' => 'or'
-                    ]
+                        'operator' => 'or',
+                    ],
                 ];
             }
 
             // Add filters
-            if (!empty($filters['subject_name'])) {
+            if (! empty($filters['subject_name'])) {
                 $must[] = ['term' => ['subject_name.keyword' => $filters['subject_name']]];
             }
 
-            if (!empty($filters['category'])) {
+            if (! empty($filters['category'])) {
                 $must[] = ['term' => ['category' => $filters['category']]];
             }
 
-            if (!empty($filters['file_extension'])) {
+            if (! empty($filters['file_extension'])) {
                 $must[] = ['term' => ['file_extension' => $filters['file_extension']]];
             }
 
@@ -183,49 +175,47 @@ class ElasticsearchService
                 'body' => [
                     'query' => [
                         'bool' => [
-                            'must' => $must
-                        ]
+                            'must' => $must,
+                        ],
                     ],
                     'size' => $size,
                     'sort' => [
                         ['_score' => ['order' => 'desc']],
-                        ['created_at' => ['order' => 'desc']]
+                        ['created_at' => ['order' => 'desc']],
                     ],
                     'highlight' => [
                         'max_analyzed_offset' => 10000000, // 10MB limit for highlighting
                         'fields' => [
-                            'filename' => new \stdClass(),
+                            'filename' => new \stdClass,
                             'content' => [
                                 'fragment_size' => 150,
-                                'number_of_fragments' => 3
-                            ]
-                        ]
-                    ]
-                ]
+                                'number_of_fragments' => 3,
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $response = $this->client->search($params);
 
             return $this->formatSearchResults($response->asArray());
         } catch (Exception $e) {
-            Log::error("Elasticsearch search failed", [
+            Log::error('Elasticsearch search failed', [
                 'query' => $query,
                 'user_id' => $userId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [
                 'total' => 0,
                 'results' => [],
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     /**
      * Format search results
-     *
-     * @param array $response
-     * @return array
      */
     private function formatSearchResults(array $response): array
     {
@@ -237,21 +227,18 @@ class ElasticsearchService
                 'file_id' => $hit['_id'],
                 'score' => $hit['_score'],
                 'source' => $hit['_source'],
-                'highlight' => $hit['highlight'] ?? []
+                'highlight' => $hit['highlight'] ?? [],
             ];
         }, $hits);
 
         return [
             'total' => $total,
-            'results' => $results
+            'results' => $results,
         ];
     }
 
     /**
      * Delete a document from the index
-     *
-     * @param int $fileId
-     * @return bool
      */
     public function deleteDocument(int $fileId): bool
     {
@@ -259,26 +246,24 @@ class ElasticsearchService
             $params = [
                 'index' => $this->indexName,
                 'id' => $fileId,
-                'refresh' => 'true' // Force immediate refresh to make deletion visible
+                'refresh' => 'true', // Force immediate refresh to make deletion visible
             ];
 
             $response = $this->client->delete($params);
 
             return $response['result'] === 'deleted';
         } catch (Exception $e) {
-            Log::error("Failed to delete document from Elasticsearch", [
+            Log::error('Failed to delete document from Elasticsearch', [
                 'file_id' => $fileId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Bulk index documents
-     *
-     * @param array $documents
-     * @return array
      */
     public function bulkIndex(array $documents): array
     {
@@ -289,8 +274,8 @@ class ElasticsearchService
                 $params['body'][] = [
                     'index' => [
                         '_index' => $this->indexName,
-                        '_id' => $document['file_id']
-                    ]
+                        '_id' => $document['file_id'],
+                    ],
                 ];
                 $params['body'][] = $document;
             }
@@ -311,49 +296,46 @@ class ElasticsearchService
             return [
                 'indexed' => $indexed,
                 'failed' => $failed,
-                'total' => count($documents)
+                'total' => count($documents),
             ];
         } catch (Exception $e) {
-            Log::error("Bulk indexing failed", ['error' => $e->getMessage()]);
+            Log::error('Bulk indexing failed', ['error' => $e->getMessage()]);
+
             return [
                 'indexed' => 0,
                 'failed' => count($documents),
                 'total' => count($documents),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     /**
      * Get document by ID
-     *
-     * @param int $fileId
-     * @return array|null
      */
     public function getDocument(int $fileId): ?array
     {
         try {
             $params = [
                 'index' => $this->indexName,
-                'id' => $fileId
+                'id' => $fileId,
             ];
 
             $response = $this->client->get($params);
 
             return $response['_source'] ?? null;
         } catch (Exception $e) {
-            Log::warning("Document not found in Elasticsearch", [
+            Log::warning('Document not found in Elasticsearch', [
                 'file_id' => $fileId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
 
     /**
      * Get index statistics
-     *
-     * @return array
      */
     public function getStats(): array
     {
@@ -368,80 +350,75 @@ class ElasticsearchService
                 'size_in_bytes' => $indexStats['total']['store']['size_in_bytes'] ?? 0,
             ];
         } catch (Exception $e) {
-            Log::error("Failed to get index stats", ['error' => $e->getMessage()]);
+            Log::error('Failed to get index stats', ['error' => $e->getMessage()]);
+
             return [
                 'document_count' => 0,
                 'deleted_count' => 0,
                 'size_in_bytes' => 0,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     /**
      * Check Elasticsearch connection
-     *
-     * @return bool
      */
     public function ping(): bool
     {
         try {
             return $this->client->ping()->asBool();
         } catch (Exception $e) {
-            Log::error("Elasticsearch ping failed", ['error' => $e->getMessage()]);
+            Log::error('Elasticsearch ping failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
 
     /**
      * Get Elasticsearch cluster info
-     *
-     * @return array
      */
     public function getInfo(): array
     {
         try {
             return $this->client->info()->asArray();
         } catch (Exception $e) {
-            Log::error("Failed to get Elasticsearch info", ['error' => $e->getMessage()]);
+            Log::error('Failed to get Elasticsearch info', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
 
     /**
      * Check if index exists
-     *
-     * @return bool
      */
     public function indexExists(): bool
     {
         try {
             return $this->client->indices()->exists(['index' => $this->indexName])->asBool();
         } catch (Exception $e) {
-            Log::error("Failed to check if index exists", ['error' => $e->getMessage()]);
+            Log::error('Failed to check if index exists', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
 
     /**
      * Get detailed index statistics
-     *
-     * @return array
      */
     public function getIndexStats(): array
     {
         try {
             return $this->client->indices()->stats(['index' => $this->indexName])->asArray();
         } catch (Exception $e) {
-            Log::error("Failed to get index stats", ['error' => $e->getMessage()]);
+            Log::error('Failed to get index stats', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
 
     /**
      * Delete the entire index
-     *
-     * @return bool
      */
     public function deleteIndex(): bool
     {
@@ -451,7 +428,8 @@ class ElasticsearchService
 
             return $response['acknowledged'] ?? false;
         } catch (Exception $e) {
-            Log::error("Failed to delete Elasticsearch index", ['error' => $e->getMessage()]);
+            Log::error('Failed to delete Elasticsearch index', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -459,8 +437,6 @@ class ElasticsearchService
     /**
      * Get all subjects with file counts using Elasticsearch aggregation
      * Much faster than PostgreSQL for this operation
-     *
-     * @return array
      */
     public function getSubjectsWithCounts(): array
     {
@@ -474,11 +450,11 @@ class ElasticsearchService
                             'terms' => [
                                 'field' => 'subject_name.keyword',
                                 'size' => 1000, // Support up to 1000 subjects
-                                'order' => ['_key' => 'asc'] // Sort alphabetically
-                            ]
-                        ]
-                    ]
-                ]
+                                'order' => ['_key' => 'asc'], // Sort alphabetically
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $response = $this->client->search($params);
@@ -495,13 +471,14 @@ class ElasticsearchService
                 $subjects[] = [
                     'subject_name' => $subjectName,
                     'file_count' => $bucket['doc_count'],
-                    'has_profile' => isset($subjectsWithProfiles[$subjectName])
+                    'has_profile' => isset($subjectsWithProfiles[$subjectName]),
                 ];
             }
 
             return $subjects;
         } catch (Exception $e) {
-            Log::error("Failed to get subjects from Elasticsearch", ['error' => $e->getMessage()]);
+            Log::error('Failed to get subjects from Elasticsearch', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -509,10 +486,6 @@ class ElasticsearchService
     /**
      * Get files for a specific subject from Elasticsearch
      * Much faster than PostgreSQL + ORM
-     *
-     * @param string $subjectName
-     * @param int $size
-     * @return array
      */
     public function getFilesBySubject(string $subjectName, int $size = 1000): array
     {
@@ -523,13 +496,13 @@ class ElasticsearchService
                 'body' => [
                     'query' => [
                         'term' => [
-                            'subject_name.keyword' => $subjectName
-                        ]
+                            'subject_name.keyword' => $subjectName,
+                        ],
                     ],
                     'sort' => [
-                        ['created_at' => ['order' => 'desc']]
-                    ]
-                ]
+                        ['created_at' => ['order' => 'desc']],
+                    ],
+                ],
             ];
 
             $response = $this->client->search($params);
@@ -541,10 +514,11 @@ class ElasticsearchService
 
             return $files;
         } catch (Exception $e) {
-            Log::error("Failed to get files by subject from Elasticsearch", [
+            Log::error('Failed to get files by subject from Elasticsearch', [
                 'subject' => $subjectName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -552,8 +526,6 @@ class ElasticsearchService
     /**
      * Get comprehensive stats directly from Elasticsearch
      * Faster than multiple database queries
-     *
-     * @return array
      */
     public function getComprehensiveStats(): array
     {
@@ -565,28 +537,28 @@ class ElasticsearchService
                     'aggs' => [
                         'total_subjects' => [
                             'cardinality' => [
-                                'field' => 'subject_name.keyword'
-                            ]
+                                'field' => 'subject_name.keyword',
+                            ],
                         ],
                         'total_storage' => [
                             'sum' => [
-                                'field' => 'file_size'
-                            ]
+                                'field' => 'file_size',
+                            ],
                         ],
                         'by_category' => [
                             'terms' => [
                                 'field' => 'category.keyword',
-                                'size' => 10
-                            ]
+                                'size' => 10,
+                            ],
                         ],
                         'by_extension' => [
                             'terms' => [
                                 'field' => 'file_extension.keyword',
-                                'size' => 10
-                            ]
-                        ]
-                    ]
-                ]
+                                'size' => 10,
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $response = $this->client->search($params);
@@ -599,32 +571,32 @@ class ElasticsearchService
                 'files_by_category' => array_map(function ($bucket) {
                     return [
                         'category' => $bucket['key'],
-                        'count' => $bucket['doc_count']
+                        'count' => $bucket['doc_count'],
                     ];
                 }, $aggs['by_category']['buckets'] ?? []),
                 'files_by_extension' => array_map(function ($bucket) {
                     return [
                         'file_extension' => $bucket['key'],
-                        'count' => $bucket['doc_count']
+                        'count' => $bucket['doc_count'],
                     ];
-                }, $aggs['by_extension']['buckets'] ?? [])
+                }, $aggs['by_extension']['buckets'] ?? []),
             ];
         } catch (Exception $e) {
-            Log::error("Failed to get comprehensive stats from Elasticsearch", ['error' => $e->getMessage()]);
+            Log::error('Failed to get comprehensive stats from Elasticsearch', ['error' => $e->getMessage()]);
+
             return [
                 'total_files' => 0,
                 'total_subjects' => 0,
                 'total_storage_bytes' => 0,
                 'files_by_category' => [],
-                'files_by_extension' => []
+                'files_by_extension' => [],
             ];
         }
     }
+
     /**
      * Update subject name for all matching documents
      *
-     * @param string $oldName
-     * @param string $newName
      * @return int Number of updated documents
      */
     public function updateSubjectName(string $oldName, string $newName): int
@@ -635,25 +607,26 @@ class ElasticsearchService
                 'body' => [
                     'script' => [
                         'source' => 'ctx._source.subject_name = params.newName',
-                        'params' => ['newName' => $newName]
+                        'params' => ['newName' => $newName],
                     ],
                     'query' => [
                         'term' => [
-                            'subject_name.keyword' => $oldName
-                        ]
-                    ]
-                ]
+                            'subject_name.keyword' => $oldName,
+                        ],
+                    ],
+                ],
             ];
 
             $response = $this->client->updateByQuery($params);
 
             return $response['updated'] ?? 0;
         } catch (Exception $e) {
-            Log::error("Failed to update subject name in Elasticsearch", [
+            Log::error('Failed to update subject name in Elasticsearch', [
                 'old_name' => $oldName,
                 'new_name' => $newName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return 0;
         }
     }

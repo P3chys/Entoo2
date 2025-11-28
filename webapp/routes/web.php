@@ -37,6 +37,7 @@ Route::get('/dashboard/subject/{subject}', function ($subject) {
 
 Route::get('/dashboard/search', function () {
     $query = request('q', '');
+
     return view('dashboard-enhanced', ['searchQuery' => $query]);
 })->name('dashboard.search');
 

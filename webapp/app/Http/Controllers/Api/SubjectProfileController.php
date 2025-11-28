@@ -95,10 +95,10 @@ class SubjectProfileController extends Controller
             ->withCount('uploadedFiles')
             ->first();
 
-        if (!$profile) {
+        if (! $profile) {
             return response()->json([
                 'profile' => null,
-                'message' => 'No profile found for this subject'
+                'message' => 'No profile found for this subject',
             ], 404);
         }
 
@@ -165,7 +165,7 @@ class SubjectProfileController extends Controller
         return response()->json([
             'message' => 'Subject profile created successfully',
             'profile' => $profile->load(['creator:id,name', 'updater:id,name'])
-                ->loadCount('uploadedFiles')
+                ->loadCount('uploadedFiles'),
         ], 201);
     }
 
@@ -231,7 +231,7 @@ class SubjectProfileController extends Controller
         return response()->json([
             'message' => 'Subject profile updated successfully',
             'profile' => $profile->load(['creator:id,name', 'updater:id,name'])
-                ->loadCount('uploadedFiles')
+                ->loadCount('uploadedFiles'),
         ]);
     }
 
@@ -265,7 +265,7 @@ class SubjectProfileController extends Controller
         $profile->delete();
 
         return response()->json([
-            'message' => 'Subject profile deleted successfully'
+            'message' => 'Subject profile deleted successfully',
         ]);
     }
 }

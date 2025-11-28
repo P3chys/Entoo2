@@ -2,16 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Models\FavoriteSubject;
 use App\Models\SubjectProfile;
 use App\Models\UploadedFile;
-use App\Models\FavoriteSubject;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DatabasePerformanceTest extends TestCase
 {
     protected User $user;
+
     protected array $testSubjects = [
         'Biology', 'Chemistry', 'Computer Science', 'Mathematics', 'Physics',
         'Test Subject', 'Subject_0', 'Subject_1', 'Subject_2', 'Subject_3', 'Subject_4',
@@ -152,11 +153,12 @@ class DatabasePerformanceTest extends TestCase
         // We're looking for separate queries like: SELECT count(*) FROM uploaded_files WHERE...
         $separateFileCountQueries = collect($queries)->filter(function ($query) {
             $sql = $query['query'];
+
             // Check if it's a standalone count query (starts with "select count")
             // and NOT the main query with subquery (which starts with "select "subject_profiles".*")
             return str_contains($sql, 'uploaded_files') &&
                    str_contains(strtolower($sql), 'count(*)') &&
-                   !str_contains($sql, 'subject_profiles');
+                   ! str_contains($sql, 'subject_profiles');
         })->count();
 
         // With withCount, there should be NO separate count queries - all counts are in subqueries
@@ -201,11 +203,11 @@ class DatabasePerformanceTest extends TestCase
         }
 
         // Query with EXPLAIN to check if index is used
-        $explain = DB::select("
+        $explain = DB::select('
             EXPLAIN (FORMAT JSON)
             SELECT * FROM uploaded_files
             WHERE subject_name = ?
-        ", [$subject]);
+        ', [$subject]);
 
         $plan = json_decode($explain[0]->{'QUERY PLAN'}, true);
 
@@ -245,11 +247,11 @@ class DatabasePerformanceTest extends TestCase
         }
 
         // Query with EXPLAIN to check if index is used
-        $explain = DB::select("
+        $explain = DB::select('
             EXPLAIN (FORMAT JSON)
             SELECT * FROM uploaded_files
             WHERE subject_name = ? AND category = ?
-        ", [$subject, $category]);
+        ', [$subject, $category]);
 
         $plan = json_decode($explain[0]->{'QUERY PLAN'}, true);
         $planString = json_encode($plan);
@@ -276,11 +278,11 @@ class DatabasePerformanceTest extends TestCase
         ]);
 
         // Test query by subject_name
-        $explain = DB::select("
+        $explain = DB::select('
             EXPLAIN (FORMAT JSON)
             SELECT * FROM favorite_subjects
             WHERE subject_name = ?
-        ", [$subject]);
+        ', [$subject]);
 
         $plan = json_decode($explain[0]->{'QUERY PLAN'}, true);
         $planString = json_encode($plan);

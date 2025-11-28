@@ -17,9 +17,10 @@ class FilePolicy
             'is_admin' => $user->is_admin,
             'ability' => $ability,
         ]);
-        
+
         if ($user->is_admin) {
             \Log::info('Admin access granted in before method');
+
             return true;
         }
 
@@ -65,20 +66,21 @@ class FilePolicy
      */
     public function delete(?User $user, UploadedFile $file): bool
     {
-        error_log('FilePolicy::delete called for user ' . ($user ? $user->id : 'null') . ' and file ' . $file->id);
-        if (!$user) {
+        error_log('FilePolicy::delete called for user '.($user ? $user->id : 'null').' and file '.$file->id);
+        if (! $user) {
             return false;
         }
 
         \Log::info('FilePolicy::delete called', [
             'user_id' => $user->id,
             'file_id' => $file->id,
-            'is_admin' => $user->is_admin
+            'is_admin' => $user->is_admin,
         ]);
 
         // Allow admins to delete any file
         if ($user->is_admin) {
             error_log('FilePolicy::delete - Admin access granted');
+
             return true;
         }
 
