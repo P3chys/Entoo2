@@ -1,0 +1,209 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  performance-tests:
+    name: Run Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: entoo_test
+          POSTGRES_USER: entoo
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      elasticsearch:
+        image: elasticsearch:7.17.10
+        env:
+          discovery.type: single-node
+        options: >-
+          --health-cmd "curl http://localhost:9200/_cluster/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 9200:9200
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ./webapp
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Start Server
+        working-directory: ./webapp
+        run: |
+          php artisan serve --port=8000 &
+          sleep 5
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          ELASTICSEARCH_HOSTS: http://localhost:9200
+
+      - name: Run Playwright performance tests
+        working-directory: ./tests
+        run: |
+          npm ci
+          npx playwright install chromium
+          npx playwright test tests/performance/ --reporter=json --output=performance-results.json
+
+      - name: Parse performance results
+        id: parse
+        run: |
+          # Extract key metrics using jq
+          totalTests=$(jq '.suites[].specs[].tests | length' tests/performance-results.json | awk '{s+=$1} END {print s}')
+          passedTests=$(jq '.suites[].specs[].tests[] | select(.status=="passed") | length' tests/performance-results.json | wc -l)
+
+          echo "total_tests=$totalTests" >> $GITHUB_OUTPUT
+          echo "passed_tests=$passedTests" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Run API endpoint benchmarks
+        id: benchmark
+        run: |
+          echo "Running API benchmarks..."
+
+          # Function to calculate average
+          calc_avg() {
+            local url=$1
+            local total=0
+            for i in {1..10}; do
+              start=$(date +%s%N)
+              curl -s -o /dev/null "$url"
+              end=$(date +%s%N)
+              duration=$(( ($end - $start) / 1000000 ))
+              total=$((total + duration))
+            done
+            echo $((total / 10))
+          }
+
+          # Test /api/subjects endpoint
+          avg_subjects=$(calc_avg "http://localhost:8000/api/subjects?with_counts=true")
+          echo "Average /api/subjects response time: $avg_subjects ms"
+
+          # Test /api/search endpoint
+          avg_search=$(calc_avg "http://localhost:8000/api/search?q=test")
+          echo "Average /api/search response time: $avg_search ms"
+
+          # Output metrics
+          echo "subjects_avg=$avg_subjects" >> $GITHUB_OUTPUT
+          echo "search_avg=$avg_search" >> $GITHUB_OUTPUT
+
+          # Check against thresholds
+          if [ "$avg_subjects" -gt 100 ]; then
+            echo "::warning::/api/subjects response time exceeds 100ms threshold"
+          fi
+
+          if [ "$avg_search" -gt 200 ]; then
+            echo "::warning::/api/search response time exceeds 200ms threshold"
+          fi
+        continue-on-error: true
+
+      - name: Database query performance
+        run: |
+          echo "Analyzing database query performance..."
+          # Requires pg_stat_statements enabled in postgres container
+          # Skipping for now as it requires specific postgres config
+          echo "Skipping database query analysis"
+
+      - name: Redis performance
+        run: |
+          echo "Checking Redis performance..."
+          redis-cli -h localhost INFO stats | grep "instantaneous_ops_per_sec" || true
+          redis-cli -h localhost INFO memory | grep "used_memory_human" || true
+
+      - name: Elasticsearch performance
+        run: |
+          echo "Checking Elasticsearch performance..."
+          curl -s http://localhost:9200/_cluster/health | jq .status
+          curl -s http://localhost:9200/_stats | jq '._all.total.docs.count'
+        continue-on-error: true
+
+      - name: Generate performance report
+        if: always()
+        run: |
+          echo "## Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "| Endpoint | Avg Response Time | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| /api/subjects | ${{ steps.benchmark.outputs.subjects_avg }}ms | ${{ steps.benchmark.outputs.subjects_avg < 100 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| /api/search | ${{ steps.benchmark.outputs.search_avg }}ms | ${{ steps.benchmark.outputs.search_avg < 200 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Total: ${{ steps.parse.outputs.total_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: ${{ steps.parse.outputs.passed_tests }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-results
+          path: |
+            tests/performance-results.json
+            tests/playwright-report/
+          retention-days: 30
+
+      - name: Alert on performance degradation
+        if: steps.benchmark.outputs.subjects_avg > 100 || steps.benchmark.outputs.search_avg > 200
+        run: |
+          echo "⚠️ Performance degradation detected!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "One or more endpoints are performing slower than expected." >> $GITHUB_STEP_SUMMARY
+          echo "Please investigate and optimize." >> $GITHUB_STEP_SUMMARY
+
+          # Send alert (configure your notification method)
+          # Example: Slack webhook, email, etc.

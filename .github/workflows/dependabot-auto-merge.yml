@@ -1,0 +1,68 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Check if auto-merge is allowed
+        id: check
+        run: |
+          echo "update-type=${{ steps.metadata.outputs.update-type }}" >> $GITHUB_OUTPUT
+
+          # Auto-merge minor and patch updates
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]] || \
+             [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]]; then
+            echo "should-merge=true" >> $GITHUB_OUTPUT
+            echo "✅ Auto-merge allowed for ${{ steps.metadata.outputs.update-type }}"
+          else
+            echo "should-merge=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Manual review required for ${{ steps.metadata.outputs.update-type }}"
+          fi
+
+      - name: Approve PR
+        if: steps.check.outputs.should-merge == 'true'
+        run: |
+          gh pr review "${{ github.event.pull_request.number }}" --approve --body "Auto-approved by Dependabot Auto-Merge workflow for ${{ steps.metadata.outputs.update-type }} update"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.check.outputs.should-merge == 'true'
+        run: |
+          gh pr merge "${{ github.event.pull_request.number }}" --auto --squash --delete-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on major updates
+        if: steps.check.outputs.should-merge == 'false'
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "⚠️ **Manual Review Required**
+
+          This PR updates **${{ steps.metadata.outputs.dependency-names }}** from version **${{ steps.metadata.outputs.previous-version }}** to **${{ steps.metadata.outputs.new-version }}**.
+
+          This is a **${{ steps.metadata.outputs.update-type }}** update and requires manual review before merging.
+
+          Please review:
+          - Breaking changes in the changelog
+          - Migration guides
+          - Test results
+          - Impact on application functionality"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
