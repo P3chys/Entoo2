@@ -68,6 +68,7 @@ jobs:
           cp .env.example .env
           sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env
           sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
+          sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
           php artisan key:generate
 
       - name: Run post-autoload-dump
@@ -191,6 +192,9 @@ jobs:
         working-directory: ./webapp
         run: |
           cp .env.example .env
+          sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env
+          sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
+          sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
           php artisan key:generate
 
       - name: Run database migrations
@@ -365,6 +369,7 @@ jobs:
           cp .env.example .env
           sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env
           sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
+          sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
           php artisan key:generate
 
       - name: Run post-autoload-dump
