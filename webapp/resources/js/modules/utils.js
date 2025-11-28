@@ -44,3 +44,52 @@ export function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+/**
+ * Get file type badge HTML with color coding
+ * @param {string} extension - File extension (e.g., 'pdf', 'docx')
+ * @returns {HTMLElement} - Badge element
+ */
+export function getFileTypeBadge(extension) {
+    const badge = document.createElement('span');
+    badge.className = `file-type-badge ${extension.toLowerCase()}`;
+
+    // Icon mapping for different file types
+    const iconMap = {
+        'pdf': '📕',
+        'doc': '📘',
+        'docx': '📘',
+        'ppt': '📊',
+        'pptx': '📊',
+        'xls': '📗',
+        'xlsx': '📗',
+        'txt': '📝',
+        'zip': '📦',
+        'rar': '📦',
+        '7z': '📦',
+        'jpg': '🖼️',
+        'jpeg': '🖼️',
+        'png': '🖼️',
+        'gif': '🖼️',
+        'svg': '🖼️'
+    };
+
+    const ext = extension.toLowerCase();
+    const icon = iconMap[ext] || '📄';
+
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = icon;
+    iconSpan.setAttribute('aria-hidden', 'true');
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = extension.toUpperCase();
+
+    badge.appendChild(iconSpan);
+    badge.appendChild(textSpan);
+
+    // Add aria-label for accessibility
+    badge.setAttribute('aria-label', `${extension.toUpperCase()} file`);
+    badge.setAttribute('role', 'status');
+
+    return badge;
+}

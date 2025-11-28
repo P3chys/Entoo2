@@ -32,9 +32,11 @@ test.describe('File Deletion Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // Find and expand the subject
-    const subjectHeader = page.locator('.subject-header').filter({ hasText: testSubjectName });
-    await expect(subjectHeader).toBeVisible({ timeout: 10000 });
-    await subjectHeader.click();
+    const subjectRow = page.locator('.subject-row').filter({ hasText: testSubjectName });
+    await expect(subjectRow).toBeVisible({ timeout: 10000 });
+
+    // Click the expand arrow
+    await page.getByText('▶').first().click();
 
     // Wait for files to load
     await page.waitForTimeout(1000);
@@ -241,13 +243,14 @@ test.describe('File Deletion Tests', () => {
     await newUserPage.goto('/dashboard');
     await newUserPage.waitForLoadState('networkidle');
 
-    const subjectHeader = newUserPage.locator('.subject-header').filter({ hasText: testSubjectName });
+    const subjectRow = newUserPage.locator('.subject-row').filter({ hasText: testSubjectName });
 
     // Only check if the subject exists (it might not if files are filtered by user)
-    const subjectExists = await subjectHeader.count() > 0;
+    const subjectExists = await subjectRow.count() > 0;
 
     if (subjectExists) {
-      await subjectHeader.click();
+      // Click expand arrow
+      await newUserPage.getByText('▶').first().click();
       await newUserPage.waitForTimeout(1000);
 
       // Verify that delete button is NOT present for the file (since this user didn't upload it)
@@ -276,9 +279,11 @@ test.describe('File Deletion Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // Expand subject
-    const subjectHeader = page.locator('.subject-header').filter({ hasText: testSubjectName });
-    await expect(subjectHeader).toBeVisible();
-    await subjectHeader.click();
+    const subjectRow = page.locator('.subject-row').filter({ hasText: testSubjectName });
+    await expect(subjectRow).toBeVisible();
+
+    // Click expand arrow
+    await page.getByText('▶').first().click();
     await page.waitForTimeout(1000);
 
     // Delete all files rapidly

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { isFavorite } from './favorites.js';
-import { escapeHtml, getFileIcon, formatBytes } from './utils.js';
+import { escapeHtml, getFileIcon, formatBytes, getFileTypeBadge } from './utils.js';
 import { renderSubjectProfile } from '../subject-profile-renderer.js';
 
 /**
@@ -202,7 +202,7 @@ export function buildFilesHTML(files) {
         const ownerId = file.user ? file.user.id : null;
 
         const fileItem = document.createElement('div');
-        fileItem.className = 'file-item glass-file-item';
+        fileItem.className = 'file-item glass-file-item enhanced';
 
         const fileInfo = document.createElement('div');
         fileInfo.className = 'file-item-info';
@@ -215,30 +215,40 @@ export function buildFilesHTML(files) {
         detailsDiv.className = 'file-item-details';
 
         const h4 = document.createElement('h4');
-        h4.textContent = file.original_filename; // Auto-escaped
+        const filenameText = document.createTextNode(file.original_filename);
+        h4.appendChild(filenameText);
+
+        // Add file type badge
+        const badge = getFileTypeBadge(file.file_extension);
+        h4.appendChild(badge);
 
         const metaDiv = document.createElement('div');
         metaDiv.className = 'file-item-meta';
 
-        // Build meta text safely
-        let metaText = `${fileSize} • ${file.file_extension.toUpperCase()} • ${date}`;
+        // Build meta with separators (no extension, it's in the badge now)
+        metaDiv.appendChild(document.createTextNode(fileSize));
+
+        const sep1 = document.createElement('span');
+        sep1.className = 'meta-separator';
+        sep1.textContent = '•';
+        metaDiv.appendChild(sep1);
+
+        metaDiv.appendChild(document.createTextNode(date));
+
         if (ownerId) {
-            metaText += ' • ';
-            metaDiv.appendChild(document.createTextNode(metaText));
+            const sep2 = document.createElement('span');
+            sep2.className = 'meta-separator';
+            sep2.textContent = '•';
+            metaDiv.appendChild(sep2);
 
             const ownerLink = document.createElement('a');
             ownerLink.href = '#';
             ownerLink.className = 'owner-filter-link';
             ownerLink.dataset.ownerId = ownerId;
             ownerLink.dataset.ownerName = ownerName;
-            ownerLink.style.color = 'var(--primary-color)';
-            ownerLink.style.textDecoration = 'none';
-            ownerLink.style.fontWeight = '600';
             ownerLink.textContent = `👤 ${ownerName}`; // Auto-escaped
 
             metaDiv.appendChild(ownerLink);
-        } else {
-            metaDiv.textContent = metaText;
         }
 
         detailsDiv.appendChild(h4);
