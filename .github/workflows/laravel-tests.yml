@@ -95,6 +95,14 @@ jobs:
       working-directory: ./webapp
       run: composer dump-autoload
 
+    - name: Install NPM Dependencies (Webapp)
+      working-directory: ./webapp
+      run: npm ci
+
+    - name: Build Frontend Assets
+      working-directory: ./webapp
+      run: npm run build
+
     - name: Install NPM Dependencies (Tests)
       working-directory: ./tests
       run: npm ci
