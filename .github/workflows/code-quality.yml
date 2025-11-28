@@ -39,7 +39,15 @@ jobs:
           chmod -R 777 bootstrap/cache
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run post-autoload-dump
+        run: composer dump-autoload
 
       - name: Run Laravel Pint
         id: pint

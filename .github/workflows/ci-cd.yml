@@ -61,7 +61,15 @@ jobs:
           chmod -R 777 bootstrap/cache
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --no-scripts --optimize-autoloader
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run post-autoload-dump
+        run: composer dump-autoload --optimize
 
       - name: Run Laravel Pint (Code Style)
         run: ./vendor/bin/pint --test
@@ -347,7 +355,17 @@ jobs:
 
       - name: Install Composer dependencies
         working-directory: ./webapp
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Setup environment
+        working-directory: ./webapp
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run post-autoload-dump
+        working-directory: ./webapp
+        run: composer dump-autoload
 
       - name: Check Composer dependencies for vulnerabilities
         working-directory: ./webapp
