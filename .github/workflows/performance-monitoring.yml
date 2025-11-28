@@ -11,18 +11,87 @@ on:
 jobs:
   performance-tests:
     name: Run Performance Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: entoo_test
+          POSTGRES_USER: entoo
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      elasticsearch:
+        image: elasticsearch:7.17.10
+        env:
+          discovery.type: single-node
+        options: >-
+          --health-cmd "curl http://localhost:9200/_cluster/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 9200:9200
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Ensure containers are running
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ./webapp
         run: |
-          docker-compose up -d
-          Start-Sleep -Seconds 30
-        shell: pwsh
+          composer install --no-interaction --prefer-dist
+          npm ci
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Start Server
+        working-directory: ./webapp
+        run: |
+          php artisan serve --port=8000 &
+          sleep 5
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          ELASTICSEARCH_HOSTS: http://localhost:9200
 
       - name: Run Playwright performance tests
         working-directory: ./tests
@@ -34,99 +103,74 @@ jobs:
       - name: Parse performance results
         id: parse
         run: |
-          $results = Get-Content tests/performance-results.json | ConvertFrom-Json
+          # Extract key metrics using jq
+          totalTests=$(jq '.suites[].specs[].tests | length' tests/performance-results.json | awk '{s+=$1} END {print s}')
+          passedTests=$(jq '.suites[].specs[].tests[] | select(.status=="passed") | length' tests/performance-results.json | wc -l)
 
-          # Extract key metrics
-          $totalTests = $results.suites.specs.tests.Count
-          $passedTests = ($results.suites.specs.tests | Where-Object { $_.status -eq 'passed' }).Count
-
-          Write-Output "total_tests=$totalTests" >> $env:GITHUB_OUTPUT
-          Write-Output "passed_tests=$passedTests" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          echo "total_tests=$totalTests" >> $GITHUB_OUTPUT
+          echo "passed_tests=$passedTests" >> $GITHUB_OUTPUT
+        continue-on-error: true
 
       - name: Run API endpoint benchmarks
         id: benchmark
         run: |
-          Write-Host "Running API benchmarks..."
+          echo "Running API benchmarks..."
+
+          # Function to calculate average
+          calc_avg() {
+            local url=$1
+            local total=0
+            for i in {1..10}; do
+              start=$(date +%s%N)
+              curl -s -o /dev/null "$url"
+              end=$(date +%s%N)
+              duration=$(( ($end - $start) / 1000000 ))
+              total=$((total + duration))
+            done
+            echo $((total / 10))
+          }
 
           # Test /api/subjects endpoint
-          $subjects_times = @()
-          for ($i = 0; $i -lt 10; $i++) {
-            $start = Get-Date
-            $response = Invoke-WebRequest -Uri "http://localhost:8000/api/subjects?with_counts=true" -UseBasicParsing
-            $end = Get-Date
-            $duration = ($end - $start).TotalMilliseconds
-            $subjects_times += $duration
-          }
-
-          $avg_subjects = ($subjects_times | Measure-Object -Average).Average
-          Write-Host "Average /api/subjects response time: $avg_subjects ms"
+          avg_subjects=$(calc_avg "http://localhost:8000/api/subjects?with_counts=true")
+          echo "Average /api/subjects response time: $avg_subjects ms"
 
           # Test /api/search endpoint
-          $search_times = @()
-          for ($i = 0; $i -lt 10; $i++) {
-            $start = Get-Date
-            $response = Invoke-WebRequest -Uri "http://localhost:8000/api/search?q=test" -UseBasicParsing
-            $end = Get-Date
-            $duration = ($end - $start).TotalMilliseconds
-            $search_times += $duration
-          }
-
-          $avg_search = ($search_times | Measure-Object -Average).Average
-          Write-Host "Average /api/search response time: $avg_search ms"
+          avg_search=$(calc_avg "http://localhost:8000/api/search?q=test")
+          echo "Average /api/search response time: $avg_search ms"
 
           # Output metrics
-          Write-Output "subjects_avg=$avg_subjects" >> $env:GITHUB_OUTPUT
-          Write-Output "search_avg=$avg_search" >> $env:GITHUB_OUTPUT
+          echo "subjects_avg=$avg_subjects" >> $GITHUB_OUTPUT
+          echo "search_avg=$avg_search" >> $GITHUB_OUTPUT
 
           # Check against thresholds
-          if ($avg_subjects -gt 100) {
-            Write-Warning "⚠️ /api/subjects response time exceeds 100ms threshold"
-          }
+          if [ "$avg_subjects" -gt 100 ]; then
+            echo "::warning::/api/subjects response time exceeds 100ms threshold"
+          fi
 
-          if ($avg_search -gt 200) {
-            Write-Warning "⚠️ /api/search response time exceeds 200ms threshold"
-          }
-        shell: pwsh
+          if [ "$avg_search" -gt 200 ]; then
+            echo "::warning::/api/search response time exceeds 200ms threshold"
+          fi
+        continue-on-error: true
 
       - name: Database query performance
         run: |
-          Write-Host "Analyzing database query performance..."
-
-          # Get slow query log
-          docker exec postgres psql -U entoo -d entoo -c "
-            SELECT
-              calls,
-              mean_exec_time::numeric(10,2) as avg_time_ms,
-              max_exec_time::numeric(10,2) as max_time_ms,
-              query
-            FROM pg_stat_statements
-            WHERE mean_exec_time > 100
-            ORDER BY mean_exec_time DESC
-            LIMIT 10;
-          " || Write-Host "pg_stat_statements not available"
-        shell: pwsh
-        continue-on-error: true
+          echo "Analyzing database query performance..."
+          # Requires pg_stat_statements enabled in postgres container
+          # Skipping for now as it requires specific postgres config
+          echo "Skipping database query analysis"
 
       - name: Redis performance
         run: |
-          Write-Host "Checking Redis performance..."
-
-          docker exec redis redis-cli INFO stats | Select-String "instantaneous_ops_per_sec"
-          docker exec redis redis-cli INFO memory | Select-String "used_memory_human"
-        shell: pwsh
+          echo "Checking Redis performance..."
+          redis-cli -h localhost INFO stats | grep "instantaneous_ops_per_sec" || true
+          redis-cli -h localhost INFO memory | grep "used_memory_human" || true
 
       - name: Elasticsearch performance
         run: |
-          Write-Host "Checking Elasticsearch performance..."
-
-          $esHealth = Invoke-RestMethod -Uri "http://localhost:9200/_cluster/health"
-          Write-Host "Cluster status: $($esHealth.status)"
-
-          $esStats = Invoke-RestMethod -Uri "http://localhost:9200/_stats"
-          Write-Host "Documents indexed: $($esStats._all.total.docs.count)"
-          Write-Host "Index size: $($esStats._all.total.store.size_in_bytes / 1MB) MB"
-        shell: pwsh
+          echo "Checking Elasticsearch performance..."
+          curl -s http://localhost:9200/_cluster/health | jq .status
+          curl -s http://localhost:9200/_stats | jq '._all.total.docs.count'
+        continue-on-error: true
 
       - name: Generate performance report
         if: always()

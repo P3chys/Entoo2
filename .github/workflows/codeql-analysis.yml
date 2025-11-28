@@ -1,13 +1,22 @@
 name: CodeQL Security Analysis
 
+# NOTE: This workflow is currently disabled to avoid conflicts with GitHub's default CodeQL setup.
+# To re-enable: Go to Repository Settings → Code security and analysis → Disable "CodeQL analysis"
+# Then uncomment the triggers below.
+
+# DISABLED - Conflicts with default CodeQL
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+#   schedule:
+#     # Run at 2 AM UTC every Monday
+#     - cron: '0 2 * * 1'
+#   workflow_dispatch:
+
+# Workflow will not trigger automatically - only via workflow_dispatch if manually enabled
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run at 2 AM UTC every Monday
-    - cron: '0 2 * * 1'
   workflow_dispatch:
 
 jobs:

@@ -13,8 +13,11 @@ jobs:
   # ============================================
   php-quality:
     name: PHP Code Quality
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./webapp
 
     steps:
       - name: Checkout code
@@ -22,81 +25,73 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: none
+          tools: composer
+
       - name: Install dependencies
-        run: docker exec php composer install --no-interaction --prefer-dist
-        shell: pwsh
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run Laravel Pint
         id: pint
-        run: |
-          docker exec php ./vendor/bin/pint --test
-        shell: pwsh
+        run: ./vendor/bin/pint --test
         continue-on-error: true
 
       - name: Run PHPStan
         id: phpstan
         run: |
-          docker exec php ./vendor/bin/phpstan analyse --memory-limit=2G --error-format=json > phpstan-report.json || $true
-          $report = Get-Content phpstan-report.json | ConvertFrom-Json
-
-          if ($report.totals.errors -gt 0) {
-            Write-Warning "Found $($report.totals.errors) PHPStan errors"
-          }
-
-          Write-Output "errors=$($report.totals.errors)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          ./vendor/bin/phpstan analyse --memory-limit=2G --error-format=json > phpstan-report.json || true
+          errors=$(jq -r '.totals.errors // 0' phpstan-report.json)
+          echo "errors=$errors" >> $GITHUB_OUTPUT
+          if [ "$errors" -gt 0 ]; then
+            echo "::warning::Found $errors PHPStan errors"
+          fi
         continue-on-error: true
 
       - name: Run PHP Code Sniffer
         id: phpcs
         run: |
-          docker exec php ./vendor/bin/phpcs --standard=PSR12 app/ --report=json > phpcs-report.json || $true
-          $report = Get-Content phpcs-report.json | ConvertFrom-Json
-
-          $totalErrors = ($report.totals.errors + $report.totals.warnings)
-          Write-Host "Found $totalErrors PHPCS issues"
-
-          Write-Output "issues=$totalErrors" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          ./vendor/bin/phpcs --standard=PSR12 app/ --report=json > phpcs-report.json || true
+          if [ -f phpcs-report.json ]; then
+            totalIssues=$(jq -r '.totals.errors + .totals.warnings' phpcs-report.json)
+            echo "Found $totalIssues PHPCS issues"
+            echo "issues=$totalIssues" >> $GITHUB_OUTPUT
+          else
+            echo "issues=0" >> $GITHUB_OUTPUT
+          fi
         continue-on-error: true
 
       - name: Check for code smells
         id: code_smells
         run: |
-          Write-Host "Checking for common code smells..."
-
-          # Check for commented code
-          $commentedCode = docker exec php grep -rn "//\s*\(function\|class\|if\|for\|while\)" app/ || $true
+          echo "Checking for common code smells..."
 
           # Check for TODO/FIXME comments
-          $todos = docker exec php grep -rn "TODO\|FIXME\|XXX\|HACK" app/ || $true
-          if ($todos) {
-            Write-Warning "Found TODO/FIXME comments that should be addressed"
-            Write-Output $todos
-          }
+          if grep -rn "TODO\|FIXME\|XXX\|HACK" app/ 2>/dev/null; then
+            echo "::warning::Found TODO/FIXME comments that should be addressed"
+          fi
 
           # Check for var_dump/dd/dump usage
-          $debugCode = docker exec php grep -rn "var_dump\|dd(\|dump(" app/ || $true
-          if ($debugCode) {
-            Write-Error "Found debug statements in code!"
-            Write-Output $debugCode
+          if grep -rn "var_dump\|\bdd(\|\bdump(" app/ 2>/dev/null; then
+            echo "::error::Found debug statements in code!"
             exit 1
-          }
+          fi
 
           # Check for long files (>500 lines)
-          $longFiles = docker exec php find app/ -name "*.php" -exec wc -l {} \; | Where-Object { $_.Split()[0] -gt 500 }
-          if ($longFiles) {
-            Write-Warning "Found files with >500 lines - consider refactoring"
-          }
-        shell: pwsh
+          find app/ -name "*.php" -exec wc -l {} \; | while read lines file; do
+            if [ "$lines" -gt 500 ]; then
+              echo "::warning::File $file has $lines lines - consider refactoring"
+            fi
+          done
         continue-on-error: true
 
       - name: Measure code complexity
         id: complexity
-        run: |
-          # Using PHPStan to measure complexity
-          docker exec php ./vendor/bin/phpstan analyse --level=max app/ --no-progress --error-format=json > complexity.json || $true
-        shell: pwsh
+        run: ./vendor/bin/phpstan analyse --level=max app/ --no-progress --error-format=json > complexity.json || true
         continue-on-error: true
 
       - name: Generate PHP quality report

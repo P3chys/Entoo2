@@ -28,8 +28,11 @@ jobs:
   # ============================================
   code-quality:
     name: Code Quality & Linting
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./webapp
 
     steps:
       - name: Checkout code
@@ -37,43 +40,44 @@ jobs:
         with:
           fetch-depth: 0  # Full history for better analysis
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: none
+
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: ${{ env.COMPOSER_CACHE_DIR }}
+          path: webapp/vendor
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: docker exec php composer install --no-interaction --prefer-dist --optimize-autoloader
-        shell: pwsh
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run Laravel Pint (Code Style)
-        run: docker exec php ./vendor/bin/pint --test
-        shell: pwsh
+        run: ./vendor/bin/pint --test
 
       - name: Run PHPStan (Static Analysis)
-        run: docker exec php ./vendor/bin/phpstan analyse --memory-limit=2G || true
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G || true
         continue-on-error: true
-        shell: pwsh
 
       - name: Check for Laravel best practices
         run: |
-          Write-Host "Checking for common Laravel anti-patterns..."
+          echo "Checking for common Laravel anti-patterns..."
 
           # Check for DB::raw usage (potential SQL injection)
-          $rawUsage = docker exec php grep -r "DB::raw" app/ || $true
-          if ($rawUsage) {
-            Write-Warning "Found DB::raw usage - ensure proper sanitization"
-          }
+          if grep -r "DB::raw" app/ 2>/dev/null; then
+            echo "::warning::Found DB::raw usage - ensure proper sanitization"
+          fi
 
           # Check for env() in config files (should use config())
-          $envInCode = docker exec php grep -r "env(" app/ || $true
-          if ($envInCode) {
-            Write-Warning "Found env() calls outside config files"
-          }
-        shell: pwsh
+          if grep -r "env(" app/ 2>/dev/null; then
+            echo "::warning::Found env() calls outside config files"
+          fi
 
   # ============================================
   # Frontend Quality
@@ -124,59 +128,79 @@ jobs:
   # ============================================
   backend-tests:
     name: Backend Tests (PHPUnit)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [code-quality]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: entoo_test
+          POSTGRES_USER: entoo
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Ensure Docker containers are running
-        run: |
-          $containerStatus = docker inspect -f '{{.State.Running}}' php 2>$null
-          if ($containerStatus -ne "true") {
-            Write-Host "Starting Docker containers..."
-            docker-compose up -d
-
-            # Wait for containers to be healthy
-            $timeout = 120
-            $elapsed = 0
-            while ($elapsed -lt $timeout) {
-              $postgresHealthy = docker inspect --format='{{.State.Health.Status}}' postgres 2>$null
-              $phpRunning = docker inspect -f '{{.State.Running}}' php 2>$null
-
-              if ($postgresHealthy -eq "healthy" -and $phpRunning -eq "true") {
-                Write-Host "Containers are ready"
-                break
-              }
-
-              Start-Sleep -Seconds 10
-              $elapsed += 10
-            }
-          }
-        shell: pwsh
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pgsql, redis, zip, gd
+          coverage: xdebug
 
       - name: Install dependencies
-        run: docker exec php composer install --no-interaction --prefer-dist
-        shell: pwsh
+        working-directory: ./webapp
+        run: composer install --no-interaction --prefer-dist
 
-      - name: Set up test environment
+      - name: Copy .env and generate key
+        working-directory: ./webapp
         run: |
-          docker exec php php artisan config:clear
-          docker exec php php artisan cache:clear
-        shell: pwsh
+          cp .env.example .env
+          php artisan key:generate
 
       - name: Run database migrations
-        run: docker exec php php artisan migrate --force
-        shell: pwsh
+        working-directory: ./webapp
+        run: php artisan migrate --force
         env:
           DB_CONNECTION: pgsql
-          DB_HOST: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
 
       - name: Run PHPUnit tests with coverage
-        run: docker exec php php artisan test --parallel --coverage --min=80
-        shell: pwsh
+        working-directory: ./webapp
+        run: php artisan test --parallel --coverage --min=80
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: entoo_test
+          DB_USERNAME: entoo
+          DB_PASSWORD: secret
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
 
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
@@ -191,7 +215,7 @@ jobs:
   # ============================================
   e2e-tests:
     name: E2E Tests (Playwright)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [backend-tests, frontend-quality]
 
@@ -295,7 +319,7 @@ jobs:
   # ============================================
   security-scan-php:
     name: Security Scan (PHP Dependencies)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       security-events: write
@@ -304,9 +328,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer
+
+      - name: Install Composer dependencies
+        working-directory: ./webapp
+        run: composer install --no-interaction --prefer-dist
+
       - name: Check Composer dependencies for vulnerabilities
-        run: docker exec php composer audit
-        shell: pwsh
+        working-directory: ./webapp
+        run: composer audit
         continue-on-error: true
 
   # ============================================
