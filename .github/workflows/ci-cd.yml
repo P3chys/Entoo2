@@ -56,7 +56,9 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Create cache directory
-        run: mkdir -p webapp/bootstrap/cache
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 777 bootstrap/cache
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -339,7 +341,9 @@ jobs:
 
       - name: Create cache directory
         working-directory: ./webapp
-        run: mkdir -p bootstrap/cache
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 777 bootstrap/cache
 
       - name: Install Composer dependencies
         working-directory: ./webapp

@@ -34,7 +34,9 @@ jobs:
           tools: composer
 
       - name: Create cache directory
-        run: mkdir -p bootstrap/cache
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 777 bootstrap/cache
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
