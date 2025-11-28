@@ -1,0 +1,224 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests (not recommended for production)'
+        required: false
+        type: boolean
+        default: false
+
+  release:
+    types: [published]
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # Pre-deployment Tests
+  # ============================================
+  pre-deployment-tests:
+    name: Pre-deployment Tests
+    runs-on: self-hosted
+    if: github.event.inputs.skip_tests != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run full test suite
+        run: |
+          Write-Host "Running pre-deployment tests..."
+          docker exec php php artisan test --parallel
+        shell: pwsh
+
+      - name: Run E2E tests
+        working-directory: ./tests
+        run: |
+          npm ci
+          npx playwright test --reporter=list
+        continue-on-error: false
+
+  # ============================================
+  # Deploy to Environment
+  # ============================================
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-tests]
+    if: always() && (needs.pre-deployment-tests.result == 'success' || needs.pre-deployment-tests.result == 'skipped')
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup deployment environment
+        id: setup
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'production' }}"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+          case $ENVIRONMENT in
+            development)
+              echo "url=https://dev.entoo.example.com" >> $GITHUB_OUTPUT
+              echo "server=${{ secrets.DEV_SERVER_HOST }}" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "url=https://staging.entoo.example.com" >> $GITHUB_OUTPUT
+              echo "server=${{ secrets.STAGING_SERVER_HOST }}" >> $GITHUB_OUTPUT
+              ;;
+            production)
+              echo "url=https://entoo.example.com" >> $GITHUB_OUTPUT
+              echo "server=${{ secrets.PROD_SERVER_HOST }}" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Deploy via SSH
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          ENVIRONMENT: ${{ steps.setup.outputs.environment }}
+        with:
+          host: ${{ steps.setup.outputs.server }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+          envs: ENVIRONMENT
+          script: |
+            set -e
+
+            echo "Deploying to $ENVIRONMENT environment..."
+
+            # Navigate to application directory
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Create backup before deployment
+            echo "Creating backup..."
+            BACKUP_DIR="backups/$(date +%Y%m%d_%H%M%S)"
+            mkdir -p $BACKUP_DIR
+            cp -r storage/app $BACKUP_DIR/
+
+            # Pull latest changes
+            echo "Pulling latest changes..."
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+
+            # Install dependencies
+            echo "Installing dependencies..."
+            cd webapp
+            composer install --no-dev --optimize-autoloader --no-interaction
+            npm ci
+            npm run build
+
+            # Run migrations
+            echo "Running database migrations..."
+            php artisan migrate --force
+
+            # Clear and optimize caches
+            echo "Optimizing caches..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            # Restart services
+            echo "Restarting services..."
+            docker-compose restart php nginx
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Run smoke tests
+        run: |
+          DEPLOY_URL="${{ steps.setup.outputs.url }}"
+
+          echo "Running smoke tests on $DEPLOY_URL..."
+
+          # Test main endpoint
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $DEPLOY_URL/api/health)
+          if [ "$HEALTH_STATUS" != "200" ]; then
+            echo "❌ Health check failed with status $HEALTH_STATUS"
+            exit 1
+          fi
+
+          echo "✅ Smoke tests passed"
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "## ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.setup.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Rollback on failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ steps.setup.outputs.server }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+          script: |
+            echo "❌ Deployment failed, initiating rollback..."
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Restore from latest backup
+            LATEST_BACKUP=$(ls -td backups/* | head -1)
+            if [ -d "$LATEST_BACKUP" ]; then
+              echo "Restoring from backup: $LATEST_BACKUP"
+              cp -r $LATEST_BACKUP/app storage/
+              docker-compose restart php nginx
+              echo "✅ Rollback completed"
+            else
+              echo "⚠️ No backup found for rollback"
+            fi
+
+  # ============================================
+  # Post-deployment
+  # ============================================
+  post-deployment:
+    name: Post-deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: success()
+
+    steps:
+      - name: Clear CDN cache
+        if: github.event.inputs.environment == 'production'
+        run: |
+          echo "Clearing CDN cache..."
+          # Add your CDN cache clearing logic here
+          # Example: curl -X POST https://api.cloudflare.com/...
+
+      - name: Send deployment notification
+        run: |
+          echo "Sending deployment notification..."
+          # Add your notification logic here (Slack, Discord, email, etc.)
+          # Example using webhook:
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Deployed to ${{ github.event.inputs.environment }}"}'
+
+      - name: Create deployment tag
+        if: github.event.inputs.environment == 'production'
+        run: |
+          echo "Creating deployment tag..."
+          # Tag format: deploy-production-YYYYMMDD-HHMMSS
+          TAG="deploy-production-$(date +%Y%m%d-%H%M%S)"
+          git tag $TAG
+          git push origin $TAG

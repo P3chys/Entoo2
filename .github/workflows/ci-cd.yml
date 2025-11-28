@@ -1,0 +1,342 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+  COMPOSER_CACHE_DIR: ~/.composer/cache
+  NPM_CACHE_DIR: ~/.npm
+
+jobs:
+  # ============================================
+  # Code Quality & Linting
+  # ============================================
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: self-hosted
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.COMPOSER_CACHE_DIR }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: docker exec php composer install --no-interaction --prefer-dist --optimize-autoloader
+        shell: pwsh
+
+      - name: Run Laravel Pint (Code Style)
+        run: docker exec php ./vendor/bin/pint --test
+        shell: pwsh
+
+      - name: Run PHPStan (Static Analysis)
+        run: docker exec php ./vendor/bin/phpstan analyse --memory-limit=2G || true
+        continue-on-error: true
+        shell: pwsh
+
+      - name: Check for Laravel best practices
+        run: |
+          Write-Host "Checking for common Laravel anti-patterns..."
+
+          # Check for DB::raw usage (potential SQL injection)
+          $rawUsage = docker exec php grep -r "DB::raw" app/ || $true
+          if ($rawUsage) {
+            Write-Warning "Found DB::raw usage - ensure proper sanitization"
+          }
+
+          # Check for env() in config files (should use config())
+          $envInCode = docker exec php grep -r "env(" app/ || $true
+          if ($envInCode) {
+            Write-Warning "Found env() calls outside config files"
+          }
+        shell: pwsh
+
+  # ============================================
+  # Frontend Quality
+  # ============================================
+  frontend-quality:
+    name: Frontend Quality
+    runs-on: self-hosted
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./webapp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Check for console.log statements
+        run: |
+          $consoleFound = Select-String -Path "resources/js/**/*.js" -Pattern "console\.(log|debug|info)" -Recurse
+          if ($consoleFound) {
+            Write-Warning "Found console statements in production code:"
+            $consoleFound | Format-Table
+          }
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: webapp/public/build/
+          retention-days: 7
+
+  # ============================================
+  # Backend Tests
+  # ============================================
+  backend-tests:
+    name: Backend Tests (PHPUnit)
+    runs-on: self-hosted
+    timeout-minutes: 15
+    needs: [code-quality]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure Docker containers are running
+        run: |
+          $containerStatus = docker inspect -f '{{.State.Running}}' php 2>$null
+          if ($containerStatus -ne "true") {
+            Write-Host "Starting Docker containers..."
+            docker-compose up -d
+
+            # Wait for containers to be healthy
+            $timeout = 120
+            $elapsed = 0
+            while ($elapsed -lt $timeout) {
+              $postgresHealthy = docker inspect --format='{{.State.Health.Status}}' postgres 2>$null
+              $phpRunning = docker inspect -f '{{.State.Running}}' php 2>$null
+
+              if ($postgresHealthy -eq "healthy" -and $phpRunning -eq "true") {
+                Write-Host "Containers are ready"
+                break
+              }
+
+              Start-Sleep -Seconds 10
+              $elapsed += 10
+            }
+          }
+        shell: pwsh
+
+      - name: Install dependencies
+        run: docker exec php composer install --no-interaction --prefer-dist
+        shell: pwsh
+
+      - name: Set up test environment
+        run: |
+          docker exec php php artisan config:clear
+          docker exec php php artisan cache:clear
+        shell: pwsh
+
+      - name: Run database migrations
+        run: docker exec php php artisan migrate --force
+        shell: pwsh
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: postgres
+
+      - name: Run PHPUnit tests with coverage
+        run: docker exec php php artisan test --parallel --coverage --min=80
+        shell: pwsh
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: webapp/coverage/
+          retention-days: 30
+
+  # ============================================
+  # E2E Tests
+  # ============================================
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: self-hosted
+    timeout-minutes: 20
+    needs: [backend-tests, frontend-quality]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './tests/package-lock.json'
+
+      - name: Install Playwright dependencies
+        working-directory: ./tests
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Run performance tests
+        working-directory: ./tests
+        run: npx playwright test tests/performance/ --reporter=list
+        continue-on-error: false
+
+      - name: Run caching tests
+        working-directory: ./tests
+        run: npx playwright test tests/caching/ --reporter=list
+        continue-on-error: false
+
+      - name: Run PDF parsing tests
+        working-directory: ./tests
+        run: npx playwright test tests/pdf-parsing.spec.ts --reporter=list
+        continue-on-error: false
+
+      - name: Skip GUI tests (Auth required)
+        working-directory: ./tests
+        run: |
+          echo "⚠️ GUI tests skipped in CI - require authentication setup"
+          echo "GUI tests can be run locally: npm test tests/gui/"
+          echo "Total GUI tests: 71 (auth, favorites, file-upload, search, subject-profile, dashboard)"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: tests/test-results/
+          retention-days: 7
+
+  # ============================================
+  # Security Scan
+  # ============================================
+  security-scan:
+    name: Security Scanning
+    runs-on: self-hosted
+    timeout-minutes: 10
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for secrets
+        run: |
+          # Check for common secret patterns
+          Write-Host "Scanning for potential secrets..."
+
+          $patterns = @(
+            "password\s*=\s*['\"][^'\"]+['\"]",
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]",
+            "secret\s*=\s*['\"][^'\"]+['\"]",
+            "token\s*=\s*['\"][^'\"]+['\"]"
+          )
+
+          foreach ($pattern in $patterns) {
+            $found = Select-String -Pattern $pattern -Path "**/*.php","**/*.js","**/*.env.example" -Exclude "vendor/**","node_modules/**" 2>$null
+            if ($found) {
+              Write-Warning "Potential secret found: $pattern"
+            }
+          }
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Check Composer dependencies for vulnerabilities
+        run: docker exec php composer audit
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Check NPM dependencies for vulnerabilities
+        working-directory: ./webapp
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ============================================
+  # Build Status
+  # ============================================
+  build-status:
+    name: Build Status
+    runs-on: self-hosted
+    needs: [code-quality, frontend-quality, backend-tests, e2e-tests, security-scan]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          Write-Host "=== BUILD SUMMARY ==="
+          Write-Host "Code Quality: ${{ needs.code-quality.result }}"
+          Write-Host "Frontend Quality: ${{ needs.frontend-quality.result }}"
+          Write-Host "Backend Tests: ${{ needs.backend-tests.result }}"
+          Write-Host "E2E Tests: ${{ needs.e2e-tests.result }}"
+          Write-Host "Security Scan: ${{ needs.security-scan.result }}"
+
+          if ("${{ needs.backend-tests.result }}" -ne "success" -or "${{ needs.e2e-tests.result }}" -ne "success") {
+            Write-Error "Build failed! Check test results."
+            exit 1
+          }
+
+          Write-Host "✅ All required checks passed!"
+        shell: pwsh
+
+      - name: Post build summary
+        if: always()
+        run: |
+          $summary = @"
+          ## Build Results
+
+          | Check | Status |
+          |-------|--------|
+          | Code Quality | ${{ needs.code-quality.result }} |
+          | Frontend Quality | ${{ needs.frontend-quality.result }} |
+          | Backend Tests | ${{ needs.backend-tests.result }} |
+          | E2E Tests | ${{ needs.e2e-tests.result }} |
+          | Security Scan | ${{ needs.security-scan.result }} |
+          "@
+
+          Write-Host $summary
+        shell: pwsh

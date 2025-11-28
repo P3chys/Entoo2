@@ -1,0 +1,165 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  performance-tests:
+    name: Run Performance Tests
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure containers are running
+        run: |
+          docker-compose up -d
+          Start-Sleep -Seconds 30
+        shell: pwsh
+
+      - name: Run Playwright performance tests
+        working-directory: ./tests
+        run: |
+          npm ci
+          npx playwright install chromium
+          npx playwright test tests/performance/ --reporter=json --output=performance-results.json
+
+      - name: Parse performance results
+        id: parse
+        run: |
+          $results = Get-Content tests/performance-results.json | ConvertFrom-Json
+
+          # Extract key metrics
+          $totalTests = $results.suites.specs.tests.Count
+          $passedTests = ($results.suites.specs.tests | Where-Object { $_.status -eq 'passed' }).Count
+
+          Write-Output "total_tests=$totalTests" >> $env:GITHUB_OUTPUT
+          Write-Output "passed_tests=$passedTests" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Run API endpoint benchmarks
+        id: benchmark
+        run: |
+          Write-Host "Running API benchmarks..."
+
+          # Test /api/subjects endpoint
+          $subjects_times = @()
+          for ($i = 0; $i -lt 10; $i++) {
+            $start = Get-Date
+            $response = Invoke-WebRequest -Uri "http://localhost:8000/api/subjects?with_counts=true" -UseBasicParsing
+            $end = Get-Date
+            $duration = ($end - $start).TotalMilliseconds
+            $subjects_times += $duration
+          }
+
+          $avg_subjects = ($subjects_times | Measure-Object -Average).Average
+          Write-Host "Average /api/subjects response time: $avg_subjects ms"
+
+          # Test /api/search endpoint
+          $search_times = @()
+          for ($i = 0; $i -lt 10; $i++) {
+            $start = Get-Date
+            $response = Invoke-WebRequest -Uri "http://localhost:8000/api/search?q=test" -UseBasicParsing
+            $end = Get-Date
+            $duration = ($end - $start).TotalMilliseconds
+            $search_times += $duration
+          }
+
+          $avg_search = ($search_times | Measure-Object -Average).Average
+          Write-Host "Average /api/search response time: $avg_search ms"
+
+          # Output metrics
+          Write-Output "subjects_avg=$avg_subjects" >> $env:GITHUB_OUTPUT
+          Write-Output "search_avg=$avg_search" >> $env:GITHUB_OUTPUT
+
+          # Check against thresholds
+          if ($avg_subjects -gt 100) {
+            Write-Warning "⚠️ /api/subjects response time exceeds 100ms threshold"
+          }
+
+          if ($avg_search -gt 200) {
+            Write-Warning "⚠️ /api/search response time exceeds 200ms threshold"
+          }
+        shell: pwsh
+
+      - name: Database query performance
+        run: |
+          Write-Host "Analyzing database query performance..."
+
+          # Get slow query log
+          docker exec postgres psql -U entoo -d entoo -c "
+            SELECT
+              calls,
+              mean_exec_time::numeric(10,2) as avg_time_ms,
+              max_exec_time::numeric(10,2) as max_time_ms,
+              query
+            FROM pg_stat_statements
+            WHERE mean_exec_time > 100
+            ORDER BY mean_exec_time DESC
+            LIMIT 10;
+          " || Write-Host "pg_stat_statements not available"
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Redis performance
+        run: |
+          Write-Host "Checking Redis performance..."
+
+          docker exec redis redis-cli INFO stats | Select-String "instantaneous_ops_per_sec"
+          docker exec redis redis-cli INFO memory | Select-String "used_memory_human"
+        shell: pwsh
+
+      - name: Elasticsearch performance
+        run: |
+          Write-Host "Checking Elasticsearch performance..."
+
+          $esHealth = Invoke-RestMethod -Uri "http://localhost:9200/_cluster/health"
+          Write-Host "Cluster status: $($esHealth.status)"
+
+          $esStats = Invoke-RestMethod -Uri "http://localhost:9200/_stats"
+          Write-Host "Documents indexed: $($esStats._all.total.docs.count)"
+          Write-Host "Index size: $($esStats._all.total.store.size_in_bytes / 1MB) MB"
+        shell: pwsh
+
+      - name: Generate performance report
+        if: always()
+        run: |
+          echo "## Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "| Endpoint | Avg Response Time | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| /api/subjects | ${{ steps.benchmark.outputs.subjects_avg }}ms | ${{ steps.benchmark.outputs.subjects_avg < 100 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| /api/search | ${{ steps.benchmark.outputs.search_avg }}ms | ${{ steps.benchmark.outputs.search_avg < 200 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Total: ${{ steps.parse.outputs.total_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: ${{ steps.parse.outputs.passed_tests }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-results
+          path: |
+            tests/performance-results.json
+            tests/playwright-report/
+          retention-days: 30
+
+      - name: Alert on performance degradation
+        if: steps.benchmark.outputs.subjects_avg > 100 || steps.benchmark.outputs.search_avg > 200
+        run: |
+          echo "⚠️ Performance degradation detected!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "One or more endpoints are performing slower than expected." >> $GITHUB_STEP_SUMMARY
+          echo "Please investigate and optimize." >> $GITHUB_STEP_SUMMARY
+
+          # Send alert (configure your notification method)
+          # Example: Slack webhook, email, etc.

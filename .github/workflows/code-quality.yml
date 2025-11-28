@@ -1,0 +1,314 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  # ============================================
+  # PHP Code Quality
+  # ============================================
+  php-quality:
+    name: PHP Code Quality
+    runs-on: self-hosted
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: docker exec php composer install --no-interaction --prefer-dist
+        shell: pwsh
+
+      - name: Run Laravel Pint
+        id: pint
+        run: |
+          docker exec php ./vendor/bin/pint --test
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Run PHPStan
+        id: phpstan
+        run: |
+          docker exec php ./vendor/bin/phpstan analyse --memory-limit=2G --error-format=json > phpstan-report.json || $true
+          $report = Get-Content phpstan-report.json | ConvertFrom-Json
+
+          if ($report.totals.errors -gt 0) {
+            Write-Warning "Found $($report.totals.errors) PHPStan errors"
+          }
+
+          Write-Output "errors=$($report.totals.errors)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Run PHP Code Sniffer
+        id: phpcs
+        run: |
+          docker exec php ./vendor/bin/phpcs --standard=PSR12 app/ --report=json > phpcs-report.json || $true
+          $report = Get-Content phpcs-report.json | ConvertFrom-Json
+
+          $totalErrors = ($report.totals.errors + $report.totals.warnings)
+          Write-Host "Found $totalErrors PHPCS issues"
+
+          Write-Output "issues=$totalErrors" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Check for code smells
+        id: code_smells
+        run: |
+          Write-Host "Checking for common code smells..."
+
+          # Check for commented code
+          $commentedCode = docker exec php grep -rn "//\s*\(function\|class\|if\|for\|while\)" app/ || $true
+
+          # Check for TODO/FIXME comments
+          $todos = docker exec php grep -rn "TODO\|FIXME\|XXX\|HACK" app/ || $true
+          if ($todos) {
+            Write-Warning "Found TODO/FIXME comments that should be addressed"
+            Write-Output $todos
+          }
+
+          # Check for var_dump/dd/dump usage
+          $debugCode = docker exec php grep -rn "var_dump\|dd(\|dump(" app/ || $true
+          if ($debugCode) {
+            Write-Error "Found debug statements in code!"
+            Write-Output $debugCode
+            exit 1
+          }
+
+          # Check for long files (>500 lines)
+          $longFiles = docker exec php find app/ -name "*.php" -exec wc -l {} \; | Where-Object { $_.Split()[0] -gt 500 }
+          if ($longFiles) {
+            Write-Warning "Found files with >500 lines - consider refactoring"
+          }
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Measure code complexity
+        id: complexity
+        run: |
+          # Using PHPStan to measure complexity
+          docker exec php ./vendor/bin/phpstan analyse --level=max app/ --no-progress --error-format=json > complexity.json || $true
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Generate PHP quality report
+        if: always()
+        run: |
+          echo "## PHP Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Status | Issues |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Laravel Pint | ${{ steps.pint.outcome }} | N/A |" >> $GITHUB_STEP_SUMMARY
+          echo "| PHPStan | ${{ steps.phpstan.outcome }} | ${{ steps.phpstan.outputs.errors }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PHPCS (PSR12) | ${{ steps.phpcs.outcome }} | ${{ steps.phpcs.outputs.issues }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload quality reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: php-quality-reports
+          path: |
+            phpstan-report.json
+            phpcs-report.json
+            complexity.json
+          retention-days: 30
+
+  # ============================================
+  # JavaScript Code Quality
+  # ============================================
+  js-quality:
+    name: JavaScript Code Quality
+    runs-on: self-hosted
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./webapp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        id: eslint
+        run: |
+          npx eslint resources/js/**/*.js --format json --output-file eslint-report.json || $true
+          $report = Get-Content eslint-report.json | ConvertFrom-Json
+
+          $totalIssues = ($report | Measure-Object -Property errorCount -Sum).Sum + ($report | Measure-Object -Property warningCount -Sum).Sum
+          Write-Host "Found $totalIssues ESLint issues"
+
+          Write-Output "issues=$totalIssues" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Check for console statements
+        id: console_check
+        run: |
+          $consoleStatements = Select-String -Path "resources/js/**/*.js" -Pattern "console\.(log|debug|info|warn|error)" -Recurse
+
+          if ($consoleStatements) {
+            $count = ($consoleStatements | Measure-Object).Count
+            Write-Warning "Found $count console statements"
+            Write-Output "count=$count" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "count=0" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Check bundle size
+        id: bundle_size
+        run: |
+          npm run build
+
+          # Check build output size
+          $buildSize = (Get-ChildItem -Path "public/build" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host "Total build size: $buildSize MB"
+
+          if ($buildSize -gt 5) {
+            Write-Warning "Build size exceeds 5MB threshold"
+          }
+
+          Write-Output "size_mb=$buildSize" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Analyze JavaScript complexity
+        id: js_complexity
+        run: |
+          # Check for large files
+          $largeFiles = Get-ChildItem -Path "resources/js" -Filter "*.js" -Recurse | Where-Object { $_.Length -gt 10KB }
+
+          if ($largeFiles) {
+            Write-Warning "Found JavaScript files >10KB:"
+            $largeFiles | ForEach-Object { Write-Host $_.FullName }
+          }
+        shell: pwsh
+        continue-on-error: true
+
+      - name: Generate JavaScript quality report
+        if: always()
+        run: |
+          echo "## JavaScript Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint Issues | ${{ steps.eslint.outputs.issues }} | ${{ steps.eslint.outputs.issues == 0 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Console Statements | ${{ steps.console_check.outputs.count }} | ${{ steps.console_check.outputs.count == 0 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ${{ steps.bundle_size.outputs.size_mb }} MB | ${{ steps.bundle_size.outputs.size_mb < 5 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload JavaScript quality reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: js-quality-reports
+          path: webapp/eslint-report.json
+          retention-days: 30
+
+  # ============================================
+  # Documentation Quality
+  # ============================================
+  docs-quality:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "⚠️ README.md not found"
+            exit 1
+          fi
+
+      - name: Check for broken links in markdown
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+        continue-on-error: true
+
+      - name: Spell check documentation
+        uses: rojopolis/spellcheck-github-actions@0.35.0
+        with:
+          config_path: .github/spellcheck-config.yml
+        continue-on-error: true
+
+      - name: Check API documentation is up to date
+        run: |
+          if [ -f webapp/storage/api-docs/api-docs.json ]; then
+            echo "✅ API documentation found"
+            # Check if it's recent (modified in last 30 days)
+            LAST_MODIFIED=$(stat -c %Y webapp/storage/api-docs/api-docs.json)
+            CURRENT_TIME=$(date +%s)
+            DIFF=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
+
+            if [ $DIFF -gt 30 ]; then
+              echo "⚠️ API documentation is $DIFF days old - consider regenerating"
+            fi
+          else
+            echo "⚠️ API documentation not found - run: php artisan l5-swagger:generate"
+          fi
+
+  # ============================================
+  # Overall Quality Score
+  # ============================================
+  quality-score:
+    name: Calculate Quality Score
+    runs-on: ubuntu-latest
+    needs: [php-quality, js-quality, docs-quality]
+    if: always()
+
+    steps:
+      - name: Calculate quality score
+        run: |
+          echo "## Overall Code Quality Score" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Calculate score based on job results
+          SCORE=100
+
+          if [ "${{ needs.php-quality.result }}" != "success" ]; then
+            SCORE=$((SCORE - 30))
+          fi
+
+          if [ "${{ needs.js-quality.result }}" != "success" ]; then
+            SCORE=$((SCORE - 30))
+          fi
+
+          if [ "${{ needs.docs-quality.result }}" != "success" ]; then
+            SCORE=$((SCORE - 10))
+          fi
+
+          echo "**Quality Score: $SCORE/100**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ $SCORE -lt 70 ]; then
+            echo "❌ Quality score below acceptable threshold (70)" >> $GITHUB_STEP_SUMMARY
+            echo "Please address the issues identified in the quality checks." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          elif [ $SCORE -lt 90 ]; then
+            echo "⚠️ Quality score acceptable but could be improved" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Excellent code quality!" >> $GITHUB_STEP_SUMMARY
+          fi

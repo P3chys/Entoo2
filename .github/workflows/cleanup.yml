@@ -1,0 +1,44 @@
+name: Cleanup Old Workflow Runs
+
+on:
+  schedule:
+    # Run weekly on Sunday at 2 AM
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      days_old:
+        description: 'Delete runs older than (days)'
+        required: false
+        default: '30'
+        type: string
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Cleanup Old Runs and Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: ${{ github.event.inputs.days_old || 30 }}
+          keep_minimum_runs: 10
+
+      - name: Delete old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '${{ github.event.inputs.days_old || 30 }} days'
+          skip-recent: 5
+
+      - name: Summary
+        run: |
+          echo "## Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Deleted workflow runs older than ${{ github.event.inputs.days_old || 30 }} days" >> $GITHUB_STEP_SUMMARY
+          echo "- Deleted artifacts older than ${{ github.event.inputs.days_old || 30 }} days" >> $GITHUB_STEP_SUMMARY
+          echo "- Kept at least 10 recent runs and 5 recent artifacts" >> $GITHUB_STEP_SUMMARY
