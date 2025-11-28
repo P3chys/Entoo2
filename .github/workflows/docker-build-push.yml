@@ -80,15 +80,15 @@ jobs:
             VCS_REF=${{ github.sha }}
             VERSION=${{ steps.meta.outputs.version }}
 
-      # -------------------------
-      # FIXED TRIVY SCAN STEP
-      # -------------------------
+      # ==========================================
+      # FIXED TRIVY STEP — scans <tag>@<digest>
+      # ==========================================
       - name: Scan image for vulnerabilities
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
-          # IMPORTANT: full remote ref (registry + image + @digest)
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}@${{ steps.build.outputs.digest }}
+          # Use the first generated tag + digest (always valid for GHCR)
+          image-ref: ${{ fromJson(steps.meta.outputs.json).tags[0] }}@${{ steps.build.outputs.digest }}
           format: 'sarif'
           output: 'trivy-results.sarif'
         continue-on-error: true
