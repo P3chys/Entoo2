@@ -55,10 +55,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
-      - name: Create cache directory
+      - name: Create cache directories
         run: |
           mkdir -p bootstrap/cache
-          chmod -R 777 bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          chmod -R 777 bootstrap/cache storage/framework
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-scripts --optimize-autoloader
@@ -353,11 +356,14 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           tools: composer
 
-      - name: Create cache directory
+      - name: Create cache directories
         working-directory: ./webapp
         run: |
           mkdir -p bootstrap/cache
-          chmod -R 777 bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          chmod -R 777 bootstrap/cache storage/framework
 
       - name: Install Composer dependencies
         working-directory: ./webapp

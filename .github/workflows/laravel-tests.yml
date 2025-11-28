@@ -69,11 +69,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
 
-    - name: Create cache directory
+    - name: Create cache directories
       working-directory: ./webapp
       run: |
         mkdir -p bootstrap/cache
-        chmod -R 777 bootstrap/cache
+        mkdir -p storage/framework/cache/data
+        mkdir -p storage/framework/sessions
+        mkdir -p storage/framework/views
+        chmod -R 777 bootstrap/cache storage/framework
 
     - name: Install Composer Dependencies
       working-directory: ./webapp

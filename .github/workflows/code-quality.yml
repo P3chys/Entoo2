@@ -33,10 +33,13 @@ jobs:
           coverage: none
           tools: composer
 
-      - name: Create cache directory
+      - name: Create cache directories
         run: |
           mkdir -p bootstrap/cache
-          chmod -R 777 bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          chmod -R 777 bootstrap/cache storage/framework
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-scripts

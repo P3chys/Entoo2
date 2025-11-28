@@ -73,7 +73,10 @@ jobs:
         working-directory: ./webapp
         run: |
           mkdir -p bootstrap/cache
-          chmod -R 777 bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          chmod -R 777 bootstrap/cache storage/framework
           composer install --no-interaction --prefer-dist --no-scripts
           npm ci
           cp .env.example .env
