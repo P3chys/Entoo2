@@ -4,6 +4,7 @@
  */
 
 import { renderSubjectProfile } from './subject-profile-renderer.js';
+import { loadComments } from './subject-comments.js';
 import { fetchAPI } from './modules/api.js';
 
 /**
@@ -46,8 +47,11 @@ window.viewSubjectProfile = async function (subjectName, event) {
             profile = data.profile;
         }
 
+        // Load comments for this subject
+        const comments = await loadComments(subjectName);
+
         // Display profile info in the panel
-        displaySubjectProfileInPanel(detailPanel, subjectName, profile);
+        displaySubjectProfileInPanel(detailPanel, subjectName, profile, comments);
     } catch (error) {
         detailPanel.innerHTML = '<p class="error" style="padding: 1rem;">Failed to load profile</p>';
     }
@@ -56,9 +60,9 @@ window.viewSubjectProfile = async function (subjectName, event) {
 /**
  * Display subject profile in the expandable panel
  */
-window.displaySubjectProfileInPanel = function (panel, subjectName, profile) {
+window.displaySubjectProfileInPanel = function (panel, subjectName, profile, comments = []) {
     // Use shared renderer with panel-specific styling
-    const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container profile-panel');
+    const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container profile-panel', comments);
 
     // Wrap in panel container with border
     panel.innerHTML = `
@@ -159,7 +163,8 @@ window.saveSubjectProfile = async function (event) {
                     profile = data.profile;
                 }
 
-                window.displaySubjectProfileInPanel(detailPanel, subjectName, profile);
+                const comments = await loadComments(subjectName);
+                window.displaySubjectProfileInPanel(detailPanel, subjectName, profile, comments);
             }
         }
     } catch (error) {

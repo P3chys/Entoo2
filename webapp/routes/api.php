@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SubjectCommentController;
 use App\Http\Controllers\Api\SubjectController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,9 @@ Route::get('/search', [SearchController::class, 'search']);
 Route::get('/subject-profiles', [\App\Http\Controllers\Api\SubjectProfileController::class, 'index']);
 Route::get('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'show']);
 
+// Subject comments (public read)
+Route::get('/subjects/{subjectName}/comments', [SubjectCommentController::class, 'index']);
+
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
@@ -72,6 +76,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subject-profiles', [\App\Http\Controllers\Api\SubjectProfileController::class, 'store']);
     Route::put('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'update']);
     Route::delete('/subject-profiles/{subjectName}', [\App\Http\Controllers\Api\SubjectProfileController::class, 'destroy']);
+
+    // Subject comments (authenticated create/update/delete)
+    Route::post('/subjects/{subjectName}/comments', [SubjectCommentController::class, 'store']);
+    Route::put('/subjects/{subjectName}/comments/{id}', [SubjectCommentController::class, 'update']);
+    Route::delete('/subjects/{subjectName}/comments/{id}', [SubjectCommentController::class, 'destroy']);
 });
 
 // Admin routes (require authentication + admin role)

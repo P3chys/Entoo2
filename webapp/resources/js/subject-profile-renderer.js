@@ -3,18 +3,21 @@
  * Provides consistent subject profile rendering across the application
  */
 
+import { renderCommentsSection } from './subject-comments.js';
+
 /**
  * Render subject profile HTML
  * @param {string} subjectName - The subject name
  * @param {object|null} profile - Profile data or null
  * @param {string} containerClass - CSS class for the container (default: 'profile-container')
+ * @param {Array} comments - Array of comment objects (optional)
  * @returns {string} - HTML string for the profile
  */
-export function renderSubjectProfile(subjectName, profile, containerClass = 'profile-container') {
+export function renderSubjectProfile(subjectName, profile, containerClass = 'profile-container', comments = []) {
     const token = localStorage.getItem('token');
 
     if (!profile) {
-        // No profile exists - show create option
+        // No profile exists - show create option (no comments for non-existent profiles)
         return `
             <div class="${containerClass} glass-profile-empty">
                 <p style="color: var(--text-secondary); margin-bottom: 1rem;">
@@ -91,6 +94,8 @@ export function renderSubjectProfile(subjectName, profile, containerClass = 'pro
                     <p class="profile-text profile-notes">${escapeHtml(profile.notes)}</p>
                 </div>
             ` : ''}
+
+            ${renderCommentsSection(subjectName, comments)}
         </div>
     `;
 }

@@ -66,4 +66,12 @@ class SubjectProfile extends Model
         // Otherwise fall back to direct query (will cause N+1 if used in loops)
         return $this->uploadedFiles()->count();
     }
+
+    /**
+     * Get comments for this subject
+     */
+    public function comments()
+    {
+        return $this->hasMany(SubjectComment::class, 'subject_name', 'subject_name');
+    }
 }
