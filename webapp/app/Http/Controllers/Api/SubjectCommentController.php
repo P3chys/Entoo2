@@ -32,7 +32,7 @@ class SubjectCommentController extends Controller
     public function index(string $subjectName)
     {
         $comments = SubjectComment::where('subject_name', $subjectName)
-            ->with('user:id,name')
+            ->with('userRelation:id,name')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -76,15 +76,17 @@ class SubjectCommentController extends Controller
     {
         $validated = $request->validate([
             'comment' => 'required|string|min:1|max:5000',
+            'is_anonymous' => 'boolean',
         ]);
 
         $comment = SubjectComment::create([
             'subject_name' => $subjectName,
             'user_id' => $request->user()->id,
             'comment' => $validated['comment'],
+            'is_anonymous' => $validated['is_anonymous'] ?? false,
         ]);
 
-        $comment->load('user:id,name');
+        $comment->load('userRelation:id,name');
 
         return response()->json([
             'message' => 'Comment posted successfully',
@@ -108,6 +110,7 @@ class SubjectCommentController extends Controller
                 required: ['comment'],
                 properties: [
                     new OA\Property(property: 'comment', type: 'string', example: 'Updated comment text'),
+                    new OA\Property(property: 'is_anonymous', type: 'boolean', example: false),
                 ]
             )
         ),
@@ -143,10 +146,11 @@ class SubjectCommentController extends Controller
 
         $validated = $request->validate([
             'comment' => 'required|string|min:1|max:5000',
+            'is_anonymous' => 'boolean',
         ]);
 
         $comment->update($validated);
-        $comment->load('user:id,name');
+        $comment->load('userRelation:id,name');
 
         return response()->json([
             'message' => 'Comment updated successfully',

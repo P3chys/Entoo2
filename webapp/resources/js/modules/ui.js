@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { isFavorite } from './favorites.js';
 import { escapeHtml, getFileIcon, formatBytes, getFileTypeBadge } from './utils.js';
-import { renderSubjectProfile } from '../subject-profile-renderer.js';
+import { renderSubjectProfile, renderCommentsSection } from '../subject-profile-renderer.js';
 
 /**
  * Update star icon for a subject
@@ -110,7 +110,7 @@ export function buildTreeStructure(subjects) {
 /**
  * Build subject tabs HTML with profile + categories
  */
-export function buildSubjectTabsHTML(categories, subjectName, profile) {
+export function buildSubjectTabsHTML(categories, subjectName, profile, comments = []) {
     const categoryOrder = ['Prednasky', 'Otazky', 'Materialy', 'Seminare'];
     const subjectId = subjectName.replace(/[^a-zA-Z0-9]/g, '_');
 
@@ -156,10 +156,12 @@ export function buildSubjectTabsHTML(categories, subjectName, profile) {
 
     // Profile tab content - use shared renderer
     const profileHTML = renderSubjectProfile(subjectName, profile, 'profile-container');
+    const commentsHTML = renderCommentsSection(subjectName, comments);
 
     tabContentHTML += `
-        <div class="tab-content active" id="tab-${subjectId}-Profile">
+        <div class="tab-content active" id="tab-${subjectId}-Profile" style="max-height: 800px; overflow-y: auto;">
             ${profileHTML}
+            ${commentsHTML}
         </div>
     `;
 

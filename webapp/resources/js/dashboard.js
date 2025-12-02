@@ -155,7 +155,10 @@ window.toggleSubject = async function (element, subjectName) {
                 const hasProfile = subject?.has_profile || false;
 
                 const promises = [
-                    fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`)
+                    fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`),
+                    fetch(`/api/subjects/${encodeURIComponent(subjectName)}/comments`, {
+                        headers: { 'Accept': 'application/json' }
+                    }).then(res => res.ok ? res : null).catch(() => null)
                 ];
 
                 if (hasProfile) {
@@ -168,9 +171,18 @@ window.toggleSubject = async function (element, subjectName) {
 
                 const results = await Promise.all(promises);
                 const filesResponse = results[0];
-                const profileResponse = results[1] || null;
+                const commentsResponse = results[1];
+                // Profile response is either result[2] (if hasProfile) or null
+                const profileResponse = hasProfile ? results[2] : null;
 
                 const files = filesResponse.data || [];
+
+                let comments = [];
+                if (commentsResponse) {
+                    const data = await commentsResponse.json();
+                    comments = data.comments || [];
+                }
+
                 let profile = null;
                 if (profileResponse) {
                     const data = await profileResponse.json();
@@ -197,7 +209,7 @@ window.toggleSubject = async function (element, subjectName) {
                     tree[file.category].push(file);
                 });
 
-                categories.innerHTML = buildSubjectTabsHTML(tree, subjectName, profile);
+                categories.innerHTML = buildSubjectTabsHTML(tree, subjectName, profile, comments);
             } catch (error) {
                 categories.innerHTML = '<p class="error" style="padding: 1rem;">Failed to load files</p>';
             }
