@@ -43,11 +43,12 @@ jobs:
         image: elasticsearch:7.17.10
         env:
           discovery.type: single-node
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
         options: >-
-          --health-cmd "curl http://localhost:9200/_cluster/health"
+          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
           --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-timeout 10s
+          --health-retries 10
         ports:
           - 9200:9200
 
@@ -100,6 +101,19 @@ jobs:
           DB_DATABASE: entoo_test
           DB_USERNAME: entoo
           DB_PASSWORD: secret
+
+      - name: Wait for Elasticsearch
+        run: |
+          echo "Waiting for Elasticsearch to be ready..."
+          for i in {1..60}; do
+            if curl -s http://localhost:9200/_cluster/health | grep -q '"status":"green\|yellow"'; then
+              echo "Elasticsearch is ready!"
+              curl -s http://localhost:9200/_cluster/health
+              break
+            fi
+            echo "Waiting for Elasticsearch... ($i/60)"
+            sleep 2
+          done
 
       - name: Start Server
         working-directory: ./webapp

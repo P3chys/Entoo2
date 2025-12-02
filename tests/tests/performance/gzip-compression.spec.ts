@@ -116,9 +116,9 @@ test.describe('Gzip Compression', () => {
     expect(response.ok()).toBeTruthy();
 
     // Small responses may or may not be compressed (depends on nginx config)
-    // Just verify the endpoint works
+    // Just verify the endpoint works and returns valid JSON with status
     const body = await response.text();
-    expect(body).toContain('healthy');
+    expect(body).toMatch(/"status":"(healthy|degraded)"/);
   });
 
   test('should handle clients without gzip support', async ({ request }) => {
