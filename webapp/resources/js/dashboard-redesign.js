@@ -15,7 +15,7 @@ import {
     getUserInitials,
     getAvatarColor
 } from './modules/documentTypes.js';
-import { api } from './modules/api.js';
+import { fetchAPI } from './modules/api.js';
 
 // Global state
 let currentSubject = null;
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadDashboardData() {
     try {
         // Fetch subjects
-        const subjectsResponse = await api.get('/api/subjects');
+        const subjectsResponse = await fetchAPI('/api/subjects');
         allSubjects = subjectsResponse.data || [];
 
         console.log(`Loaded ${allSubjects.length} subjects`);
@@ -107,14 +107,12 @@ async function loadSubjectContent(subjectName) {
         await updateSubjectHeader(subjectName);
 
         // Load files for this subject
-        const filesResponse = await api.get('/api/files', {
-            params: { subject: subjectName }
-        });
-        allFiles = filesResponse.data?.data || [];
+        const filesResponse = await fetchAPI(`/api/files?subject=${encodeURIComponent(subjectName)}`);
+        allFiles = filesResponse.data || [];
 
         // Load comments for this subject
-        const commentsResponse = await api.get(`/api/subjects/${encodeURIComponent(subjectName)}/comments`);
-        allComments = commentsResponse.data?.comments || [];
+        const commentsResponse = await fetchAPI(`/api/subjects/${encodeURIComponent(subjectName)}/comments`);
+        allComments = commentsResponse.comments || [];
 
         // Update tab content
         updateAllTabContent();
@@ -131,8 +129,7 @@ async function loadSubjectContent(subjectName) {
 async function updateSubjectHeader(subjectName) {
     try {
         // Fetch subject profile
-        const profileResponse = await api.get(`/api/subject-profiles/${encodeURIComponent(subjectName)}`);
-        const profile = profileResponse.data || {};
+        const profile = await fetchAPI(`/api/subject-profiles/${encodeURIComponent(subjectName)}`);
 
         // Update header elements
         document.getElementById('subjectTitle').textContent = subjectName;

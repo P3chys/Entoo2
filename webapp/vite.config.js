@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/css/admin.css',
                 'resources/js/app.js',
                 'resources/js/dashboard.js',
+                'resources/js/dashboard-redesign.js',
                 'resources/js/file-upload.js',
                 'resources/js/subject-profile-modal.js',
                 'resources/js/admin.js'

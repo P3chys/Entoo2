@@ -27,26 +27,26 @@ Route::get('/reset-password/{token}', function ($token) {
 
 // Dashboard and app pages
 Route::get('/dashboard', function () {
-    return view('dashboard-enhanced');
+    return view('dashboard-redesign');
 })->name('dashboard');
 
 // Dashboard sub-routes with proper navigation
 Route::get('/dashboard/subject/{subject}', function ($subject) {
-    return view('dashboard-enhanced', ['selectedSubject' => urldecode($subject)]);
+    return view('dashboard-redesign', ['selectedSubject' => urldecode($subject)]);
 })->name('dashboard.subject');
 
 Route::get('/dashboard/search', function () {
     $query = request('q', '');
 
-    return view('dashboard-enhanced', ['searchQuery' => $query]);
+    return view('dashboard-redesign', ['searchQuery' => $query]);
 })->name('dashboard.search');
 
 Route::get('/dashboard/profile/{subject}', function ($subject) {
-    return view('dashboard-enhanced', ['profileSubject' => urldecode($subject)]);
+    return view('dashboard-redesign', ['profileSubject' => urldecode($subject)]);
 })->name('dashboard.profile');
 
 Route::get('/dashboard/user/{userId}/{userName?}', function ($userId, $userName = null) {
-    return view('dashboard-enhanced', ['filterUserId' => $userId, 'filterUserName' => $userName]);
+    return view('dashboard-redesign', ['filterUserId' => $userId, 'filterUserName' => $userName]);
 })->name('dashboard.user');
 
 Route::get('/favorites', function () {
