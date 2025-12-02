@@ -12,12 +12,10 @@ const THEME_DARK = 'dark';
  */
 export function initTheme() {
     const savedTheme = getSavedTheme();
-    const systemTheme = getSystemTheme();
-    const theme = savedTheme || systemTheme;
+    const theme = savedTheme || THEME_LIGHT; // Default to light if not set
 
     applyTheme(theme);
     setupThemeToggle();
-    watchSystemTheme();
 }
 
 /**
@@ -27,15 +25,7 @@ function getSavedTheme() {
     return localStorage.getItem(THEME_KEY);
 }
 
-/**
- * Get system/OS theme preference
- */
-function getSystemTheme() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return THEME_DARK;
-    }
-    return THEME_LIGHT;
-}
+// System theme detection removed - using manual toggle only
 
 /**
  * Get current theme
@@ -82,22 +72,7 @@ function setupThemeToggle() {
     });
 }
 
-/**
- * Watch for system theme changes
- */
-function watchSystemTheme() {
-    if (window.matchMedia) {
-        const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-        darkModeQuery.addEventListener('change', (e) => {
-            // Only auto-switch if user hasn't manually set a preference
-            if (!getSavedTheme()) {
-                const newTheme = e.matches ? THEME_DARK : THEME_LIGHT;
-                applyTheme(newTheme);
-            }
-        });
-    }
-}
+// System theme watching removed - using manual toggle only
 
 /**
  * Update meta theme-color for mobile browsers
