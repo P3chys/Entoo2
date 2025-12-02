@@ -8,8 +8,12 @@ import { getFileIcon, formatBytes } from './utils.js';
 export async function performSearchFromRoute() {
     const routeParams = window.dashboardRouteParams;
     const query = routeParams.searchQuery;
-    const searchInContent = document.getElementById('searchInContent')?.checked ?? true;
-    const searchInFilename = document.getElementById('searchInFilename')?.checked ?? true;
+
+    // Check both old and new search checkboxes (navbar or body)
+    const searchInContent = document.getElementById('navSearchInContent')?.checked ??
+                           document.getElementById('searchInContent')?.checked ?? true;
+    const searchInFilename = document.getElementById('navSearchInFilename')?.checked ??
+                            document.getElementById('searchInFilename')?.checked ?? true;
 
     if (!query) {
         return;

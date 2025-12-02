@@ -10,13 +10,33 @@
 </head>
 <body>
     <nav class="navbar glass-navbar">
-        <div class="container">
+        <div class="navbar-container">
             <a href="/" class="navbar-brand">
                 <div class="brand-logo-icon">
                     📚
                 </div>
                 <h1>Entoo</h1>
             </a>
+
+            <!-- Search Bar in Navbar -->
+            <div class="navbar-search" id="navbarSearch" style="display: none;">
+                <form action="/dashboard/search" method="GET" class="navbar-search-form">
+                    <input type="text" name="q" id="navSearchInput" class="navbar-search-input" placeholder="Search in file names and content..." value="">
+                    <button type="submit" class="navbar-search-btn">🔍</button>
+                    <a href="/dashboard" class="navbar-search-clear" id="navClearSearchBtn" style="display: none;">✕</a>
+                </form>
+                <div class="navbar-search-options">
+                    <label class="navbar-checkbox-label">
+                        <input type="checkbox" id="navSearchInContent" checked>
+                        <span>Content</span>
+                    </label>
+                    <label class="navbar-checkbox-label">
+                        <input type="checkbox" id="navSearchInFilename" checked>
+                        <span>Filenames</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="navbar-menu" id="navbarMenu">
                 <!-- Theme Toggle (always visible) -->
                 <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
@@ -117,10 +137,16 @@
             const authLinks = document.getElementById('authLinks');
             const userAvatar = document.getElementById('userAvatar');
             const userName = document.getElementById('userName');
+            const navbarSearch = document.getElementById('navbarSearch');
 
             if (token && user) {
                 guestLinks.style.display = 'none';
                 authLinks.style.display = 'flex';
+
+                // Show search bar when authenticated
+                if (navbarSearch) {
+                    navbarSearch.style.display = 'flex';
+                }
 
                 const name = user.name || user.email || 'User';
                 if (userName) {
@@ -132,11 +158,40 @@
             } else {
                 guestLinks.style.display = 'flex';
                 authLinks.style.display = 'none';
+
+                // Hide search bar when not authenticated
+                if (navbarSearch) {
+                    navbarSearch.style.display = 'none';
+                }
             }
         }
 
         // Update navbar on page load
         updateNavbar();
+
+        // Sync search query from URL if present
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            const navSearchInput = document.getElementById('navSearchInput');
+            const navClearSearchBtn = document.getElementById('navClearSearchBtn');
+
+            if (query && navSearchInput) {
+                navSearchInput.value = query;
+                if (navClearSearchBtn) {
+                    navClearSearchBtn.style.display = 'flex';
+                }
+            }
+
+            // Show/hide clear button based on input
+            if (navSearchInput) {
+                navSearchInput.addEventListener('input', function() {
+                    if (navClearSearchBtn) {
+                        navClearSearchBtn.style.display = this.value ? 'flex' : 'none';
+                    }
+                });
+            }
+        });
 
         // Profile Modal Functions
         async function showProfileModal(event) {
