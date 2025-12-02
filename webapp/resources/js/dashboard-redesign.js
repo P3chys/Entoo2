@@ -57,9 +57,28 @@ async function loadDashboardData() {
     try {
         // Fetch subjects
         const subjectsResponse = await fetchAPI('/api/subjects');
-        allSubjects = subjectsResponse.data || [];
+        const subjects = subjectsResponse.data || subjectsResponse || [];
 
-        console.log(`Loaded ${allSubjects.length} subjects`);
+        // Enrich subjects with profile data
+        allSubjects = await Promise.all(subjects.map(async (subject) => {
+            try {
+                const profile = await fetchAPI(`/api/subject-profiles/${encodeURIComponent(subject.subject_name)}`);
+                return {
+                    ...subject,
+                    course_code: profile.course_code,
+                    semester: profile.semester,
+                    professor_name: profile.professor_name
+                };
+            } catch (error) {
+                // If no profile, return subject without semester info
+                return {
+                    ...subject,
+                    semester: null
+                };
+            }
+        }));
+
+        console.log(`Loaded ${allSubjects.length} subjects`, allSubjects);
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
