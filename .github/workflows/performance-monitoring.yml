@@ -131,14 +131,14 @@ jobs:
         run: |
           npm ci
           npx playwright install chromium
-          npx playwright test tests/performance/ --reporter=json --output=performance-results.json
+          npx playwright test tests/performance/ --reporter=json
 
       - name: Parse performance results
         id: parse
         run: |
           # Extract key metrics using jq
-          totalTests=$(jq '.suites[].specs[].tests | length' tests/performance-results.json | awk '{s+=$1} END {print s}')
-          passedTests=$(jq '.suites[].specs[].tests[] | select(.status=="passed") | length' tests/performance-results.json | wc -l)
+          totalTests=$(jq '.suites[].specs[].tests | length' tests/test-results/results.json | awk '{s+=$1} END {print s}')
+          passedTests=$(jq '.suites[].specs[].tests[] | select(.status=="passed") | length' tests/test-results/results.json | wc -l)
 
           echo "total_tests=$totalTests" >> $GITHUB_OUTPUT
           echo "passed_tests=$passedTests" >> $GITHUB_OUTPUT
@@ -226,7 +226,7 @@ jobs:
         with:
           name: performance-results
           path: |
-            tests/performance-results.json
+            tests/test-results/results.json
             tests/playwright-report/
           retention-days: 30
 
