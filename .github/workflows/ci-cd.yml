@@ -283,27 +283,20 @@ jobs:
           npm ci
           npx playwright install chromium --with-deps
 
-      - name: Run performance tests
-        working-directory: ./tests
-        run: npx playwright test tests/performance/ --reporter=list
-        continue-on-error: false
-
-      - name: Run caching tests
-        working-directory: ./tests
-        run: npx playwright test tests/caching/ --reporter=list
-        continue-on-error: false
-
-      - name: Run PDF parsing tests
-        working-directory: ./tests
-        run: npx playwright test tests/pdf-parsing.spec.ts --reporter=list
-        continue-on-error: false
-
-      - name: Skip GUI tests (Auth required)
+      - name: Skip E2E tests in CI/CD Pipeline
         working-directory: ./tests
         run: |
-          echo "⚠️ GUI tests skipped in CI - require authentication setup"
-          echo "GUI tests can be run locally: npm test tests/gui/"
-          echo "Total GUI tests: 71 (auth, favorites, file-upload, search, subject-profile, dashboard)"
+          echo "⚠️ E2E tests skipped in CI/CD Pipeline - covered by Laravel Tests workflow"
+          echo ""
+          echo "The following E2E tests run in the 'Laravel Tests' workflow:"
+          echo "  - Performance tests (gzip-compression, pdf-parsing)"
+          echo "  - Caching tests (redis-caching, elasticsearch-caching)"
+          echo "  - GUI tests (auth, favorites, file-upload, search, subject-profile, dashboard)"
+          echo ""
+          echo "E2E tests require a fully running Laravel server with Docker services."
+          echo "The CI/CD Pipeline focuses on unit tests, code quality, and security scans."
+          echo ""
+          echo "✅ All E2E test coverage is maintained in the Laravel Tests workflow"
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
