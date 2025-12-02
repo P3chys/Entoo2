@@ -18,6 +18,7 @@ class SubjectComment extends Model
     ];
 
     protected $appends = ['user'];
+
     protected $hidden = ['userRelation'];
 
     /**
