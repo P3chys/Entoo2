@@ -107,7 +107,7 @@ test.describe('Gzip Compression', () => {
 
   test('should not compress small responses (< 256 bytes)', async ({ request }) => {
     // Health endpoint is very small, might not be compressed
-    const response = await request.get('/health', {
+    const response = await request.get('/api/health', {
       headers: {
         'Accept-Encoding': 'gzip',
       },
