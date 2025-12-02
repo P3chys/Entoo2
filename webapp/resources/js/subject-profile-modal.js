@@ -41,7 +41,7 @@ async function loadComments(subjectName) {
 function renderCommentsSection(subjectName, comments = []) {
     const token = localStorage.getItem('token');
     const currentUserId = getCurrentUserId();
-    const safeSubject = subjectName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const safeSubject = subjectName.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
     return `
         <div class="comments-section">
@@ -88,7 +88,7 @@ function renderComment(subjectName, comment, currentUserId) {
     const isOwner = currentUserId && comment.user_id === currentUserId;
     const formattedDate = formatDate(comment.created_at);
     const userName = comment.user?.name || 'Unknown User';
-    const safeSubject = subjectName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const safeSubject = subjectName.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
     return `
         <div class="comment" id="comment-${comment.id}" data-comment-id="${comment.id}">
@@ -416,8 +416,8 @@ window.editComment = async function (subjectName, commentId) {
     commentBody.innerHTML = `
         <textarea class="comment-textarea" id="edit-textarea-${commentId}" rows="3">${escapeHtml(currentText)}</textarea>
         <div class="comment-form-actions" style="margin-top: 0.5rem;">
-            <button onclick="saveCommentEdit('${subjectName.replace(/'/g, "\\'")}', ${commentId})" class="btn btn-primary btn-small">Save</button>
-            <button onclick="cancelCommentEdit(${commentId}, '${escapeHtml(currentText).replace(/'/g, "\\'")} ')" class="btn btn-secondary btn-small">Cancel</button>
+            <button onclick="saveCommentEdit('${subjectName.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}', ${commentId})" class="btn btn-primary btn-small">Save</button>
+            <button onclick="cancelCommentEdit(${commentId}, '${escapeHtml(currentText).replace(/\\/g, "\\\\").replace(/'/g, "\\'")} ')" class="btn btn-secondary btn-small">Cancel</button>
         </div>
     `;
 }
