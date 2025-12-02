@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -125,7 +125,7 @@ jobs:
           echo "| PHPCS (PSR12) | ${{ steps.phpcs.outcome }} | ${{ steps.phpcs.outputs.issues }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload quality reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: php-quality-reports
@@ -148,10 +148,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -224,7 +224,7 @@ jobs:
           echo "| Bundle Size | ${{ steps.bundle_size.outputs.size_mb }} MB | ${{ steps.bundle_size.outputs.size_mb < 5 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload JavaScript quality reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: js-quality-reports
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Check README exists
         run: |
@@ -258,7 +258,7 @@ jobs:
         continue-on-error: true
 
       - name: Spell check documentation
-        uses: rojopolis/spellcheck-github-actions@0.35.0
+        uses: rojopolis/spellcheck-github-actions@0.55.0
         with:
           config_path: .github/spellcheck-config.yml
         continue-on-error: true
