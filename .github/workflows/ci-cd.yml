@@ -210,6 +210,21 @@ jobs:
           php artisan key:generate
           composer dump-autoload
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './webapp/package-lock.json'
+
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: npm ci
+
+      - name: Build frontend assets
+        working-directory: ./webapp
+        run: npm run build
+
       - name: Run database migrations
         working-directory: ./webapp
         run: php artisan migrate --force
