@@ -6,6 +6,9 @@
 /* Base - Variables, reset, typography */
 @import './base.css';
 
+/* Redesign Theme System */
+@import './theme-redesign.css';
+
 /* Components */
 @import './components/navbar.css';
 @import './components/buttons.css';
@@ -17,11 +20,20 @@
 @import './components/subject-profile.css';
 @import './components/file-cards.css';
 
+/* Redesign Components */
+@import './components/tabs-redesign.css';
+@import './components/document-cards-redesign.css';
+@import './components/discussion-redesign.css';
+@import './components/subject-header-redesign.css';
+
 /* Layouts */
 @import './layouts/dashboard.css';
 @import './layouts/auth.css';
 @import './layouts/search.css';
 @import './layouts/files.css';
+
+/* Redesign Layouts */
+@import './layouts/sidebar-redesign.css';
 
 /* Glassmorphism Design System */
 @import './glassmorphism.css';

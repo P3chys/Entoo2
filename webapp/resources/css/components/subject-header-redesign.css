@@ -1,0 +1,197 @@
+/* ========================================
+   SUBJECT HEADER REDESIGN
+   Enhanced subject detail header
+   ======================================== */
+
+.subject-header {
+    padding: var(--spacing-2xl);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.subject-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.subject-header-info {
+    flex: 1;
+}
+
+.subject-header-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+.subject-code {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--primary-blue);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.breadcrumb-separator {
+    color: var(--text-muted);
+}
+
+.subject-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+    line-height: 1.2;
+}
+
+.subject-professor {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.professor-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.subject-description {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 800px;
+}
+
+.subject-header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.btn-favorite,
+.btn-upload,
+.btn-edit-subject {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-primary);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+}
+
+.btn-favorite:hover,
+.btn-edit-subject:hover {
+    background: var(--card-hover-bg);
+    border-color: var(--border-secondary);
+    color: var(--text-primary);
+}
+
+.btn-favorite.active {
+    background: #fef3c7;
+    border-color: #fbbf24;
+    color: #f59e0b;
+}
+
+[data-theme="dark"] .btn-favorite.active {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+.btn-upload {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-upload:hover {
+    background: var(--primary-blue-dark);
+    border-color: var(--primary-blue-dark);
+}
+
+.btn-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Subject metadata (additional info) */
+.subject-metadata {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-primary);
+    margin-top: var(--spacing-lg);
+}
+
+.subject-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.subject-meta-label {
+    color: var(--text-muted);
+}
+
+.subject-meta-value {
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+/* Responsive subject header */
+@media (max-width: 768px) {
+    .subject-header {
+        padding: var(--spacing-lg);
+    }
+
+    .subject-header-top {
+        flex-direction: column;
+    }
+
+    .subject-title {
+        font-size: var(--text-2xl);
+    }
+
+    .subject-header-actions {
+        width: 100%;
+    }
+
+    .btn-favorite,
+    .btn-upload,
+    .btn-edit-subject {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .subject-metadata {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+}

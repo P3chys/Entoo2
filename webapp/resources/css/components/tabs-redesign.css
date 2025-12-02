@@ -1,0 +1,260 @@
+/* ========================================
+   TABBED NAVIGATION REDESIGN
+   Document Type Tabs with Light/Dark Modes
+   ======================================== */
+
+/* ==========================================
+   TAB CONTAINER
+   ========================================== */
+
+.content-tabs {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+.content-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.content-tabs::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 2px;
+}
+
+/* ==========================================
+   TABS - LIGHT MODE (Underline Style)
+   ========================================== */
+
+.tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+    position: relative;
+}
+
+.tab:hover {
+    color: var(--text-primary);
+    background: var(--tab-hover-bg);
+}
+
+.tab.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+}
+
+.tab-icon {
+    font-size: 1.25rem;
+    transition: transform 0.2s ease;
+}
+
+.tab:hover .tab-icon {
+    transform: scale(1.1);
+}
+
+.tab-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+}
+
+.tab-subtitle {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border-radius: 10px;
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    margin-left: var(--spacing-xs);
+}
+
+.tab.active .tab-badge {
+    background: var(--primary-blue);
+    color: white;
+}
+
+/* ==========================================
+   TABS - DARK MODE (Card Style)
+   ========================================== */
+
+[data-theme="dark"] .tab {
+    background: var(--tab-bg);
+    border: 1px solid var(--tab-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    min-width: 140px;
+    border-bottom: 1px solid var(--tab-border); /* Override underline */
+}
+
+[data-theme="dark"] .tab:hover {
+    background: var(--tab-hover-bg);
+    border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .tab.active {
+    background: var(--tab-active-bg);
+    border-color: var(--tab-active-border);
+    border-bottom: 1px solid var(--tab-active-border); /* Override underline */
+}
+
+[data-theme="dark"] .tab-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+[data-theme="dark"] .tab-label {
+    color: var(--text-primary);
+    font-weight: var(--font-semibold);
+}
+
+[data-theme="dark"] .tab-subtitle {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    margin-top: var(--spacing-xs);
+}
+
+[data-theme="dark"] .tab.active .tab-label {
+    color: var(--primary-blue-light);
+}
+
+/* ==========================================
+   TAB PANELS (Content Areas)
+   ========================================== */
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   TAB PANEL HEADERS
+   ========================================== */
+
+.tab-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.tab-panel-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.tab-panel-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border-radius: 12px;
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+}
+
+.tab-panel-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+/* ==========================================
+   SORT/FILTER CONTROLS IN TAB PANELS
+   ========================================== */
+
+.tab-panel-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.tab-sort-select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+}
+
+.tab-sort-select:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+/* ==========================================
+   RESPONSIVE TABS
+   ========================================== */
+
+@media (max-width: 768px) {
+    .content-tabs {
+        gap: var(--spacing-sm);
+        padding: 0 var(--spacing-md);
+    }
+
+    .tab {
+        min-width: auto;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    [data-theme="dark"] .tab {
+        min-width: 120px;
+        padding: var(--spacing-md);
+    }
+
+    .tab-subtitle {
+        display: none; /* Hide subtitles on mobile */
+    }
+
+    .tab-label {
+        font-size: var(--text-xs);
+    }
+}

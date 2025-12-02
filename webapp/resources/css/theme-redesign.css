@@ -1,0 +1,230 @@
+/* ========================================
+   ENTOO REDESIGN THEME SYSTEM
+   Professional Document Management Platform
+   Light & Dark Mode Support
+   ======================================== */
+
+/* ==========================================
+   THEME VARIABLES - Light Mode (Default)
+   ========================================== */
+
+:root {
+    /* Primary Brand Colors */
+    --primary-blue: #2563eb;
+    --primary-blue-dark: #1e40af;
+    --primary-blue-light: #3b82f6;
+
+    /* Accent Colors */
+    --accent-indigo: #4f46e5;
+    --accent-purple: #7c3aed;
+
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+
+    /* Text Colors */
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    /* Border Colors */
+    --border-primary: #e2e8f0;
+    --border-secondary: #cbd5e1;
+
+    /* Status Colors */
+    --success-green: #10b981;
+    --warning-yellow: #f59e0b;
+    --error-red: #ef4444;
+    --info-blue: #3b82f6;
+
+    /* Document Type Badge Colors */
+    --badge-pdf: #ef4444;      /* Red for PDF */
+    --badge-docx: #3b82f6;     /* Blue for DOCX */
+    --badge-txt: #6b7280;      /* Gray for TXT */
+    --badge-pptx: #f59e0b;     /* Orange for PPTX */
+
+    /* Sidebar */
+    --sidebar-width: 240px;
+    --sidebar-bg: var(--bg-secondary);
+    --sidebar-border: var(--border-primary);
+    --sidebar-item-hover: var(--bg-tertiary);
+    --sidebar-item-active: var(--bg-primary);
+    --sidebar-item-active-border: var(--primary-blue);
+
+    /* Header */
+    --header-height: 64px;
+    --header-bg: var(--bg-primary);
+    --header-border: var(--border-primary);
+
+    /* Cards */
+    --card-bg: var(--bg-primary);
+    --card-border: var(--border-primary);
+    --card-hover-bg: var(--bg-secondary);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+    /* Tabs */
+    --tab-bg: var(--bg-primary);
+    --tab-active-bg: var(--bg-primary);
+    --tab-border: var(--border-primary);
+    --tab-active-border: var(--primary-blue);
+    --tab-hover-bg: var(--bg-secondary);
+}
+
+/* ==========================================
+   DARK MODE THEME VARIABLES
+   ========================================== */
+
+[data-theme="dark"] {
+    /* Primary Brand Colors (adjusted for dark background) */
+    --primary-blue: #3b82f6;       /* Slightly lighter */
+    --primary-blue-dark: #2563eb;
+    --primary-blue-light: #60a5fa;
+
+    /* Accent Colors */
+    --accent-indigo: #6366f1;
+    --accent-purple: #8b5cf6;
+
+    /* Dark Background Colors */
+    --bg-primary: #0f172a;         /* Very dark navy/slate */
+    --bg-secondary: #1e293b;       /* Lighter dark for cards */
+    --bg-tertiary: #334155;        /* Card hover/elevated */
+
+    /* Dark Text Colors */
+    --text-primary: #f1f5f9;       /* Light text */
+    --text-secondary: #cbd5e1;     /* Muted light text */
+    --text-muted: #94a3b8;         /* Very muted text */
+
+    /* Dark Border Colors */
+    --border-primary: #334155;     /* Subtle borders */
+    --border-secondary: #475569;   /* Visible borders */
+
+    /* Status Colors (adjusted for dark mode) */
+    --success-green: #34d399;
+    --warning-yellow: #fbbf24;
+    --error-red: #f87171;
+    --info-blue: #60a5fa;
+
+    /* Document Type Badge Colors (maintain visibility) */
+    --badge-pdf: #ef4444;          /* Keep red */
+    --badge-docx: #60a5fa;         /* Lighter blue */
+    --badge-txt: #9ca3af;          /* Lighter gray */
+    --badge-pptx: #fbbf24;         /* Lighter orange */
+
+    /* Sidebar (Dark Mode) */
+    --sidebar-bg: #1e293b;
+    --sidebar-border: #334155;
+    --sidebar-item-hover: #334155;
+    --sidebar-item-active: #0f172a;
+    --sidebar-item-active-border: #3b82f6;
+
+    /* Header (Dark Mode) */
+    --header-bg: #1e293b;
+    --header-border: #334155;
+
+    /* Cards (Dark Mode) */
+    --card-bg: #1e293b;
+    --card-border: #334155;
+    --card-hover-bg: #334155;
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    --card-hover-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+
+    /* Tabs (Dark Mode - Card Style) */
+    --tab-bg: #1e293b;
+    --tab-active-bg: #334155;
+    --tab-border: #334155;
+    --tab-active-border: #3b82f6;
+    --tab-hover-bg: #334155;
+}
+
+/* ==========================================
+   THEME AUTO-DETECTION
+   ========================================== */
+
+/* Auto-detect system dark mode preference */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+    }
+}
+
+/* ==========================================
+   GLOBAL BODY STYLES
+   ========================================== */
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Override animated gradient for redesign */
+[data-theme="dark"] body {
+    background: var(--bg-primary);
+    animation: none;
+}
+
+/* Light mode - clean background */
+body:not([data-theme="dark"]) {
+    background: var(--bg-primary);
+    animation: none;
+}
+
+/* ==========================================
+   DOCUMENT TYPE COLORS
+   ========================================== */
+
+.doc-type-notes { color: var(--primary-blue); }
+.doc-type-case-briefs { color: #8b5cf6; }
+.doc-type-statutes { color: #f59e0b; }
+.doc-type-past-papers { color: #10b981; }
+.doc-type-discussion { color: #6366f1; }
+
+/* ==========================================
+   THEME TOGGLE BUTTON
+   ========================================== */
+
+.theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+.theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Hide/show icons based on theme */
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+[data-theme="light"] .theme-toggle .icon-moon { display: block; }
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }
