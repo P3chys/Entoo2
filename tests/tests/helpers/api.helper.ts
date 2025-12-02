@@ -468,3 +468,89 @@ export async function getAuthHeaders(page: Page): Promise<Record<string, string>
     'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
   };
 }
+
+/**
+ * Create a test subject with a profile
+ */
+export async function createTestSubject(
+  authToken: string,
+  subjectName: string,
+  description: string = 'Test subject profile'
+): Promise<void> {
+  const response = await fetch('http://localhost:8000/api/subject-profiles', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    },
+    body: JSON.stringify({
+      subject_name: subjectName,
+      description: description,
+      professor_name: 'Test Professor',
+      course_code: 'TEST101',
+      semester: 'Winter',
+      year: 2024,
+      credits: 5,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to create test subject: ${response.statusText} - ${errorText}`);
+  }
+}
+
+/**
+ * Create a test comment on a subject
+ */
+export async function createTestComment(
+  authToken: string,
+  subjectName: string,
+  commentText: string
+): Promise<number> {
+  const response = await fetch(`http://localhost:8000/api/subjects/${encodeURIComponent(subjectName)}/comments`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    },
+    body: JSON.stringify({
+      comment: commentText,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to create test comment: ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.comment.id;
+}
+
+/**
+ * Delete a test comment
+ */
+export async function deleteTestComment(
+  authToken: string,
+  subjectName: string,
+  commentId: number
+): Promise<void> {
+  const response = await fetch(`http://localhost:8000/api/subjects/${encodeURIComponent(subjectName)}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+      'Accept': 'application/json',
+      'X-Bypass-Rate-Limit': RATE_LIMIT_BYPASS_TOKEN,
+    },
+  });
+
+  if (!response.ok && response.status !== 404) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete test comment: ${response.statusText} - ${errorText}`);
+  }
+}
