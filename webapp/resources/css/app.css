@@ -1,5 +1,5 @@
 /* ========================================
-   Entoo - Modern Document Management System
+   LexScholar - Legal Education Platform
    Modular CSS Architecture
    ======================================== */
 
@@ -17,6 +17,7 @@
 @import './components/progress.css';
 @import './components/subject-profile.css';
 @import './components/file-cards.css';
+@import './components/tabs-cards.css';
 
 /* Layouts */
 @import './layouts/dashboard.css';
