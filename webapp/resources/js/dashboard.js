@@ -9,6 +9,7 @@ import { loadFavorites, toggleFavorite, updateFavoriteCount } from './modules/fa
 import { buildTreeStructure, updateStarIcon, buildSubjectTabsHTML } from './modules/ui.js';
 import { performSearchFromRoute } from './modules/search.js';
 import { switchTab } from './modules/tabs.js';
+import { renderSidebarSubjects } from './modules/sidebar.js';
 
 // Route parameters - will be set by blade template
 window.dashboardRouteParams = window.dashboardRouteParams || {};
@@ -285,6 +286,9 @@ async function loadFiles(bypassCache = false) {
         } else {
             if (noFiles) noFiles.classList.add('hidden');
             buildTreeStructure(subjects);
+
+            // NEW: Populate sidebar with subjects
+            renderSidebarSubjects(subjects);
 
             if (expandedSubjects.length > 0) {
                 setTimeout(() => {

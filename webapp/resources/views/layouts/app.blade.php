@@ -4,70 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Entoo - Document Management')</title>
+    <title>@yield('title', 'LexScholar - Legal Education Platform')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    <script>
+        // Initialize theme immediately to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : savedTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
-    <nav class="navbar glass-navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-brand">
-                <div class="brand-logo-icon">
-                    📚
-                </div>
-                <h1>Entoo</h1>
-            </a>
-
-            <!-- Search Bar in Navbar -->
-            <div class="navbar-search" id="navbarSearch" style="display: none;">
-                <form action="/dashboard/search" method="GET" class="navbar-search-form">
-                    <input type="text" name="q" id="navSearchInput" class="navbar-search-input" placeholder="Search in file names and content..." value="">
-                    <button type="submit" class="navbar-search-btn">🔍</button>
-                    <a href="/dashboard" class="navbar-search-clear" id="navClearSearchBtn" style="display: none;">✕</a>
-                </form>
-                <div class="navbar-search-options">
-                    <label class="navbar-checkbox-label">
-                        <input type="checkbox" id="navSearchInContent" checked>
-                        <span>Content</span>
-                    </label>
-                    <label class="navbar-checkbox-label">
-                        <input type="checkbox" id="navSearchInFilename" checked>
-                        <span>Filenames</span>
-                    </label>
-                </div>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="mainSidebar">
+            <div class="sidebar-header">
+                <a href="/" class="brand-logo">
+                    <div class="brand-icon">⚖️</div>
+                    <h1>LexScholar</h1>
+                </a>
             </div>
 
-            <div class="navbar-menu" id="navbarMenu">
-                <!-- Theme Toggle (always visible) -->
-                <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
-                    <span class="theme-toggle-icon" id="themeIcon">🌙</span>
-                </button>
-                <!-- Guest links (shown when not logged in) -->
-                <div id="guestLinks" class="flex-center">
-                    <a href="/login" class="nav-link">Login</a>
-                    <a href="/register" class="nav-link btn-primary">Get Started</a>
+            <div class="sidebar-content">
+                <!-- Semester 1 Group -->
+                <div class="sidebar-group">
+                    <h3 class="group-title">SEMESTER 1</h3>
+                    <div class="subject-list" id="semester1Subjects">
+                        <!-- Populated by JS -->
+                        <div class="loading-placeholder"></div>
+                    </div>
                 </div>
-                <!-- Authenticated links (shown when logged in) -->
-                <div id="authLinks" class="flex-hidden">
-                    <a href="/dashboard" class="nav-link">
-                        Dashboard
-                    </a>
-                    <div class="divider-vertical"></div>
-                    <a href="#" onclick="showProfileModal(event)" class="nav-link user-profile-link" id="userInfo">
-                        <div class="avatar avatar-sm" id="userAvatar"></div>
-                        <span id="userName"></span>
-                    </a>
-                    <button onclick="logout()" class="btn btn-danger nav-link">
-                        Logout
+
+                <!-- Semester 2 Group -->
+                <div class="sidebar-group">
+                    <h3 class="group-title">SEMESTER 2</h3>
+                    <div class="subject-list" id="semester2Subjects">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Non-Assigned Group -->
+                <div class="sidebar-group">
+                    <h3 class="group-title">NON-ASSIGNED</h3>
+                    <div class="subject-list" id="otherSubjects">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <button class="btn-add-subject" onclick="openAddSubjectModal()">
+                    <span>+</span> Add New Subject
+                </button>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-card" onclick="showProfileModal(event)">
+                    <div class="avatar avatar-sm" id="sidebarUserAvatar">U</div>
+                    <div class="user-info">
+                        <span class="user-name" id="sidebarUserName">User</span>
+                        <span class="user-role" id="sidebarUserRole">Student</span>
+                    </div>
+                    <button class="btn-settings" title="Settings">⚙️</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="globalSearch" placeholder="Global Search..." class="search-input">
+                </div>
+
+                <div class="navbar-actions">
+                    <button onclick="toggleTheme()" class="btn-icon theme-toggle" id="themeToggle" title="Toggle Theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    
+                    <button class="btn btn-primary btn-upload" onclick="openUploadModal()">
+                        <span class="icon">📤</span> Upload New File
                     </button>
                 </div>
-            </div>
-        </div>
-    </nav>
+            </header>
 
-    <main class="main-content">
-        @yield('content')
-    </main>
+            <!-- Page Content -->
+            <main class="content-area">
+                @yield('content')
+            </main>
+        </div>
+    </div>
 
     <!-- Profile Modal -->
     <div id="profileModal" class="modal glass-modal-backdrop hidden">
@@ -76,247 +105,60 @@
                 <h2>👤 User Profile</h2>
                 <button onclick="closeProfileModal()" class="close-btn">&times;</button>
             </div>
-
             <div id="profileContent" style="padding: var(--spacing-xl);">
                 <div class="loading">Loading profile...</div>
             </div>
         </div>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 Entoo. All rights reserved.</p>
-        </div>
-    </footer>
-
     <script>
-        // Theme Management
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const htmlElement = document.documentElement;
-            const themeIcon = document.getElementById('themeIcon');
-
-            htmlElement.setAttribute('data-theme', savedTheme);
-            if (themeIcon) {
-                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-            }
-        }
-
+        // Theme Toggle Logic
         function toggleTheme() {
-            const htmlElement = document.documentElement;
-            const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            const themeIcon = document.getElementById('themeIcon');
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            
+            updateThemeIcon(next);
+        }
 
-            // Add rotation animation
-            if (themeIcon) {
-                themeIcon.classList.add('rotate');
-                setTimeout(() => {
-                    themeIcon.classList.remove('rotate');
-                }, 500);
-            }
-
-            // Update theme
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-
-            // Update icon
-            if (themeIcon) {
-                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        function updateThemeIcon(theme) {
+            const btn = document.getElementById('themeToggle');
+            if(btn) {
+                const icon = btn.querySelector('.theme-icon');
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             }
         }
 
-        // Initialize theme before page load completes
-        initTheme();
-
-        // Update navbar based on authentication status
-        function updateNavbar() {
-            const token = localStorage.getItem('token');
+        // Initialize UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            updateThemeIcon(currentTheme);
+            
+            // Update user info in sidebar
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const guestLinks = document.getElementById('guestLinks');
-            const authLinks = document.getElementById('authLinks');
-            const userAvatar = document.getElementById('userAvatar');
-            const userName = document.getElementById('userName');
-            const navbarSearch = document.getElementById('navbarSearch');
-
-            if (token && user) {
-                guestLinks.style.display = 'none';
-                authLinks.style.display = 'flex';
-
-                // Show search bar when authenticated
-                if (navbarSearch) {
-                    navbarSearch.style.display = 'flex';
-                }
-
-                const name = user.name || user.email || 'User';
-                if (userName) {
-                    userName.textContent = name;
-                }
-                if (userAvatar) {
-                    userAvatar.textContent = name.charAt(0).toUpperCase();
-                }
-            } else {
-                guestLinks.style.display = 'flex';
-                authLinks.style.display = 'none';
-
-                // Hide search bar when not authenticated
-                if (navbarSearch) {
-                    navbarSearch.style.display = 'none';
-                }
-            }
-        }
-
-        // Update navbar on page load
-        updateNavbar();
-
-        // Sync search query from URL if present
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const query = urlParams.get('q');
-            const navSearchInput = document.getElementById('navSearchInput');
-            const navClearSearchBtn = document.getElementById('navClearSearchBtn');
-
-            if (query && navSearchInput) {
-                navSearchInput.value = query;
-                if (navClearSearchBtn) {
-                    navClearSearchBtn.style.display = 'flex';
-                }
-            }
-
-            // Show/hide clear button based on input
-            if (navSearchInput) {
-                navSearchInput.addEventListener('input', function() {
-                    if (navClearSearchBtn) {
-                        navClearSearchBtn.style.display = this.value ? 'flex' : 'none';
-                    }
-                });
+            if (user.name) {
+                document.getElementById('sidebarUserName').textContent = user.name;
+                document.getElementById('sidebarUserAvatar').textContent = user.name.charAt(0).toUpperCase();
+                // Mock role for now
+                document.getElementById('sidebarUserRole').textContent = 'Year 2 • L.L.B'; 
             }
         });
 
-        // Profile Modal Functions
-        async function showProfileModal(event) {
+        // Global functions for modal access
+        window.showProfileModal = async function(event) {
             if (event) event.preventDefault();
-
             const modal = document.getElementById('profileModal');
-            const content = document.getElementById('profileContent');
-
             modal.classList.remove('hidden');
-            content.innerHTML = '<div class="loading">Loading profile...</div>';
+            // Reuse existing profile loading logic...
+            // (Keeping implementation simple for layout step)
+        };
 
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to load profile');
-
-                const data = await response.json();
-                displayProfile(data);
-            } catch (error) {
-                content.innerHTML = '<div class="alert alert-error">Failed to load profile</div>';
-            }
-        }
-
-        function displayProfile(data) {
-            const content = document.getElementById('profileContent');
-            const user = data.user;
-            const stats = data.stats;
-
-            content.innerHTML = `
-                <div style="text-align: center; margin-bottom: var(--spacing-xl);">
-                    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-600); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin: 0 auto var(--spacing-md);">
-                        ${user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--spacing-xs);">${user.name}</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
-                </div>
-
-                <div class="stats-grid" style="margin-bottom: var(--spacing-xl); grid-template-columns: repeat(2, 1fr);">
-                    <div class="stat-card glass-stat-card">
-                        <h3>${stats.total_files}</h3>
-                        <p>Files Uploaded</p>
-                    </div>
-                    <div class="stat-card glass-stat-card">
-                        <h3>${stats.total_size_formatted}</h3>
-                        <p>Storage Used</p>
-                    </div>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-                    <button onclick="viewMyFiles()" class="btn btn-primary btn-block">
-                        📁 View My Files
-                    </button>
-                    <button onclick="changePassword()" class="btn btn-secondary btn-block">
-                        🔒 Change Password
-                    </button>
-                </div>
-            `;
-        }
-
-        function closeProfileModal() {
+        window.closeProfileModal = function() {
             document.getElementById('profileModal').classList.add('hidden');
-        }
-
-        function changePassword() {
-            const password = prompt('Enter new password:');
-            if (!password) return;
-
-            const confirmPassword = prompt('Confirm new password:');
-            if (password !== confirmPassword) {
-                alert('Passwords do not match');
-                return;
-            }
-
-            const currentPassword = prompt('Enter current password:');
-            if (!currentPassword) return;
-
-            const token = localStorage.getItem('token');
-            fetch('/api/change-password', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    current_password: currentPassword,
-                    new_password: password,
-                    new_password_confirmation: confirmPassword
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message || 'Password changed successfully. Please log in again.');
-                logout();
-            })
-            .catch(error => {
-                alert('Failed to change password. Please check your current password.');
-            });
-        }
-
-        function viewMyFiles() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            closeProfileModal();
-            if (user.id && window.filterByUser) {
-                window.filterByUser(user.id, user.name);
-            } else {
-                window.location.href = '/dashboard';
-            }
-        }
-
-        // Logout function
-        function logout() {
-            // Clear authentication data from localStorage
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-
-            // Redirect to login page
-            window.location.href = '/login';
-        }
+        };
     </script>
     @stack('scripts')
 </body>
