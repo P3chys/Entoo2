@@ -138,6 +138,9 @@ class AuthController extends Controller
         // Create new token
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Also log the user in for web session (for protected web routes)
+        Auth::login($user);
+
         return response()->json([
             'message' => 'Login successful',
             'user' => $user,

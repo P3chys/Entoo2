@@ -1,9 +1,4 @@
-/* ========================================
-   LexScholar - Legal Education Platform
-   Modular CSS Architecture
-   ======================================== */
 
-/* Base - Variables, reset, typography */
 @import './theme.css';
 @import './base.css';
 

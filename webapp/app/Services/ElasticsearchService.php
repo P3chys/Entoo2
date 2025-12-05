@@ -52,6 +52,18 @@ class ElasticsearchService
                                     'tokenizer' => 'standard',
                                     'filter' => ['lowercase', 'asciifolding'],
                                 ],
+                                'edge_ngram_analyzer' => [
+                                    'type' => 'custom',
+                                    'tokenizer' => 'standard',
+                                    'filter' => ['lowercase', 'asciifolding', 'edge_ngram_filter'],
+                                ],
+                            ],
+                            'filter' => [
+                                'edge_ngram_filter' => [
+                                    'type' => 'edge_ngram',
+                                    'min_gram' => 3,
+                                    'max_gram' => 15,
+                                ],
                             ],
                         ],
                     ],
@@ -61,14 +73,16 @@ class ElasticsearchService
                             'user_id' => ['type' => 'long'],
                             'filename' => [
                                 'type' => 'text',
-                                'analyzer' => 'custom_analyzer',
+                                'analyzer' => 'edge_ngram_analyzer',
+                                'search_analyzer' => 'custom_analyzer',
                                 'fields' => [
                                     'keyword' => ['type' => 'keyword'],
                                 ],
                             ],
                             'original_filename' => [
                                 'type' => 'text',
-                                'analyzer' => 'custom_analyzer',
+                                'analyzer' => 'edge_ngram_analyzer',
+                                'search_analyzer' => 'custom_analyzer',
                             ],
                             'filepath' => ['type' => 'keyword'],
                             'subject_name' => [
@@ -459,19 +473,23 @@ class ElasticsearchService
 
             $response = $this->client->search($params);
 
-            // Get all subject names that have profiles
-            $subjectsWithProfiles = \DB::table('subject_profiles')
-                ->pluck('subject_name')
-                ->flip()
-                ->toArray();
+            // Get all subject profiles with codes and semesters
+            $profiles = \DB::table('subject_profiles')
+                ->select('subject_name', 'course_code', 'semester')
+                ->get()
+                ->keyBy('subject_name');
 
             $subjects = [];
             foreach ($response['aggregations']['subjects']['buckets'] ?? [] as $bucket) {
                 $subjectName = $bucket['key'];
+                $profile = $profiles->get($subjectName);
+
                 $subjects[] = [
                     'subject_name' => $subjectName,
                     'file_count' => $bucket['doc_count'],
-                    'has_profile' => isset($subjectsWithProfiles[$subjectName]),
+                    'has_profile' => $profile !== null,
+                    'code' => $profile ? $profile->course_code : null,
+                    'semester' => $profile ? $profile->semester : null,
                 ];
             }
 

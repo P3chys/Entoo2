@@ -1,45 +1,13 @@
-/* Tab Navigation Styles - Card Style for Dark Mode */
+/* Tab Navigation Styles - Card Style */
 
-/* Light Mode: Traditional horizontal tabs */
+/* Card-style tabs - horizontal layout */
 .tab-nav {
     display: flex;
-    gap: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-primary);
-    margin-bottom: var(--spacing-lg);
-}
-
-.tab-btn {
-    padding: var(--spacing-md);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-weight: 500;
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.tab-btn:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-secondary);
-}
-
-.tab-btn.active {
-    color: var(--primary-blue);
-    border-bottom-color: var(--primary-blue);
-}
-
-/* Dark Mode: Card-style tabs */
-[data-theme="dark"] .tab-nav {
-    border-bottom: none;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
 }
 
-[data-theme="dark"] .tab-btn {
+.tab-btn {
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -47,29 +15,34 @@
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    min-width: 120px;
+    min-width: 140px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: flex;
+    gap: var(--spacing-xs);
+    color: var(--text-secondary);
 }
 
-[data-theme="dark"] .tab-btn:hover {
+.tab-btn:hover {
     background-color: var(--bg-tertiary);
     border-color: var(--border-secondary);
-}
-
-[data-theme="dark"] .tab-btn.active {
-    background-color: var(--bg-tertiary);
-    border-color: var(--primary-blue);
     color: var(--text-primary);
 }
 
-[data-theme="dark"] .tab-btn span:first-child {
-    font-size: 1.5rem;
-    margin-bottom: var(--spacing-xs);
+.tab-btn.active {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
 }
 
-[data-theme="dark"] .tab-btn .category-count {
+.tab-btn span:first-child {
+    font-size: 1.5rem;
+}
+
+.tab-btn .category-count {
     font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: var(--spacing-xs);
+    opacity: 0.8;
 }
 
 /* Tab Content */

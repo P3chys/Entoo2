@@ -25,37 +25,40 @@ Route::get('/reset-password/{token}', function ($token) {
     return view('auth.reset-password', ['token' => $token]);
 })->name('password.reset');
 
-// Dashboard and app pages
-Route::get('/dashboard', function () {
-    return view('dashboard-enhanced');
-})->name('dashboard');
+// Protected dashboard and app pages - require authentication
+Route::middleware(['auth.web'])->group(function () {
+    // Dashboard and app pages
+    Route::get('/dashboard', function () {
+        return view('dashboard-enhanced');
+    })->name('dashboard');
 
-// Dashboard sub-routes with proper navigation
-Route::get('/dashboard/subject/{subject}', function ($subject) {
-    return view('dashboard-enhanced', ['selectedSubject' => urldecode($subject)]);
-})->name('dashboard.subject');
+    // Dashboard sub-routes with proper navigation
+    Route::get('/dashboard/subject/{subject}', function ($subject) {
+        return view('dashboard-enhanced', ['selectedSubject' => urldecode($subject)]);
+    })->name('dashboard.subject');
 
-Route::get('/dashboard/search', function () {
-    $query = request('q', '');
+    Route::get('/dashboard/search', function () {
+        $query = request('q', '');
 
-    return view('dashboard-enhanced', ['searchQuery' => $query]);
-})->name('dashboard.search');
+        return view('dashboard-enhanced', ['searchQuery' => $query]);
+    })->name('dashboard.search');
 
-Route::get('/dashboard/profile/{subject}', function ($subject) {
-    return view('dashboard-enhanced', ['profileSubject' => urldecode($subject)]);
-})->name('dashboard.profile');
+    Route::get('/dashboard/profile/{subject}', function ($subject) {
+        return view('dashboard-enhanced', ['profileSubject' => urldecode($subject)]);
+    })->name('dashboard.profile');
 
-Route::get('/dashboard/user/{userId}/{userName?}', function ($userId, $userName = null) {
-    return view('dashboard-enhanced', ['filterUserId' => $userId, 'filterUserName' => $userName]);
-})->name('dashboard.user');
+    Route::get('/dashboard/user/{userId}/{userName?}', function ($userId, $userName = null) {
+        return view('dashboard-enhanced', ['filterUserId' => $userId, 'filterUserName' => $userName]);
+    })->name('dashboard.user');
 
-Route::get('/favorites', function () {
-    return view('favorites');
-})->name('favorites');
+    Route::get('/favorites', function () {
+        return view('favorites');
+    })->name('favorites');
 
-// Admin dashboard
-// Security: admin.js checks user.is_admin on page load and redirects non-admins
-// All admin API endpoints are protected with auth:sanctum + admin middleware
-Route::get('/admin', function () {
-    return view('admin.dashboard');
-})->name('admin.dashboard');
+    // Admin dashboard
+    // Security: admin.js checks user.is_admin on page load and redirects non-admins
+    // All admin API endpoints are protected with auth:sanctum + admin middleware
+    Route::get('/admin', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+});

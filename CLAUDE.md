@@ -32,6 +32,138 @@ Check status with: `gh pr list` and `gh run list --limit 5`
 
 ---
 
+## Intelligent Agent System
+
+Claude Code features a sophisticated multi-agent orchestration system that automatically coordinates specialized agents based on your request. The system analyzes tasks and chains appropriate agents for optimal results.
+
+### Available Specialized Agents
+
+**Development Agents:**
+- `orchestrator` - Master coordinator for complex multi-step workflows with intelligent agent chaining
+- `feature-agent` - Backend development, Laravel APIs, Eloquent models, business logic
+- `frontend-agent` - UI/UX development, Tailwind CSS components, vanilla JavaScript
+- `database-architect` - PostgreSQL schema design, migrations, indexes, query optimization
+- `api-architect` - RESTful API design, endpoint structure, OpenAPI/Swagger documentation
+
+**Quality & Testing Agents:**
+- `playwright-test-creator` - Create comprehensive E2E GUI tests for all frontend features
+- `testing-agent` - Execute tests, analyze results, debug failures, check coverage
+- `security-auditor` - Security code review, OWASP Top 10, vulnerability detection
+- `performance-optimizer` - Performance profiling, query optimization, caching strategies
+
+**Infrastructure & DevOps:**
+- `github-agent` - Git operations, branch management, PR creation, CI/CD monitoring
+
+**Specialized Skills:**
+- `laravel-developer` - Laravel 12 backend expertise, Octane, Sanctum, Elasticsearch
+- `gui-designer` - Frontend design, Tailwind CSS 4, accessibility (WCAG AAA)
+- `docker-devops` - Container orchestration, infrastructure, deployment
+- `playwright-tester` - E2E testing specialist, test debugging
+
+### Automatic Agent Workflows
+
+The orchestrator automatically chains agents based on task patterns:
+
+**1. Full Stack Feature**
+```
+Task: "Add user profile feature with avatar upload"
+Workflow: database-architect → api-architect → [feature-agent || frontend-agent (parallel)]
+          → playwright-test-creator → testing-agent → security-auditor → github-agent
+```
+
+**2. Frontend Feature**
+```
+Task: "Add dark mode toggle"
+Workflow: frontend-agent → playwright-test-creator → testing-agent → github-agent
+```
+
+**3. Backend API**
+```
+Task: "Add bulk delete endpoint"
+Workflow: api-architect → feature-agent → security-auditor → testing-agent → github-agent
+```
+
+**4. Bug Fix**
+```
+Task: "Fix login validation issue"
+Workflow: [feature-agent || frontend-agent (parallel)] → security-auditor
+          → testing-agent → github-agent
+```
+
+**5. Database Changes**
+```
+Task: "Add caching for search queries"
+Workflow: database-architect → feature-agent → performance-optimizer
+          → testing-agent → github-agent
+```
+
+**6. Performance Optimization**
+```
+Task: "Optimize slow dashboard loading"
+Workflow: performance-optimizer → [feature-agent (if changes needed)]
+          → testing-agent → github-agent
+```
+
+**7. Security Audit**
+```
+Task: "Review authentication security"
+Workflow: security-auditor → [feature-agent (if fixes needed)]
+          → testing-agent → github-agent
+```
+
+### When to Use the Orchestrator
+
+**Explicitly invoke the orchestrator for:**
+- Complex multi-domain tasks (backend + frontend + database)
+- Tasks requiring parallel execution of independent work
+- Large features with clear step-by-step dependencies
+- Workflows needing quality gates between stages
+
+Example invocations:
+- `"Use orchestrator to build complete authentication system with 2FA"`
+- `"Orchestrate: add user analytics dashboard with charts and filters"`
+- `"Chain agents to implement and test file sharing feature"`
+
+**Claude Code will automatically use orchestrator when it detects:**
+- Keywords like "add feature", "implement", "build", "create new"
+- Multiple domains mentioned (UI + API + database)
+- Complex requirements needing breakdown into subtasks
+
+### Direct Agent Usage
+
+For focused, single-domain tasks, agents are used directly:
+- Simple UI change → `frontend-agent`
+- Single migration → `database-architect`
+- API endpoint design → `api-architect`
+- Code security review → `security-auditor`
+- Performance analysis → `performance-optimizer`
+- Run existing tests → `testing-agent`
+- Git operations → `github-agent`
+
+### Parallel vs Sequential Execution
+
+**Parallel Execution** (agents run simultaneously):
+- Backend and frontend development for same feature
+- Multiple independent bug fixes
+- Creating tests while code is being reviewed
+
+**Sequential Execution** (agents wait for previous completion):
+- Design → Implementation → Testing → Deployment
+- Test creation after code implementation
+- Security audit after implementation
+- PR creation after all tests pass
+
+### Quality Gates
+
+The orchestrator enforces quality gates between stages:
+- ✅ Code implemented → Tests must be created
+- ✅ Tests created → Tests must pass 100%
+- ✅ Tests pass → Security audit (for sensitive code)
+- ✅ Security cleared → Performance check (for critical paths)
+- ✅ All checks pass → PR created automatically
+
+---
+
 **IMPORTANT:** When implementing features or improvements, Claude Code should:
 
 ### 1. Automatic Testing - GUI and E2E

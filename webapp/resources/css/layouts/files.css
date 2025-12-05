@@ -106,10 +106,12 @@
     font-style: italic;
 }
 
-.search-highlight strong {
+.search-highlight strong,
+.search-highlight em {
     background: var(--warning-100);
     color: var(--text-primary);
     font-weight: 600;
+    font-style: normal;
     padding: 0.125rem 0.25rem;
     border-radius: var(--radius-sm);
 }

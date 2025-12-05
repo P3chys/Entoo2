@@ -16,6 +16,10 @@ export function renderSidebarSubjects(subjects) {
     const grouped = {
         semester1: [],
         semester2: [],
+        semester3: [],
+        semester4: [],
+        semester5: [],
+        semester6: [],
         other: []
     };
 
@@ -35,6 +39,10 @@ export function renderSidebarSubjects(subjects) {
     // Render each group
     renderSubjectGroup('semester1Subjects', grouped.semester1);
     renderSubjectGroup('semester2Subjects', grouped.semester2);
+    renderSubjectGroup('semester3Subjects', grouped.semester3);
+    renderSubjectGroup('semester4Subjects', grouped.semester4);
+    renderSubjectGroup('semester5Subjects', grouped.semester5);
+    renderSubjectGroup('semester6Subjects', grouped.semester6);
     renderSubjectGroup('otherSubjects', grouped.other);
 }
 
@@ -121,6 +129,14 @@ window.selectSubject = function (subjectName) {
         }
     });
 
-    // Navigate to subject
-    window.location.href = `/dashboard/subject/${encodeURIComponent(subjectName)}`;
+    // Hide search results when selecting a subject
+    const searchResults = document.getElementById('searchResults');
+    if (searchResults) {
+        searchResults.classList.add('hidden');
+    }
+
+    // Load subject content in main area
+    if (window.loadSubjectContent) {
+        window.loadSubjectContent(subjectName);
+    }
 };

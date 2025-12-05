@@ -95,7 +95,11 @@ async function handleLogin(event) {
         if (response.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
-            window.location.href = '/dashboard';
+
+            // Check for redirect URL (from auth-check.js or Laravel's intended URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('redirect') || '/dashboard';
+            window.location.href = redirectUrl;
         } else {
             errorDiv.textContent = data.message || 'Login failed. Please check your credentials.';
             errorDiv.classList.remove('hidden');

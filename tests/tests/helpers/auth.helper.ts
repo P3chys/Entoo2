@@ -141,3 +141,17 @@ export async function setupAuth(page: Page): Promise<void> {
   // Verify we're on the dashboard
   await expect(page).toHaveURL(/\/dashboard/);
 }
+
+/**
+ * Get current URL path
+ */
+export async function getCurrentPath(page: Page): Promise<string> {
+  return new URL(page.url()).pathname;
+}
+
+/**
+ * Get current URL search params
+ */
+export async function getSearchParams(page: Page): Promise<URLSearchParams> {
+  return new URL(page.url()).searchParams;
+}
