@@ -1,66 +1,35 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Login - Entoo')
 
 @section('content')
-<div class="auth-container">
-    <div class="auth-card glass-auth-card">
-        <div class="auth-header">
-            <div class="auth-icon">
-                📚
-            </div>
-            <h2>Welcome Back</h2>
-            <p class="subtitle">Login to access your documents</p>
-        </div>
-
-        <div id="errorMessage" class="alert alert-error hidden"></div>
-
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="your@email.com">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter your password">
-                <small><a href="#" onclick="showForgotPassword(event)">Forgot password?</a></small>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-                Login
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p>Don't have an account? <a href="/register">Register here</a></p>
-        </div>
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Login to access your documents</p>
     </div>
-</div>
 
-<!-- Forgot Password Modal -->
-<div id="forgotPasswordModal" class="modal glass-modal-backdrop hidden">
-    <div class="modal-content glass-modal-content">
-        <div class="modal-header">
-            <h2>Reset Password</h2>
-            <button onclick="closeForgotPassword()" class="close-btn">&times;</button>
+    <div id="errorMessage" class="alert alert-error hidden"></div>
+
+    <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
         </div>
 
-        <div style="padding: var(--spacing-xl);">
-            <div id="forgotMessage" class="alert hidden"></div>
-
-            <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
-                <div class="form-group">
-                    <label for="forgotEmail">Email Address</label>
-                    <input type="email" id="forgotEmail" required placeholder="your@email.com">
-                    <small>We'll send you instructions to reset your password.</small>
-                </div>
-
-                <button type="submit" class="btn btn-primary" id="forgotBtn">
-                    Send Reset Link
-                </button>
-            </form>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password" autocomplete="current-password">
+            <small><a href="/forgot-password">Forgot password?</a></small>
         </div>
+
+        <button type="submit" class="btn btn-primary" id="loginBtn">
+            Login
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
 </div>
 
@@ -75,31 +44,37 @@ async function handleLogin(event) {
     btn.textContent = 'Logging in...';
     errorDiv.classList.add('hidden');
 
+    // Get redirect URL from query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect') || '/dashboard';
+
     const formData = {
         email: document.getElementById('email').value,
-        password: document.getElementById('password').value
+        password: document.getElementById('password').value,
+        redirect: redirectUrl
     };
 
     try {
-        const response = await fetch('/api/login', {
+        // Use web route (not API) to create session
+        const response = await fetch('/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
             body: JSON.stringify(formData)
         });
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.success) {
+            // Store token for API calls
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            // Check for redirect URL (from auth-check.js or Laravel's intended URL)
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectUrl = urlParams.get('redirect') || '/dashboard';
-            window.location.href = redirectUrl;
+            // Redirect - session is now established server-side
+            window.location.href = data.redirect || '/dashboard';
         } else {
             errorDiv.textContent = data.message || 'Login failed. Please check your credentials.';
             errorDiv.classList.remove('hidden');
@@ -110,60 +85,6 @@ async function handleLogin(event) {
     } finally {
         btn.disabled = false;
         btn.textContent = 'Login';
-    }
-}
-
-function showForgotPassword(event) {
-    event.preventDefault();
-    document.getElementById('forgotPasswordModal').classList.remove('hidden');
-}
-
-function closeForgotPassword() {
-    document.getElementById('forgotPasswordModal').classList.add('hidden');
-    document.getElementById('forgotMessage').classList.add('hidden');
-}
-
-async function handleForgotPassword(event) {
-    event.preventDefault();
-
-    const btn = document.getElementById('forgotBtn');
-    const messageDiv = document.getElementById('forgotMessage');
-    const email = document.getElementById('forgotEmail').value;
-
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-    messageDiv.classList.add('hidden');
-
-    try {
-        const response = await fetch('/api/forgot-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            messageDiv.className = 'alert alert-success';
-            messageDiv.textContent = data.message || 'Password reset instructions sent to your email.';
-            messageDiv.classList.remove('hidden');
-            document.getElementById('forgotPasswordForm').reset();
-            setTimeout(closeForgotPassword, 3000);
-        } else {
-            messageDiv.className = 'alert alert-error';
-            messageDiv.textContent = data.message || 'Failed to send reset link.';
-            messageDiv.classList.remove('hidden');
-        }
-    } catch (error) {
-        messageDiv.className = 'alert alert-error';
-        messageDiv.textContent = 'An error occurred. Please try again.';
-        messageDiv.classList.remove('hidden');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Send Reset Link';
     }
 }
 </script>
