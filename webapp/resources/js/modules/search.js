@@ -52,7 +52,7 @@ export async function performSearchFromRoute() {
 /**
  * Display search results
  */
-export function displaySearchResults(results, query) {
+export function displaySearchResults(results, query, searchInContent = true, searchInFilename = true) {
     const grid = document.getElementById('searchResultsGrid');
     if (!grid) return;
 
@@ -140,11 +140,20 @@ export function displaySearchResults(results, query) {
 
         resultInfo.appendChild(fileDisplayDiv);
 
-        // Add highlight if present
-        if (result.highlight && result.highlight.content && result.highlight.content.length > 0) {
+        // Add highlight if present AND content search is enabled
+        if (searchInContent && result.highlight && result.highlight.content && result.highlight.content.length > 0) {
             const highlightDiv = document.createElement('div');
             highlightDiv.className = 'search-highlight';
-            highlightDiv.textContent = `💡 "${result.highlight.content[0]}"`; // Auto-escaped
+
+            const icon = document.createElement('span');
+            icon.textContent = '💡 ';
+            highlightDiv.appendChild(icon);
+
+            const snippet = document.createElement('span');
+            // innerHTML is safe here because Elasticsearch controls the highlighting tags
+            snippet.innerHTML = `"${result.highlight.content[0]}"`;
+            highlightDiv.appendChild(snippet);
+
             resultInfo.appendChild(highlightDiv);
         }
 

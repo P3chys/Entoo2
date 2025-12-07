@@ -2,6 +2,11 @@
 
 @section('title', 'Favorites - Entoo')
 
+@push('scripts')
+    {{-- Auth check - validates token before loading page --}}
+    @vite('resources/js/auth-check.js')
+@endpush
+
 @section('content')
 <div class="dashboard-container">
     <div class="container">

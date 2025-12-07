@@ -1,52 +1,45 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Register - Entoo')
 
 @section('content')
-<div class="auth-container">
-    <div class="auth-card glass-auth-card">
-        <div class="auth-header">
-            <div class="auth-icon">
-                ✨
-            </div>
-            <h2>Create Account</h2>
-            <p class="subtitle">Join Entoo to manage your documents</p>
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Create Account</h2>
+        <p class="subtitle">Join Entoo to manage your documents</p>
+    </div>
+
+    <div id="errorMessage" class="alert alert-error hidden"></div>
+    <div id="successMessage" class="alert alert-success hidden"></div>
+
+    <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required placeholder="John Doe" autocomplete="name">
         </div>
 
-        <div id="errorMessage" class="alert alert-error hidden"></div>
-        <div id="successMessage" class="alert alert-success hidden"></div>
-
-        <form id="registerForm" onsubmit="handleRegister(event)">
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" required placeholder="John Doe">
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="your@email.com">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required
-                       placeholder="At least 8 characters" minlength="8">
-            </div>
-
-            <div class="form-group">
-                <label for="password_confirmation">Confirm Password</label>
-                <input type="password" id="password_confirmation" name="password_confirmation"
-                       required placeholder="Repeat your password" minlength="8">
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
-                Register
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p>Already have an account? <a href="/login">Login here</a></p>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
         </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="At least 8 characters" minlength="8" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+            <label for="password_confirmation">Confirm Password</label>
+            <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Repeat your password" minlength="8" autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="registerBtn">
+            Register
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        <p>Already have an account? <a href="/login">Login here</a></p>
     </div>
 </div>
 

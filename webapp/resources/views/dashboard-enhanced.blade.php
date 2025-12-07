@@ -13,6 +13,9 @@
 @endsection
 
 @push('scripts')
+    {{-- Auth check - validates token before loading page --}}
+    @vite('resources/js/auth-check.js')
+
     {{-- Pass route parameters to JavaScript --}}
     <script>
         // Set route parameters for dashboard.js

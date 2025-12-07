@@ -269,7 +269,6 @@ window.openProfileEditModal = function (subjectName, profile) {
     document.getElementById('profileCourseCode').value = profile?.course_code || '';
     document.getElementById('profileCredits').value = profile?.credits || '';
     document.getElementById('profileSemester').value = profile?.semester || '';
-    document.getElementById('profileYear').value = profile?.year || '';
     document.getElementById('profileColor').value = profile?.color || '#667eea';
     document.getElementById('profileNotes').value = profile?.notes || '';
 }
@@ -281,14 +280,15 @@ window.saveSubjectProfile = async function (event) {
     event.preventDefault();
 
     const subjectName = document.getElementById('profileSubjectName').value;
+    const semesterValue = document.getElementById('profileSemester').value;
     const formData = {
         subject_name: subjectName,
         description: document.getElementById('profileDescription').value,
         professor_name: document.getElementById('profileProfessor').value,
         course_code: document.getElementById('profileCourseCode').value,
         credits: parseInt(document.getElementById('profileCredits').value) || null,
-        semester: document.getElementById('profileSemester').value,
-        year: parseInt(document.getElementById('profileYear').value) || null,
+        semester: semesterValue ? parseInt(semesterValue) : null,
+        year: null,
         color: document.getElementById('profileColor').value,
         notes: document.getElementById('profileNotes').value
     };
@@ -319,34 +319,14 @@ window.saveSubjectProfile = async function (event) {
         // Close modal
         window.closeSubjectProfileModal();
 
-        // Reload the subject in the dashboard to reflect changes
-        if (typeof window.reloadSubject === 'function') {
-            await window.reloadSubject(subjectName);
-        }
+        // Reload the entire dashboard to update sidebar grouping
+        if (typeof window.loadDashboard === 'function') {
+            await window.loadDashboard(true); // Force cache bypass
 
-        // Always try to refresh the detail panel if it exists
-        const panelId = 'detail-' + subjectName.replace(/[^a-zA-Z0-9]/g, '_');
-        const detailPanel = document.getElementById(panelId);
-        if (detailPanel) {
-            // If panel is currently hidden, show it with the new profile
-            if (detailPanel.style.display !== 'block') {
-                detailPanel.style.display = 'block';
+            // Reselect the subject to show its content
+            if (typeof window.selectSubject === 'function') {
+                window.selectSubject(subjectName);
             }
-
-            // Reload the profile data in the panel
-            detailPanel.innerHTML = '<div class="loading" style="padding: 1rem;">Loading profile...</div>';
-
-            const profileResponse = await fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-
-            let profile = null;
-            if (profileResponse.ok) {
-                const data = await profileResponse.json();
-                profile = data.profile;
-            }
-
-            window.displaySubjectProfileInPanel(detailPanel, subjectName, profile);
         }
     } catch (error) {
         alert('Failed to save profile: ' + error.message);

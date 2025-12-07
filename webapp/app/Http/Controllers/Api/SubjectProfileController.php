@@ -150,7 +150,7 @@ class SubjectProfileController extends Controller
             'description' => 'nullable|string',
             'professor_name' => 'nullable|string|max:255',
             'course_code' => 'nullable|string|max:50',
-            'semester' => 'nullable|string|max:50',
+            'semester' => 'nullable|integer|in:1,2',
             'year' => 'nullable|integer|min:2000|max:2100',
             'notes' => 'nullable|string',
             'color' => 'nullable|string|max:7', // hex color
@@ -217,7 +217,7 @@ class SubjectProfileController extends Controller
             'description' => 'nullable|string',
             'professor_name' => 'nullable|string|max:255',
             'course_code' => 'nullable|string|max:50',
-            'semester' => 'nullable|string|max:50',
+            'semester' => 'nullable|integer|in:1,2',
             'year' => 'nullable|integer|min:2000|max:2100',
             'notes' => 'nullable|string',
             'color' => 'nullable|string|max:7',

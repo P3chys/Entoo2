@@ -7,8 +7,12 @@ import { state, buildFileIndex, clearFileIndex } from './modules/state.js';
 import { fetchAPI } from './modules/api.js';
 import { loadFavorites, toggleFavorite, updateFavoriteCount } from './modules/favorites.js';
 import { buildTreeStructure, updateStarIcon, buildSubjectTabsHTML } from './modules/ui.js';
-import { performSearchFromRoute } from './modules/search.js';
+import { performSearchFromRoute, displaySearchResults } from './modules/search.js';
 import { switchTab } from './modules/tabs.js';
+import { renderSidebarSubjects } from './modules/sidebar.js';
+
+// Expose displaySearchResults globally
+window.displaySearchResults = displaySearchResults;
 
 // Route parameters - will be set by blade template
 window.dashboardRouteParams = window.dashboardRouteParams || {};
@@ -134,139 +138,120 @@ async function filterByOwnerFromRoute() {
     }
 }
 
-window.toggleSubject = async function (element, subjectName) {
-    const icon = element.querySelector('.subject-icon');
-    const categories = element.nextElementSibling;
+window.loadSubjectContent = async function (subjectName) {
+    const noSubjectSelected = document.getElementById('noSubjectSelected');
+    const subjectContent = document.getElementById('subjectContent');
+    const loading = document.getElementById('loadingFiles');
 
-    const isExpanded = icon.classList.contains('expanded');
+    // Hide "no subject selected" message
+    if (noSubjectSelected) noSubjectSelected.classList.add('hidden');
 
-    if (isExpanded) {
-        icon.classList.remove('expanded');
-        categories.classList.remove('expanded');
-    } else {
-        icon.classList.add('expanded');
-        categories.classList.add('expanded');
+    // Show loading
+    if (loading) loading.classList.remove('hidden');
+    if (subjectContent) subjectContent.classList.add('hidden');
 
-        if (!state.subjectFiles[subjectName]) {
-            categories.innerHTML = '<div class="loading" style="padding: 1rem;">Loading files and profile...</div>';
+    try {
+        const subject = state.allFiles.find(s => s.subject_name === subjectName);
+        const hasProfile = subject?.has_profile || false;
 
-            try {
-                const subject = state.allFiles.find(s => s.subject_name === subjectName);
-                const hasProfile = subject?.has_profile || false;
+        const promises = [
+            fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`),
+            fetch(`/api/subjects/${encodeURIComponent(subjectName)}/comments`, {
+                headers: { 'Accept': 'application/json' }
+            }).then(res => res.ok ? res : null).catch(() => null)
+        ];
 
-                const promises = [
-                    fetchAPI(`/api/files?subject_name=${encodeURIComponent(subjectName)}&per_page=1000`),
-                    fetch(`/api/subjects/${encodeURIComponent(subjectName)}/comments`, {
-                        headers: { 'Accept': 'application/json' }
-                    }).then(res => res.ok ? res : null).catch(() => null)
-                ];
-
-                if (hasProfile) {
-                    promises.push(
-                        fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
-                            headers: { 'Accept': 'application/json' }
-                        }).then(res => res.ok ? res : null).catch(() => null)
-                    );
-                }
-
-                const results = await Promise.all(promises);
-                const filesResponse = results[0];
-                const commentsResponse = results[1];
-                // Profile response is either result[2] (if hasProfile) or null
-                const profileResponse = hasProfile ? results[2] : null;
-
-                const files = filesResponse.data || [];
-
-                let comments = [];
-                if (commentsResponse) {
-                    const data = await commentsResponse.json();
-                    comments = data.comments || [];
-                }
-
-                let profile = null;
-                if (profileResponse) {
-                    const data = await profileResponse.json();
-                    profile = data.profile;
-                }
-
-                state.subjectFiles[subjectName] = files;
-
-                // Build O(1) file ID index for fast lookups
-                buildFileIndex(subjectName, files);
-
-                // Update the header count to match actual files loaded
-                const actualCount = files.length;
-                const countSpan = element.querySelector('.subject-count');
-                if (countSpan) {
-                    countSpan.textContent = `${actualCount} file${actualCount !== 1 ? 's' : ''}`;
-                }
-
-                const tree = {};
-                files.forEach(file => {
-                    if (!tree[file.category]) {
-                        tree[file.category] = [];
-                    }
-                    tree[file.category].push(file);
-                });
-
-                categories.innerHTML = buildSubjectTabsHTML(tree, subjectName, profile, comments);
-            } catch (error) {
-                categories.innerHTML = '<p class="error" style="padding: 1rem;">Failed to load files</p>';
-            }
+        if (hasProfile) {
+            promises.push(
+                fetch(`/api/subject-profiles/${encodeURIComponent(subjectName)}`, {
+                    headers: { 'Accept': 'application/json' }
+                }).then(res => res.ok ? res : null).catch(() => null)
+            );
         }
+
+        const results = await Promise.all(promises);
+        const filesResponse = results[0];
+        const commentsResponse = results[1];
+        const profileResponse = hasProfile ? results[2] : null;
+
+        const files = filesResponse.data || [];
+
+        let comments = [];
+        if (commentsResponse) {
+            const data = await commentsResponse.json();
+            comments = data.comments || [];
+        }
+
+        let profile = null;
+        if (profileResponse) {
+            const data = await profileResponse.json();
+            profile = data.profile;
+        }
+
+        state.subjectFiles[subjectName] = files;
+        buildFileIndex(subjectName, files);
+
+        const tree = {};
+        files.forEach(file => {
+            if (!tree[file.category]) {
+                tree[file.category] = [];
+            }
+            tree[file.category].push(file);
+        });
+
+        // Build subject content with header
+        const subjectHeader = `
+            <div class="subject-content-header">
+                <div class="subject-title-section">
+                    <h1>${escapeHtml(subjectName)}</h1>
+                    <p class="subject-meta">${subject?.code || ''} • ${files.length} files</p>
+                </div>
+            </div>
+        `;
+
+        if (subjectContent) {
+            subjectContent.innerHTML = subjectHeader + buildSubjectTabsHTML(tree, subjectName, profile, comments);
+            subjectContent.classList.remove('hidden');
+        }
+
+        if (loading) loading.classList.add('hidden');
+    } catch (error) {
+        if (subjectContent) {
+            subjectContent.innerHTML = '<p class="error" style="padding: 1rem;">Failed to load subject content</p>';
+            subjectContent.classList.remove('hidden');
+        }
+        if (loading) loading.classList.add('hidden');
     }
 };
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 window.reloadSubject = async function (subjectName) {
     clearFileIndex(subjectName);
     delete state.subjectFiles[subjectName];
 
-    const subjectDiv = document.querySelector(`.tree-subject[data-subject="${CSS.escape(subjectName)}"]`);
-    if (subjectDiv) {
-        const header = subjectDiv.querySelector('.subject-header');
-        const icon = header.querySelector('.subject-icon');
-
-        if (icon.classList.contains('expanded')) {
-            await window.toggleSubject(header, subjectName);
-            await window.toggleSubject(header, subjectName);
-        }
+    // Reload the subject content in the new sidebar-based structure
+    if (typeof window.loadSubjectContent === 'function') {
+        await window.loadSubjectContent(subjectName);
     }
 };
 
-function expandSubjectFromRoute() {
+function loadSubjectFromRoute() {
     const routeParams = window.dashboardRouteParams;
-    setTimeout(() => {
-        const subjects = document.querySelectorAll('.subject-header');
-        subjects.forEach(subjectHeader => {
-            const titleSpan = subjectHeader.querySelector('.subject-title span:nth-child(2)');
-            if (titleSpan && titleSpan.textContent === routeParams.selectedSubject) {
-                window.toggleSubject(subjectHeader, routeParams.selectedSubject);
-            }
-        });
-    }, 100);
+    if (routeParams.selectedSubject) {
+        // Load the selected subject content
+        setTimeout(() => {
+            window.selectSubject(routeParams.selectedSubject);
+        }, 100);
+    }
 }
 
 async function loadFiles(bypassCache = false) {
-    const loading = document.getElementById('loadingFiles');
-    const noFiles = document.getElementById('noFiles');
-    const treeView = document.getElementById('treeView');
-
-    if (loading) loading.classList.remove('hidden');
-
-    const expandedSubjects = [];
-    if (treeView) {
-        const expandedIcons = treeView.querySelectorAll('.subject-icon.expanded');
-        expandedIcons.forEach(icon => {
-            const subjectHeader = icon.closest('.subject-header');
-            if (subjectHeader) {
-                const subjectTitle = subjectHeader.querySelector('.subject-title span:nth-child(2)');
-                if (subjectTitle) {
-                    expandedSubjects.push(subjectTitle.textContent);
-                }
-            }
-        });
-    }
-
     try {
         const options = {};
         if (bypassCache) {
@@ -277,35 +262,10 @@ async function loadFiles(bypassCache = false) {
 
         state.allFiles = subjects;
 
-        if (loading) loading.classList.add('hidden');
-
-        if (subjects.length === 0) {
-            if (noFiles) noFiles.classList.remove('hidden');
-            if (treeView) treeView.innerHTML = '';
-        } else {
-            if (noFiles) noFiles.classList.add('hidden');
-            buildTreeStructure(subjects);
-
-            if (expandedSubjects.length > 0) {
-                setTimeout(() => {
-                    expandedSubjects.forEach(subjectName => {
-                        delete state.subjectFiles[subjectName];
-                        const subjects = document.querySelectorAll('.tree-subject');
-                        subjects.forEach(subjectDiv => {
-                            if (subjectDiv.dataset.subject === subjectName) {
-                                const subjectHeader = subjectDiv.querySelector('.subject-header');
-                                if (subjectHeader) {
-                                    window.toggleSubject(subjectHeader, subjectName);
-                                }
-                            }
-                        });
-                    });
-                }, 100);
-            }
-        }
+        // Populate sidebar with subjects
+        renderSidebarSubjects(subjects);
     } catch (error) {
-        if (loading) loading.classList.add('hidden');
-        if (treeView) treeView.innerHTML = '<p class="error">Failed to load files</p>';
+        console.error('Failed to load subjects:', error);
     }
 }
 
@@ -345,7 +305,7 @@ window.loadDashboard = async function (bypassCache = false) {
     } else if (routeParams.filterUserId) {
         filterByOwnerFromRoute();
     } else if (routeParams.selectedSubject) {
-        expandSubjectFromRoute();
+        loadSubjectFromRoute();
     }
 };
 
@@ -362,18 +322,6 @@ window.fetchAPI = fetchAPI;
 
 // Event delegation
 document.addEventListener('click', (event) => {
-    const header = event.target.closest('.subject-header');
-    if (header && header.dataset.subjectName && !event.target.closest('.favorite-star')) {
-        window.toggleSubject(header, header.dataset.subjectName);
-        return;
-    }
-
-    const star = event.target.closest('.favorite-star');
-    if (star && star.dataset.subjectName) {
-        window.toggleFavorite(star.dataset.subjectName, event);
-        return;
-    }
-
     const tabBtn = event.target.closest('.tab-btn');
     if (tabBtn && tabBtn.dataset.subjectId && tabBtn.dataset.tabName) {
         window.switchTab(event, tabBtn.dataset.subjectId, tabBtn.dataset.tabName);
@@ -406,6 +354,87 @@ document.addEventListener('click', (event) => {
         }
     }
 });
+
+// Search handler
+async function performSearch(query) {
+    const searchInFilename = document.getElementById('searchInFilename')?.checked ?? true;
+    const searchInContent = document.getElementById('searchInContent')?.checked ?? true;
+
+    if (!query || query.trim().length === 0) {
+        return;
+    }
+
+    try {
+        const response = await fetchAPI(`/api/search?q=${encodeURIComponent(query)}&size=100`);
+        const results = response.results || [];
+
+        // Filter results based on user preferences
+        let filteredResults = results;
+        if (!searchInContent && !searchInFilename) {
+            filteredResults = [];
+        } else if (!searchInContent && searchInFilename) {
+            // Only search in filenames - show only files where filename matches
+            filteredResults = results.filter(r =>
+                r.source.filename.toLowerCase().includes(query.toLowerCase()) ||
+                r.source.original_filename.toLowerCase().includes(query.toLowerCase())
+            );
+        } else if (searchInContent && !searchInFilename) {
+            // Only search in content - show only files with content highlights (exclude filename matches)
+            filteredResults = results.filter(r => {
+                // Must have content highlight
+                const hasContentHighlight = r.highlight && r.highlight.content && r.highlight.content.length > 0;
+                if (!hasContentHighlight) {
+                    return false;
+                }
+                // Must NOT match filename
+                const filenameMatch = r.source.filename.toLowerCase().includes(query.toLowerCase()) ||
+                                    r.source.original_filename.toLowerCase().includes(query.toLowerCase());
+                return !filenameMatch;
+            });
+        }
+        // If both are checked, show all results (default Elasticsearch behavior)
+
+        // Clear sidebar selection
+        document.querySelectorAll('.subject-nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Hide normal content, show search results
+        const noSubjectSelected = document.getElementById('noSubjectSelected');
+        const subjectContent = document.getElementById('subjectContent');
+        const searchResults = document.getElementById('searchResults');
+        const searchCount = document.getElementById('searchCount');
+
+        if (noSubjectSelected) noSubjectSelected.classList.add('hidden');
+        if (subjectContent) subjectContent.classList.add('hidden');
+        if (searchResults) {
+            searchResults.classList.remove('hidden');
+            // Scroll to top of results
+            setTimeout(() => {
+                searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        if (searchCount) searchCount.textContent = filteredResults.length;
+
+        // Display results using the search module
+        if (typeof window.displaySearchResults === 'function') {
+            window.displaySearchResults(filteredResults, query, searchInContent, searchInFilename);
+        }
+    } catch (error) {
+        alert('Search failed: ' + error.message);
+    }
+}
+
+// Global search input handler
+const globalSearchInput = document.getElementById('globalSearch');
+if (globalSearchInput) {
+    globalSearchInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            const query = event.target.value.trim();
+            performSearch(query);
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();

@@ -1,35 +1,30 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Forgot Password - Entoo')
 
 @section('content')
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <div class="auth-icon">
-                🔑
-            </div>
-            <h2>Forgot Password</h2>
-            <p class="subtitle">Enter your email to receive reset instructions</p>
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Forgot Password</h2>
+        <p class="subtitle">Enter your email to receive reset instructions</p>
+    </div>
+
+    <div id="message" class="alert hidden"></div>
+
+    <form id="forgotPasswordForm" class="auth-form" onsubmit="handleForgotPassword(event)">
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
+            <small>We'll send you instructions to reset your password.</small>
         </div>
 
-        <div id="message" class="alert hidden"></div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            Send Reset Link
+        </button>
+    </form>
 
-        <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
-                <small>We'll send you instructions to reset your password.</small>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
-                Send Reset Link
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p><a href="/login">Back to Login</a></p>
-        </div>
+    <div class="auth-footer">
+        <p><a href="/login">Back to Login</a></p>
     </div>
 </div>
 

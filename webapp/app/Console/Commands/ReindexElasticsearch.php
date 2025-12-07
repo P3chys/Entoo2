@@ -91,9 +91,10 @@ class ReindexElasticsearch extends Command
             $content = '';
 
             // Parse content if not skipping (only for parseable file types)
-            if (! $skipContent && file_exists($file->filepath) && in_array($file->file_extension, $this->parseableExtensions)) {
+            $fullPath = storage_path("app/{$file->filepath}");
+            if (! $skipContent && file_exists($fullPath) && in_array($file->file_extension, $this->parseableExtensions)) {
                 try {
-                    $content = $this->parserService->extractText($file->filepath, $file->file_extension);
+                    $content = $this->parserService->extractText($fullPath, $file->file_extension);
                 } catch (\Throwable $e) {
                     // Continue with empty content if parsing fails
                     $content = '';

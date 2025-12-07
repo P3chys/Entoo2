@@ -40,21 +40,14 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label for="profileSemester">Semester</label>
-                        <select id="profileSemester" name="semester">
-                            <option value="">Select semester</option>
-                            <option value="Winter">Winter</option>
-                            <option value="Summer">Summer</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="profileYear">Year</label>
-                        <input type="number" id="profileYear" name="year" min="2020" max="2030"
-                               placeholder="e.g., 2024">
-                    </div>
+                <div class="form-group">
+                    <label for="profileSemester">Semester Group</label>
+                    <select id="profileSemester" name="semester">
+                        <option value="">Not assigned (Other)</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                    </select>
+                    <small>This determines which sidebar group the subject appears in</small>
                 </div>
 
                 <div class="form-group">

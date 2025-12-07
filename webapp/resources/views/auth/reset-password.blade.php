@@ -1,47 +1,42 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Reset Password - Entoo')
 
 @section('content')
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <div class="auth-icon">
-                🔐
-            </div>
-            <h2>Reset Password</h2>
-            <p class="subtitle">Enter your new password below</p>
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Reset Password</h2>
+        <p class="subtitle">Enter your new password below</p>
+    </div>
+
+    <div id="message" class="alert hidden"></div>
+
+    <form id="resetPasswordForm" class="auth-form" onsubmit="handleResetPassword(event)">
+        <input type="hidden" id="token" value="{{ $token }}">
+
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
         </div>
 
-        <div id="message" class="alert hidden"></div>
-
-        <form id="resetPasswordForm" onsubmit="handleResetPassword(event)">
-            <input type="hidden" id="token" value="{{ $token }}">
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required placeholder="your@email.com" autocomplete="email">
-            </div>
-
-            <div class="form-group">
-                <label for="password">New Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter new password" minlength="8" autocomplete="new-password">
-                <small>Minimum 8 characters</small>
-            </div>
-
-            <div class="form-group">
-                <label for="password_confirmation">Confirm Password</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Confirm new password" minlength="8" autocomplete="new-password">
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
-                Reset Password
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p><a href="/login">Back to Login</a></p>
+        <div class="form-group">
+            <label for="password">New Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter new password" minlength="8" autocomplete="new-password">
+            <small>Minimum 8 characters</small>
         </div>
+
+        <div class="form-group">
+            <label for="password_confirmation">Confirm Password</label>
+            <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Confirm new password" minlength="8" autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            Reset Password
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        <p><a href="/login">Back to Login</a></p>
     </div>
 </div>
 

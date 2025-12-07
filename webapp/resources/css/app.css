@@ -1,9 +1,5 @@
-/* ========================================
-   Entoo - Modern Document Management System
-   Modular CSS Architecture
-   ======================================== */
 
-/* Base - Variables, reset, typography */
+@import './theme.css';
 @import './base.css';
 
 /* Components */
@@ -16,6 +12,7 @@
 @import './components/progress.css';
 @import './components/subject-profile.css';
 @import './components/file-cards.css';
+@import './components/tabs-cards.css';
 
 /* Layouts */
 @import './layouts/dashboard.css';
