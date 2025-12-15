@@ -125,7 +125,7 @@ jobs:
           echo "| PHPCS (PSR12) | ${{ steps.phpcs.outcome }} | ${{ steps.phpcs.outputs.issues }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload quality reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: php-quality-reports
@@ -224,7 +224,7 @@ jobs:
           echo "| Bundle Size | ${{ steps.bundle_size.outputs.size_mb }} MB | ${{ steps.bundle_size.outputs.size_mb < 5 && '✅' || '⚠️' }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload JavaScript quality reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: js-quality-reports
