@@ -53,7 +53,7 @@ jobs:
 
     - name: Cache Composer packages
       id: composer-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: webapp/vendor
         key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -62,7 +62,7 @@ jobs:
 
     - name: Cache NPM packages
       id: npm-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: node_modules
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -171,7 +171,7 @@ jobs:
 
     - name: Upload Playwright report
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: playwright-report
         path: tests/playwright-report/
@@ -179,7 +179,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: test-results
         path: tests/test-results/
